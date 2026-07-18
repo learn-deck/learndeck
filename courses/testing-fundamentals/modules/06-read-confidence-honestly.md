@@ -2,7 +2,7 @@
 id: read-confidence-honestly
 title: Read confidence honestly
 goal: Finish with a test and evidence report that separates executed coverage from confidence about untested behaviour.
-action: Run the Vitest suite and its configured coverage command, then write a short TEST-EVIDENCE.md report listing tested behaviours, observed output, and limits.
+action: Run `npm test` and `npm test -- --coverage`, then write `TEST-EVIDENCE.md` in the project root listing tested behaviours, observed output, and limits.
 sources:
   - ./06-read-confidence-honestly.md
   - ../notes/testing-principles.md
@@ -41,22 +41,27 @@ saw, and what remains outside the claim.
 
 ## Build
 
-1. Run `npm test` and record the command and result.
-2. Run the coverage command configured by your Vitest project, commonly
-   `npm test -- --coverage`. If your project reports that no coverage provider
-   is configured, record that honestly and follow the project's documented
-   learner-run setup before trying again; do not invent a percentage.
+1. Run `npm test` and record the command plus its passing `Test Files` and
+   `Tests` summaries.
+2. Run `npm test -- --coverage`. Module 00 installed
+   `@vitest/coverage-v8`, so this command should produce a `coverage/` report
+   and a coverage table. If you intentionally used a different provider,
+   record its command and observed result; never invent a percentage.
 3. Read the report for the pricing decision and HTTP edge. Note which important
    cases executed and which behaviours remain untested.
-4. In your project workspace, write `TEST-EVIDENCE.md` with the commands,
-   observed outputs, the boundary and edge cases covered, one health or
-   `POST /price` observation, and at least two limits on the confidence claim.
-5. Ask the guide to review the evidence, not to certify the project. Your
-   final record should be explainable from the repository and your observations.
+4. In the project root, write `TEST-EVIDENCE.md` with the commands, the exact
+   observed pass/coverage summaries, the boundary and edge cases covered, one
+   health or `POST /price` observation, and at least two limits on the
+   confidence claim.
+5. If a guide is connected, you may ask it to review the evidence, not to
+   certify the project; guide evaluation is optional. If no guide is connected,
+   review `TEST-EVIDENCE.md` yourself, answer the question, and select **Mark as
+   self-reviewed and continue** in the app. Your final record should be
+   explainable from the repository and your observations.
 
 ## Final evidence
 
-Finish with four concrete items:
+Finish with four concrete items, recorded in `TEST-EVIDENCE.md`:
 
 - a small parcel-pricing repository you can explain;
 - a passing Vitest command and the important behaviours it exercises;

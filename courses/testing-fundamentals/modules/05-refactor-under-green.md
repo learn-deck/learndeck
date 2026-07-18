@@ -2,7 +2,7 @@
 id: refactor-under-green
 title: Refactor under green
 goal: Change internal structure while a behaviour-focused suite protects the parcel-pricing contract.
-action: Make one internal refactor with the suite green before and after, then replace one implementation-detail assertion with an observable outcome assertion.
+action: Refactor one internal helper in `src/parcel-pricing.ts` while `test/parcel-pricing.test.ts` stays green before and after, then replace one implementation-detail assertion with an observable outcome assertion.
 sources:
   - ./05-refactor-under-green.md
   - ../notes/testing-principles.md
@@ -59,12 +59,17 @@ the spy makes it easy to inspect.
 
 ## Build
 
-1. Run `npm test` and note the green baseline before editing internals.
-2. Make one refactor that should not change the parcel-pricing contract: name
-   a helper, extract a weight-band table, or simplify a branch.
-3. Replace one assertion about a private call, order, or helper with an
-   observable price, response, or deliberate failure assertion.
-4. Run `npm test` again. If it fails, use the failure to decide whether you
+1. Run `npm test` and note the green baseline for `test/parcel-pricing.test.ts`
+   before editing internals. The output must show the existing parcel case
+   names and passing `Test Files` and `Tests` summaries.
+2. Make one refactor in `src/parcel-pricing.ts` that should not change the
+   parcel-pricing contract: name a helper, extract a weight-band table, or
+   simplify a branch.
+3. In `test/parcel-pricing.test.ts`, replace one assertion about a private call,
+   order, or helper with an observable price, response, or deliberate failure
+   assertion.
+4. Run `npm test` again. The same named behaviour must pass. If it fails, use
+   the failure to decide whether you
    found a real behaviour change or a test coupled to the old implementation.
 5. Record the before-and-after commands and the refactor in your evidence.
 
@@ -78,7 +83,8 @@ the outcome a parcel-pricing caller can observe.
 ## Definition of done
 
 - The suite was green before and after one internal refactor.
+- `src/parcel-pricing.ts` and `test/parcel-pricing.test.ts` show the changed
+  implementation and the outcome-focused protection.
 - At least one brittle implementation-detail assertion became a behaviour assertion.
 - The changed code still covers a parcel total or deliberate failure that a caller can observe.
 - Your evidence states what the green suite does not prove.
-

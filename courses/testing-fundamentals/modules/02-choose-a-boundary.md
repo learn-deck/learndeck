@@ -2,7 +2,7 @@
 id: choose-a-boundary
 title: Choose a useful test boundary
 goal: Keep pure pricing decisions fast and use one HTTP integration test to prove the transport translation.
-action: Keep a direct pricing test and add one test that sends a valid parcel through the real POST /price edge, recording the distinction in the test output.
+action: Keep the direct pricing test in `test/parcel-pricing.test.ts` and add one real HTTP test in `test/http-price.test.ts` for `POST /price`, recording the distinction in the test output.
 sources:
   - ./02-choose-a-boundary.md
   - ../notes/testing-principles.md
@@ -43,23 +43,31 @@ Use the smallest useful split:
 
 - A unit test calls the pricing decision directly with an ordinary parcel,
   option, or invalid input.
-- An integration test crosses your own HTTP edge with a real `Request`/`Response`
-  or a locally running server and checks the response status and body.
+- Add the adapter at `src/server.ts`, keep `priceParcel` in
+  `src/parcel-pricing.ts`, and change `package.json` so `npm run dev` starts
+  `src/server.ts`.
+- An integration test in `test/http-price.test.ts` crosses that HTTP edge with
+  a real `Request`/`Response` or a locally running server and checks the
+  response status and body. For the shared case, send
+  `POST /price` with `{"weightKg":2,"zone":"B","options":[]}` and expect
+  `200` with a JSON body whose `total` is `10`.
 - Do not mock the pricing function inside the test that claims to prove the
   `/price` behaviour. That would prove only that the handler called a mock.
 
 ## Build
 
-1. Keep one direct test for the shared parcel-pricing rule.
-2. Add one valid `POST /price` test for a parcel with a visible expected total.
-   Use the real HTTP adapter. If your test harness starts the local server,
-   use `fetch`; if it invokes the adapter in-process, still construct a real
-   request and inspect its real response.
-3. Run the unit and integration tests with `npm test`. Give the boundary case
-   a name that makes the transport behaviour visible in the output.
+1. Keep one direct test for the shared parcel-pricing rule in
+   `test/parcel-pricing.test.ts`.
+2. Add `src/server.ts` and the valid `POST /price` test in
+   `test/http-price.test.ts`. Use the real HTTP adapter. If your test harness
+   starts the local server, use `fetch`; if it invokes the adapter in-process,
+   still construct a real `Request` and inspect its real `Response`.
+3. Run `npm test`. Give the boundary case a name such as
+   `translates a valid POST price request into a €10 response`; that exact name
+   must be visible alongside `Test Files` and `Tests` passing summaries.
 4. Write down one transport failure you will test later, such as malformed JSON
-   returning 400-level output, and one domain failure such as an invalid weight
-   returning a distinct 4xx response.
+   returning a 400 response, and one domain failure such as an invalid weight
+   returning a distinct 422 response. Keep those as separate promises.
 
 ## What this is NOT
 
@@ -71,7 +79,7 @@ you created.
 ## Definition of done
 
 - A direct pricing test and an HTTP-edge test both run with the same test command.
-- The HTTP test sends a valid parcel through `POST /price` and checks an observable response.
+- `test/http-price.test.ts` sends the documented JSON through `POST /price` and
+  checks `200` plus a response `total` of `10`.
 - The HTTP test does not replace the pricing decision with a mock.
 - Your answer names one transport failure and one domain failure that deserve distinct tests.
-

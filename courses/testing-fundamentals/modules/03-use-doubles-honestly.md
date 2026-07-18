@@ -2,7 +2,7 @@
 id: use-doubles-honestly
 title: Use test doubles honestly
 goal: Choose a small fake for replaceable data and recognise when a mock or spy can make a test pass without proving the outcome.
-action: Replace one interaction-heavy parcel-pricing test with a small in-memory fake or fixture and assert the resulting price or failure.
+action: Put one deterministic rate fake at `test/fixtures/zone-rates.ts`, use it at a real pricing seam, and assert the resulting price or failure in `test/parcel-pricing.test.ts`.
 sources:
   - ./03-use-doubles-honestly.md
   - ../notes/testing-principles.md
@@ -59,14 +59,17 @@ if the result is ignored or a wrong surcharge is added.
 
 ## Build
 
-1. Identify one replaceable input in your implementation: a zone-rate lookup,
-   a clock, or another small dependency that genuinely exists.
-2. Create a deterministic in-memory fake or fixture for it. Keep the fake
-   behaviour obvious; do not reproduce the whole production implementation.
-3. Write or revise one test so it checks the resulting parcel price or the
-   deliberate failure, not only the fake's call history.
-4. Run `npm test` and inspect the test name and result. If you keep a spy, say
-   what contract the interaction itself protects; otherwise remove it.
+1. Identify one replaceable input in `src/parcel-pricing.ts`: a zone-rate
+   lookup, a clock, or another small dependency that genuinely exists.
+2. Create the deterministic in-memory fake in
+   `test/fixtures/zone-rates.ts`. Keep its behaviour obvious; do not reproduce
+   the whole production implementation.
+3. Write or revise one test in `test/parcel-pricing.test.ts` so it checks the
+   resulting parcel price or the deliberate failure, not only the fake's call
+   history. Name it, for example, `prices zone B through the in-memory rate fake`.
+4. Run `npm test` and inspect that case name plus the passing `Test Files` and
+   `Tests` summaries. If you keep a spy, say what contract the interaction
+   itself protects; otherwise remove it.
 
 ## What this is NOT
 
@@ -78,7 +81,8 @@ real boundary while preserving a meaningful outcome.
 ## Definition of done
 
 - One test uses a deterministic fake or fixture at a real seam in the project.
+- The fake is at `test/fixtures/zone-rates.ts` and the outcome assertion is in
+  `test/parcel-pricing.test.ts`.
 - The fake is smaller than the production dependency and has believable behaviour.
 - The test asserts a parcel price or deliberate failure, not only an interaction.
 - `npm test` passes and your explanation names when a spy would be misleading.
-
