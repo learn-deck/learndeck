@@ -13,10 +13,12 @@ visible submissions.
 ## Start or resume
 
 1. Read `AGENTS.md`, `README.md`, and `docs/mcp.md`.
-2. If the UI is not running, ask the learner to run `bun run dev` and open the
+2. If the UI is not running, ask the learner to run `bun run app` and open the
    displayed local URL. Do not start it silently.
-3. Use `patchquest_list_courses`. If the learner said only “Let's start,” ask
-   them to choose a visible course, path, and workspace/context in the UI.
+3. Ask the learner to use the UI's explicit Connect action for a supported host,
+   or continue without an agent. Then use `patchquest_list_courses`; if the
+   learner said only “Let's start,” ask them to choose a visible course, path,
+   and workspace/context in the UI.
 4. Use `patchquest_list_paths` with that course ID. If the learner has no path,
    let them create it in the UI or call `patchquest_create_path` only after they
    explicitly choose the course, path, and workspace/context.

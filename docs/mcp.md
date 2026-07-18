@@ -5,7 +5,20 @@ PatchQuest uses a local stdio MCP server. It shares the same
 the learner's current page without copying answers through chat. The server
 loads every manifest in `courses/`, making the MCP course-agnostic.
 
-## Connect
+## Connect from the standalone app
+
+Start PatchQuest with `bun run app`, open its local URL, and use the
+**Connect** button for a detected host:
+
+- **Claude Code:** runs its supported user-scope MCP command, so PatchQuest is
+  available from any workspace after restarting Claude Code.
+- **Cursor:** adds only the `patchquest` entry to `~/.cursor/mcp.json`,
+  preserving other servers. Restart Cursor afterwards.
+
+The UI does not scan arbitrary folders, read credentials, start an agent, or
+change a configuration until the learner clicks Connect.
+
+## Connect another MCP host
 
 Start the server through the agent host, not manually in a terminal. The host
 owns the stdio process and completes the MCP handshake.
@@ -14,17 +27,16 @@ owns the stdio process and completes the MCP handshake.
 {
   "mcpServers": {
     "patchquest": {
-      "command": "bun",
-      "args": ["run", "mcp"],
-      "cwd": "/absolute/path/to/patchquest"
+      "command": "/absolute/path/to/bun",
+      "args": ["/absolute/path/to/patchquest/src/mcp.ts"]
     }
   }
 }
 ```
 
-Replace `cwd` with the clone's absolute path. Set `PATCHQUEST_DB_PATH` in the
-MCP server environment only when it must use a non-default database; the UI and
-MCP must use exactly the same path.
+Use absolute paths so an MCP host can launch the server from any workspace. Set
+`PATCHQUEST_DB_PATH` in the MCP server environment only when it must use a
+non-default database; the UI and MCP must use exactly the same path.
 
 ## Tools
 

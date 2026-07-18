@@ -11,13 +11,26 @@
     <main class="shell">
       <header class="masthead">
         <div>
-          <p class="eyebrow">Local course runner</p>
+          <p class="eyebrow">Standalone local course app</p>
           <h1>PatchQuest</h1>
         </div>
         <p id="connection" class="connection">Loading course…</p>
       </header>
 
-      <section id="path-setup" class="setup" aria-labelledby="setup-title">
+      <section id="onboarding" class="setup" aria-labelledby="onboarding-title">
+        <div>
+          <p class="eyebrow">First launch</p>
+          <h2 id="onboarding-title">Connect a coding agent.</h2>
+          <p>PatchQuest can configure its local MCP server for a detected host. This only adds the PatchQuest entry; it never grants access to other files, services, or accounts.</p>
+        </div>
+        <div class="onboarding-actions">
+          <div id="integration-list" class="integration-list"></div>
+          <p id="integration-status" class="form-note">You can also continue without an agent and connect one later.</p>
+          <button id="continue-to-courses" type="button">Continue to course selection</button>
+        </div>
+      </section>
+
+      <section id="path-setup" class="setup hidden" aria-labelledby="setup-title">
         <div>
           <p class="eyebrow">First session</p>
           <h2 id="setup-title">Choose a course and path.</h2>
@@ -101,6 +114,16 @@
         </div>
         <p class="attempt-answer"></p>
         <p class="attempt-feedback"></p>
+      </article>
+    </template>
+    <template id="integration-template">
+      <article class="integration-card">
+        <div>
+          <p class="integration-label"></p>
+          <p class="integration-state"></p>
+          <p class="integration-next"></p>
+        </div>
+        <button class="integration-connect" type="button"></button>
       </article>
     </template>
     <script type="module" src="/app.js"></script>

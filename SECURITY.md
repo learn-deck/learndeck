@@ -13,3 +13,9 @@ MCP tools intentionally cannot execute learner code, install dependencies, or
 read arbitrary workspace files. They record learner-reported evidence and
 agent-provided feedback only. Agent hosts should show tool calls and require
 their normal approval controls for writes.
+
+The standalone app may detect Claude Code or Cursor from their local command,
+application, or MCP configuration signals. It returns only connection status to
+the browser. A Connect click can add the `patchquest` MCP entry to that host's
+user configuration; it does not read credentials, alter other MCP entries, or
+launch the host application.

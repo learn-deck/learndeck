@@ -8,7 +8,7 @@ const catalog = await CourseCatalog.load();
 const store = new CourseStore();
 const server = new McpServer({
   name: "patchquest",
-  version: "0.2.0",
+  version: "0.3.0",
   instructions:
     "Use PatchQuest to guide a learner through a visible local course. List courses first, read progress before teaching, ask one question at a time, and only evaluate an answer after the learner submitted it in the UI. Never run learner code or start a server through this MCP.",
 });
@@ -47,7 +47,7 @@ server.registerTool(
   "patchquest_create_path",
   {
     title: "Create a learning path",
-    description: "Create a local path after the learner has explicitly chosen its language and workspace folder.",
+    description: "Create a local path after the learner has explicitly chosen its course path and workspace or learning context.",
     inputSchema: {
       courseId: z.string().describe("The selected course ID."),
       coursePathId: z.string().describe("One of the selected course's path IDs."),

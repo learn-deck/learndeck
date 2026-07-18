@@ -9,13 +9,13 @@ The included **DDD and Hexagonal Architecture** course is a seed: a working
 example of the manifest format, not the product's sole purpose. Replace it or
 add courses for any subject with the same tracker, UI, and MCP.
 
-## Run locally
+## Run as a standalone local app
 
 Requires Bun 1.3 or newer.
 
 ```sh
 bun install
-bun run dev
+bun run app
 ```
 
 Open [http://127.0.0.1:3030](http://127.0.0.1:3030). PatchQuest creates one
@@ -23,6 +23,18 @@ local SQLite database at `.patchquest/progress.db` by default. Override its
 location with `PATCHQUEST_DB_PATH` when you need a separate database, for
 example for a workshop or test run. Courses load from `courses/`; set
 `PATCHQUEST_COURSES_DIR` when a fork keeps manifests elsewhere.
+
+The first screen is deliberately short:
+
+1. connect a detected **Claude Code** or **Cursor** host, or continue without
+   one;
+2. choose a seeded course and learning path;
+3. answer in the browser while the MCP-connected agent guides and evaluates;
+4. return to the same app to resume local progress.
+
+Connect is explicit. PatchQuest adds only its own local MCP entry to the chosen
+host's user configuration, then asks the learner to restart that host. It never
+launches an agent, installs an app, or changes unrelated MCP servers.
 
 The UI lets a learner:
 
@@ -52,23 +64,25 @@ and restart the UI and MCP server. The complete contract and diagram are in
 
 ## Connect a coding agent
 
-PatchQuest exposes a stdio MCP server:
+PatchQuest exposes a stdio MCP server. The app's **Connect** button is the
+recommended setup path for Claude Code and Cursor. For another MCP client, use
+the equivalent of:
 
-```sh
-bun run mcp
+```json
+{
+  "mcpServers": {
+    "patchquest": {
+      "command": "/absolute/path/to/bun",
+      "args": ["/absolute/path/to/patchquest/src/mcp.ts"]
+    }
+  }
+}
 ```
 
-Configure the command in your agent host as described in
-[MCP integration](docs/mcp.md). The MCP exposes deterministic tools to read the
-course, create/select a path, retrieve progress, record reported evidence, and
-evaluate a submitted answer. It never starts the learner's service or executes
-their code.
-
-## MCP capabilities
-
-The MCP exposes deterministic course, path, progress, evidence, and evaluation
-tools; see [MCP integration](docs/mcp.md). It never starts the learner's service
-or executes their code.
+Configure the host as described in [MCP integration](docs/mcp.md). The MCP
+exposes deterministic tools to read the course, create/select a path, retrieve
+progress, record reported evidence, and evaluate a submitted answer. It never
+starts the learner's service or executes their code.
 
 ## Verify
 

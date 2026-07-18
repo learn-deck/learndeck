@@ -99,7 +99,7 @@ the original answer.
 3. Add no more than one bounded build action per section.
 4. Add a diagnostic and exit question, plus a later review question where the
    distinction is important.
-5. Restart `bun run dev` and the MCP server, create a test path, submit an
+5. Restart `bun run app` and the MCP server, create a test path, submit an
    answer, and use MCP to record an evaluation.
 6. Run `bun run verify` before sharing the course.
 

@@ -1,4 +1,4 @@
-const state = { courses: [], course: null, paths: [], pathId: null, overview: null, sectionId: null, answerDirty: false };
+const state = { courses: [], integrations: [], course: null, paths: [], pathId: null, overview: null, sectionId: null, answerDirty: false, onboardingComplete: false };
 
 const $ = (selector) => document.querySelector(selector);
 const escape = (value) => String(value).replace(/[&<>"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[character]);
@@ -15,16 +15,22 @@ async function api(path, options) {
 
 async function boot() {
   try {
-    state.courses = await api("/api/courses");
+    [state.courses, state.integrations] = await Promise.all([api("/api/courses"), api("/api/integrations")]);
     bindEvents();
+    renderIntegrations();
     await selectCourse(state.courses[0].id);
-    $("#connection").textContent = "Local SQLite progress is ready";
+    $("#connection").textContent = "Local app is ready";
   } catch (error) {
     $("#connection").textContent = error.message;
   }
 }
 
 function bindEvents() {
+  $("#continue-to-courses").addEventListener("click", continueToCourses);
+  $("#integration-list").addEventListener("click", (event) => {
+    const button = event.target.closest(".integration-connect");
+    if (button?.dataset.integrationId) connectIntegration(button.dataset.integrationId);
+  });
   $("#course-choice").addEventListener("change", (event) => selectCourse(event.target.value));
   $("#course-select").addEventListener("change", (event) => selectCourse(event.target.value));
   $("#course-path").addEventListener("change", renderWorkspaceHint);
@@ -35,6 +41,49 @@ function bindEvents() {
   $("#answer").addEventListener("input", () => { state.answerDirty = Boolean($("#answer").value.trim()); });
 }
 
+function renderIntegrations() {
+  const list = $("#integration-list");
+  const template = $("#integration-template");
+  list.replaceChildren();
+  for (const integration of state.integrations) {
+    const item = template.content.cloneNode(true);
+    item.querySelector(".integration-label").textContent = integration.label;
+    item.querySelector(".integration-state").textContent = integration.configured ? "Configured" : integration.detected ? "Detected" : "Not detected";
+    item.querySelector(".integration-next").textContent = integration.nextStep;
+    const button = item.querySelector(".integration-connect");
+    button.dataset.integrationId = integration.id;
+    button.textContent = integration.configured ? "Configured" : integration.detected ? "Connect" : "Not detected";
+    button.disabled = !integration.detected || integration.configured;
+    list.append(item);
+  }
+}
+
+async function connectIntegration(id) {
+  const integration = state.integrations.find((item) => item.id === id);
+  if (!integration || !window.confirm(`Connect ${integration.label}? PatchQuest will add only its own local MCP entry, then you will restart the host.`)) return;
+  const button = document.querySelector(`.integration-connect[data-integration-id="${id}"]`);
+  if (!button) return;
+  button.disabled = true;
+  button.textContent = "Connecting…";
+  try {
+    await api(`/api/integrations/${encodeURIComponent(id)}/connect`, { method: "POST", body: "{}" });
+    state.integrations = await api("/api/integrations");
+    renderIntegrations();
+    $("#integration-status").textContent = "PatchQuest is configured. Restart the selected agent host, then ask it to start PatchQuest through MCP.";
+  } catch (error) {
+    $("#integration-status").textContent = error.message;
+    button.disabled = false;
+    button.textContent = "Connect";
+  }
+}
+
+function continueToCourses() {
+  state.onboardingComplete = true;
+  $("#onboarding").classList.add("hidden");
+  if (state.paths.length) selectPath(state.paths[0].id);
+  else $("#path-setup").classList.remove("hidden");
+}
+
 async function selectCourse(courseId) {
   state.course = state.courses.find((course) => course.id === courseId);
   if (!state.course) throw new Error("That course is no longer available.");
@@ -43,7 +92,10 @@ async function selectCourse(courseId) {
   state.overview = null;
   state.sectionId = null;
   renderPathForm();
-  if (state.paths.length) await selectPath(state.paths[0].id);
+  if (!state.onboardingComplete) {
+    $("#path-setup").classList.add("hidden");
+    $("#course").classList.add("hidden");
+  } else if (state.paths.length) await selectPath(state.paths[0].id);
   else {
     $("#path-setup").classList.remove("hidden");
     $("#course").classList.add("hidden");
@@ -87,6 +139,7 @@ async function selectPath(pathId) {
   const next = await api(`/api/paths/${encodeURIComponent(pathId)}/next`);
   state.sectionId = state.sectionId ?? next.section.id;
   $("#path-setup").classList.add("hidden");
+  $("#onboarding").classList.add("hidden");
   $("#course").classList.remove("hidden");
   state.answerDirty = false;
   render();

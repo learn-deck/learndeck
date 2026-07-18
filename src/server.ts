@@ -1,14 +1,18 @@
 import { CourseCatalog } from "./course";
+import { IntegrationService, type IntegrationId } from "./integrations";
 import { CourseStore } from "./store";
 
 const PUBLIC = `${import.meta.dir}/../public`;
 
-export async function createApp(store = new CourseStore(), catalog?: CourseCatalog) {
+export async function createApp(store = new CourseStore(), catalog?: CourseCatalog, integrations = new IntegrationService()) {
   const courses = catalog ?? await CourseCatalog.load();
 
   return async function fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     try {
+      if (url.pathname === "/api/integrations" && request.method === "GET") return json(await integrations.list());
+      const integrationRoute = url.pathname.match(/^\/api\/integrations\/(claude-code|cursor)\/connect$/);
+      if (integrationRoute && request.method === "POST") return json(await integrations.connect(integrationRoute[1] as IntegrationId));
       if (url.pathname === "/api/courses" && request.method === "GET") return json(courses.list());
       const courseRoute = url.pathname.match(/^\/api\/courses\/([^/]+)$/);
       if (courseRoute && request.method === "GET") return json(courses.get(decodeURIComponent(courseRoute[1])));

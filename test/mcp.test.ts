@@ -13,7 +13,7 @@ test("MCP exposes the learner-guidance tools over stdio", async () => {
     cwd: resolve(import.meta.dir, ".."),
     env: { ...process.env, PATCHQUEST_DB_PATH: join(directory, "progress.db") },
   });
-  const client = new Client({ name: "patchquest-test", version: "0.2.0" });
+  const client = new Client({ name: "patchquest-test", version: "0.3.0" });
   try {
     await client.connect(transport);
     const listed = await client.listTools();
