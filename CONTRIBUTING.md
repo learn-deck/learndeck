@@ -3,6 +3,13 @@
 LearnDeck accepts focused improvements to the Bun tracker, MCP integration,
 course standard, seed templates, source references, and learner experience.
 
+## Where things go
+
+- Bugs and scoped work → open an issue.
+- Course ideas and learner stories → [GitHub Discussions](https://github.com/learn-deck/learndeck/discussions).
+- Course submissions → a pull request against the [course authoring standard](docs/course-authoring.md).
+- Security reports → follow [SECURITY.md](SECURITY.md).
+
 - Keep the UI local-only and preserve the separation between course content,
   learner workspace, and ignored progress data.
 - Keep the tracker course-agnostic. Add or change a course through its manifest

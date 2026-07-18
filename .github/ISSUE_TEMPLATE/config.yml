@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Course ideas and learner stories
+    url: https://github.com/learn-deck/learndeck/discussions
+    about: Share course ideas and learner stories in GitHub Discussions.

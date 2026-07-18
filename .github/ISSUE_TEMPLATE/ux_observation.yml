@@ -1,0 +1,37 @@
+name: UX observation
+description: Share a lightweight observation from the learner flow
+title: "[UX]: "
+labels:
+  - ux
+body:
+  - type: dropdown
+    id: flow-location
+    attributes:
+      label: Where in the flow did this happen?
+      options:
+        - Start Now
+        - guide connection
+        - course briefing
+        - workspace confirmation
+        - lesson & answering
+        - Focus Mode
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did the learner expect?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened?
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot (optional)
+      description: If you attach one, remove names, answers, workspace paths, and other personal or learner data first.
