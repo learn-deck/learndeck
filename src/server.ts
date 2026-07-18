@@ -61,6 +61,27 @@ export async function createApp(store = new CourseStore(), catalog?: CourseCatal
         const document = store.exportPath(courseForPath(courses, store, pathId), pathId);
         return json(document, 200, { "content-disposition": `attachment; filename="learndeck-${fileNamePart(pathId)}.json"` });
       }
+      const pathEvidenceRoute = url.pathname.match(/^\/api\/paths\/([^/]+)\/evidence$/);
+      if (pathEvidenceRoute && request.method === "POST") {
+        const pathId = decodeURIComponent(pathEvidenceRoute[1]);
+        const courses = await getCatalog();
+        let course;
+        try {
+          course = courseForPath(courses, store, pathId);
+        } catch (error) {
+          return json({ error: error instanceof Error ? error.message : `Unknown learning path: ${pathId}` }, 404);
+        }
+        const body = requireObject(await request.json(), ["sectionId", "note"]);
+        if ("ref" in body && body.ref !== undefined && typeof body.ref !== "string") {
+          throw new Error("ref must be a string when provided.");
+        }
+        return json(store.recordLearnerEvidence(course, {
+          pathId,
+          sectionId: body.sectionId as string,
+          note: body.note as string,
+          ref: body.ref as string | undefined,
+        }), 201);
+      }
       const pathResetRoute = url.pathname.match(/^\/api\/paths\/([^/]+)$/);
       if (pathResetRoute && request.method === "DELETE") {
         return json(store.resetPath(decodeURIComponent(pathResetRoute[1])));
@@ -76,6 +97,17 @@ export async function createApp(store = new CourseStore(), catalog?: CourseCatal
         const courses = await getCatalog();
         const pathId = decodeURIComponent(next[1]);
         return json(store.nextActivity(courseForPath(courses, store, pathId), pathId));
+      }
+      const selfReviewRoute = url.pathname.match(/^\/api\/attempts\/([^/]+)\/self-review$/);
+      if (selfReviewRoute && request.method === "POST") {
+        const attemptId = Number(decodeURIComponent(selfReviewRoute[1]));
+        if (!Number.isSafeInteger(attemptId) || attemptId <= 0) return json({ error: "A valid attempt ID is required." }, 400);
+        try {
+          const courses = await getCatalog();
+          return json(store.selfReviewAttempt(courseForAttempt(courses, store, attemptId), attemptId));
+        } catch (error) {
+          return json({ error: error instanceof Error ? error.message : "Only submitted answers may be self-reviewed." }, 409);
+        }
       }
       if (url.pathname === "/api/attempts" && request.method === "POST") {
         const courses = await getCatalog();
@@ -130,6 +162,10 @@ function isNodeError(error: unknown, code: string): error is NodeJS.ErrnoExcepti
 
 function courseForPath(catalog: CourseCatalog, store: CourseStore, pathId: string) {
   return catalog.get(store.getPath(pathId).courseId);
+}
+
+function courseForAttempt(catalog: CourseCatalog, store: CourseStore, attemptId: number) {
+  return courseForPath(catalog, store, store.getAttempt(attemptId).pathId);
 }
 
 function requireObject(value: unknown, required: string[]): Record<string, unknown> {
