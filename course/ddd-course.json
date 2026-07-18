@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "ddd-backend-foundations",
-  "title": "Self-Learn Backend Development: DDD and Hexagonal Architecture in Node.js, Go, and Bun",
+  "title": "Self-Learn Backend Development: Domain-Driven Design (DDD) and Hexagonal Architecture in Node.js, Go, and Bun",
   "description": "Build one small backend in Node.js + TypeScript, Go, or Bun + TypeScript. The example course keeps the language path flexible while making the architectural decisions explicit.",
   "paths": [
     {

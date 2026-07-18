@@ -1,4 +1,4 @@
-# PatchQuest: Self-Learn Backend Development with DDD and Hexagonal Architecture in Node.js, Go, and Bun
+# PatchQuest: Self-Learn Backend Development with Domain-Driven Design (DDD) and Hexagonal Architecture in Node.js, Go, and Bun
 
 PatchQuest turns a structured course into a small local learning workspace. A
 learner chooses **Node.js + TypeScript**, **Go**, or **Bun + TypeScript**, sees
