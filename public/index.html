@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/app.css" />
   </head>
   <body>
-    <main class="shell">
+    <div class="shell">
       <header class="masthead">
         <button id="brand-home" class="brand" type="button" aria-label="Open LearnDeck home">
           <svg class="brand-mark generative-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
@@ -33,6 +33,7 @@
         </div>
       </header>
 
+      <main>
       <section id="home" class="app-home" aria-labelledby="home-title">
         <div id="welcome-screen" class="welcome-screen">
           <svg class="welcome-mark generative-mark" viewBox="0 0 120 120" fill="none" aria-label="LearnDeck mark" role="img">
@@ -47,17 +48,17 @@
               <path d="M60 30c16.2 0 27.4 14.2 21.2 29.1-4.1 9.4-11.8 14.5-22.5 26.5" transform="rotate(240 60 60)" />
             </g>
           </svg>
-          <h1 id="home-title">Your App For Learning With AI</h1>
+          <h1 id="home-title" tabindex="-1">Your App For Learning With AI</h1>
           <p class="welcome-description">Turn curiosity into capability. Choose a course, build in your own space, and let your favorite AI agent ask sharper questions, give useful feedback, and help every new skill stick.</p>
           <button id="start-learndeck" class="welcome-cta" type="button">Start Now <span aria-hidden="true">→</span></button>
-          <p id="start-status" class="welcome-proof">Your own repository <span>·</span> Local progress <span>·</span> No subscription</p>
+          <p id="start-status" class="welcome-proof" role="status" aria-live="polite">Your own repository <span>·</span> Local progress <span>·</span> No subscription</p>
         </div>
 
         <section id="course-library" class="course-library hidden" aria-labelledby="library-title">
           <div class="library-heading">
             <div>
               <p class="eyebrow">Open course library</p>
-              <h2 id="library-title">Find your next challenge.</h2>
+              <h1 id="library-title" tabindex="-1">Find your next challenge.</h1>
             </div>
             <div class="library-actions"><p id="library-count" class="library-count"></p><button id="close-library" class="text-button" type="button">Back</button></div>
           </div>
@@ -69,8 +70,8 @@
       <section id="agent-setup" class="agent-setup hidden" aria-labelledby="agent-setup-title">
         <div class="agent-setup-copy">
           <p class="eyebrow">Your learning space is ready</p>
-          <h1 id="agent-setup-title">Bring your AI guides into the learning loop.</h1>
-          <p>LearnDeck has prepared local progress and your available course library. Connect any detected guide now; every guide reads the same local course state, so you can switch without losing your place.</p>
+          <h1 id="agent-setup-title" tabindex="-1">Bring your AI guides into the learning loop.</h1>
+          <p>LearnDeck has prepared local progress and your available course library. Once connected, any guide can use the same local course state, so you can switch without losing your place.</p>
           <ol class="activation-steps" aria-label="First-start checklist">
             <li><span>01</span><div><strong>Local progress</strong><p>Saved on this Mac, per course workspace.</p></div></li>
             <li><span>02</span><div><strong>Course library</strong><p>Loaded from the configured Markdown catalogue and its local cache.</p></div></li>
@@ -83,7 +84,7 @@
           <p>Selected guides receive one local LearnDeck MCP entry. No project code, passwords, or unrelated agent settings are shared or changed.</p>
           <div id="agent-setup-list" class="agent-setup-list"></div>
           <div id="active-guide-options" class="active-guide-options" aria-live="polite"></div>
-          <p id="agent-setup-status" class="form-note">You can connect a guide now or continue to the course library and add one later.</p>
+          <p id="agent-setup-status" class="form-note" role="status" aria-live="polite" tabindex="-1">You can connect a guide now or continue to the course library and add one later.</p>
           <div class="agent-setup-actions">
             <button id="connect-selected-guides" type="button">Connect selected guides <span aria-hidden="true">→</span></button>
             <button id="continue-to-library" class="text-button" type="button">Continue to courses</button>
@@ -94,7 +95,7 @@
       <section id="course-briefing" class="course-briefing hidden" aria-labelledby="brief-title">
         <div class="briefing-intro">
           <p class="eyebrow">Guided course · Node.js + TypeScript</p>
-          <h1 id="brief-title"></h1>
+          <h1 id="brief-title" tabindex="-1"></h1>
           <p id="brief-description" class="brief-description"></p>
           <dl class="course-facts" aria-label="Course facts">
             <div><dt>Time</dt><dd id="brief-duration"></dd></div>
@@ -109,7 +110,7 @@
             <summary>Connect an AI guide <span>optional</span></summary>
             <p>LearnDeck detects supported apps on this Mac. Connecting adds one local MCP entry and never shares your course work. You can switch guides at any time because progress stays local.</p>
             <div id="integration-list" class="integration-list"></div>
-            <p id="integration-status" class="form-note">You can complete every lesson on your own, then connect a guide later.</p>
+            <p id="integration-status" class="form-note" role="status" aria-live="polite" tabindex="-1">You can complete every lesson on your own, then connect a guide later.</p>
           </details>
         </div>
 
@@ -131,13 +132,13 @@
       <section id="path-setup" class="workspace-setup hidden" aria-labelledby="setup-title">
         <div class="setup-copy">
           <p class="eyebrow">A single project</p>
-          <h1 id="setup-title">Choose the folder where you’ll build.</h1>
+          <h1 id="setup-title" tabindex="-1">Choose the folder where you’ll build.</h1>
           <p>LearnDeck will remember your progress locally. Your Node.js + TypeScript project stays in a separate folder that you own.</p>
           <dl class="setup-facts">
             <div><dt>Course</dt><dd id="setup-course-title"></dd></div>
             <div><dt>Run yourself</dt><dd><code id="setup-server-command"></code></dd></div>
           </dl>
-          <p class="setup-note"><span class="status-dot"></span> We will never run or install anything in your project without you.</p>
+          <p class="setup-note"><span class="status-dot" aria-hidden="true"></span> We will never run or install anything in your project without you.</p>
         </div>
         <div class="workspace-card">
           <p class="eyebrow">Your project workspace</p>
@@ -151,11 +152,11 @@
         </div>
       </section>
 
-      <section id="course" class="course hidden" aria-live="polite">
+      <section id="course" class="course hidden">
         <aside class="sidebar">
           <div class="course-identity">
             <p class="eyebrow">Your course</p>
-            <h2 id="course-title"></h2>
+            <p id="course-title" class="course-title"></p>
             <p id="course-meta"></p>
           </div>
           <div class="workspace-summary">
@@ -164,23 +165,25 @@
             <p id="server-command-wrap" class="path-command">You run: <code id="server-command"></code></p>
             <button id="change-workspace" class="text-button" type="button">Use another workspace</button>
           </div>
-          <ol id="section-list" class="section-list"></ol>
+          <nav aria-label="Course sections">
+            <ol id="section-list" class="section-list"></ol>
+          </nav>
         </aside>
 
         <section class="lesson" aria-labelledby="section-title">
           <div class="lesson-progress" aria-label="Lesson progress">
             <div class="lesson-progress-copy">
               <span id="section-position"></span>
-              <span id="section-status"></span>
+              <span id="section-status" role="status" aria-live="polite"></span>
             </div>
             <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Course progress">
               <span id="progress-fill"></span>
             </div>
-            <button id="zen-toggle" class="quiet-button zen-button" type="button">Focus mode</button>
+            <button id="zen-toggle" class="quiet-button zen-button" type="button" aria-pressed="false">Focus mode</button>
           </div>
           <div class="lesson-head">
             <p id="section-number" class="eyebrow"></p>
-            <h1 id="section-title"></h1>
+            <h1 id="section-title" tabindex="-1"></h1>
             <p id="section-goal" class="goal"></p>
           </div>
           <div class="action-block">
@@ -194,7 +197,7 @@
           <div class="lesson-content">
             <div id="lesson-content"></div>
           </div>
-          <div id="progress-summary" class="progress-summary"></div>
+          <div id="progress-summary" class="progress-summary" role="status" aria-live="polite" tabindex="-1"></div>
           <form id="answer-form" class="answer-form">
             <div class="question-head">
               <p id="question-kind" class="eyebrow"></p>
@@ -216,7 +219,8 @@
           </section>
         </section>
       </section>
-    </main>
+      </main>
+    </div>
     <template id="attempt-template">
       <article class="attempt">
         <div class="attempt-meta">

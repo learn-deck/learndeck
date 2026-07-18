@@ -12,6 +12,7 @@ const state = {
   answerDirty: false,
   readingObserver: null,
   zen: false,
+  zenReturnFocus: null,
   activeGuideId: storedActiveGuide(),
   guideSelection: new Set(),
   guideSetupMessage: "",
@@ -52,6 +53,7 @@ function bindEvents() {
     if (!button) return;
     state.category = button.dataset.category;
     renderHome();
+    focusFilter(state.category);
   });
   $("#course-grid").addEventListener("click", (event) => {
     const button = event.target.closest("[data-course-id]");
@@ -79,6 +81,7 @@ function bindEvents() {
   $("#answer").addEventListener("input", () => { state.answerDirty = Boolean($("#answer").value.trim()); });
   $("#answer").addEventListener("focus", () => document.body.classList.add("is-answering"));
   $("#answer").addEventListener("blur", () => document.body.classList.remove("is-answering"));
+  document.addEventListener("keydown", handleGlobalKeydown);
   $("#lesson-content").addEventListener("click", (event) => {
     const button = event.target.closest(".copy-code");
     if (button) copyCode(button);
@@ -108,9 +111,38 @@ function setTheme(theme) {
 }
 
 function toggleZenMode() {
+  if (!state.zen) state.zenReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : $("#zen-toggle");
   state.zen = !state.zen;
   document.body.classList.toggle("zen-mode", state.zen);
-  $("#zen-toggle").textContent = state.zen ? "Exit focus" : "Focus mode";
+  const button = $("#zen-toggle");
+  button.textContent = state.zen ? "Exit focus" : "Focus mode";
+  button.setAttribute("aria-pressed", String(state.zen));
+  if (state.zen) {
+    focusSurface("#zen-toggle");
+  } else {
+    const returnFocus = state.zenReturnFocus;
+    state.zenReturnFocus = null;
+    if (returnFocus?.isConnected && !returnFocus.closest(".hidden")) returnFocus.focus({ preventScroll: true });
+    else focusSurface("#zen-toggle");
+  }
+}
+
+function handleGlobalKeydown(event) {
+  if (state.zen && event.key === "Escape") {
+    event.preventDefault();
+    toggleZenMode();
+  }
+}
+
+function focusSurface(selector) {
+  const target = $(selector);
+  if (!target) return;
+  target.focus({ preventScroll: true });
+}
+
+function focusFilter(category) {
+  const button = [...document.querySelectorAll("#category-filters [data-category]")].find((item) => item.dataset.category === category);
+  button?.focus({ preventScroll: true });
 }
 
 function renderIntegrations() {
@@ -133,7 +165,7 @@ function renderIntegrations() {
   }
   const activeGuide = activeGuideIntegration();
   $("#integration-status").textContent = activeGuide
-    ? `Active guide: ${activeGuide.label}. Switch guides here at any time; every guide sees the same local progress.`
+    ? `Active guide: ${activeGuide.label}. Switch guides here at any time; configured guides share the same local progress.`
     : "You can complete every lesson on your own, then connect a guide later.";
 }
 
@@ -154,7 +186,8 @@ async function connectIntegration(id) {
     ensureActiveGuide();
     renderIntegrations();
     renderAgentSetup();
-    $("#integration-status").textContent = `LearnDeck is configured. Restart or open ${integration.label}, then ask it to start LearnDeck through MCP.`;
+    $("#integration-status").textContent = `LearnDeck is configured for ${integration.label}. Restart or open the guide, then ask it to start LearnDeck through MCP.`;
+    focusSurface("#integration-status");
   } catch (error) {
     $("#integration-status").textContent = error.message;
     button.disabled = false;
@@ -188,6 +221,7 @@ function setActiveGuide(id) {
   renderAgentSetup();
   renderIntegrations();
   updateGuideButton();
+  document.querySelector(`[data-guide-id="${guide.id}"]`)?.focus({ preventScroll: true });
 }
 
 function updateGuideButton() {
@@ -200,9 +234,11 @@ function updateGuideButton() {
 function updateGuideSelection(event) {
   const input = event.target.closest("input[data-integration-id]");
   if (!input?.dataset.integrationId) return;
+  const guideId = input.dataset.integrationId;
   if (input.checked) state.guideSelection.add(input.dataset.integrationId);
   else state.guideSelection.delete(input.dataset.integrationId);
   renderAgentSetup();
+  document.querySelector(`input[data-integration-id="${guideId}"]`)?.focus({ preventScroll: true });
 }
 
 function renderAgentSetup() {
@@ -284,10 +320,11 @@ async function connectSelectedGuides() {
   ensureActiveGuide();
   state.guideSetupMessage = failures.length
     ? `Some guides need attention. ${failures.join(" ")}`
-    : `${selected.map((integration) => integration.label).join(" and ")} ${selected.length === 1 ? "is" : "are"} connected. Restart or open a guide before using it.`;
+    : `${selected.map((integration) => integration.label).join(" and ")} ${selected.length === 1 ? "is" : "are"} configured for LearnDeck. Restart or open a guide before using it.`;
   renderAgentSetup();
   renderIntegrations();
   updateGuideButton();
+  focusSurface("#agent-setup-status");
 }
 
 function continueToCourse() {
@@ -307,6 +344,7 @@ function showHome() {
   $("#welcome-screen").classList.remove("hidden");
   $("#course-library").classList.add("hidden");
   if (state.started) renderHome();
+  focusSurface("#home-title");
 }
 
 function showLibrary() {
@@ -322,6 +360,7 @@ function showLibrary() {
   $("#welcome-screen").classList.add("hidden");
   $("#course-library").classList.remove("hidden");
   renderHome();
+  focusSurface("#library-title");
 }
 
 function showAgentSetup() {
@@ -338,6 +377,7 @@ function showAgentSetup() {
   $("#agent-setup").classList.remove("hidden");
   renderAgentSetup();
   updateGuideButton();
+  focusSurface("#agent-setup-title");
 }
 
 async function startLearnDeck() {
@@ -348,7 +388,7 @@ async function startLearnDeck() {
   const button = $("#start-learndeck");
   button.disabled = true;
   button.textContent = "Preparing LearnDeck…";
-  $("#start-status").textContent = "Preparing local progress and syncing your course library…";
+  $("#start-status").textContent = "Preparing local progress and loading your course library…";
   try {
     const bootstrap = await api("/api/bootstrap", { method: "POST", body: "{}" });
     state.courses = bootstrap.courses;
@@ -375,6 +415,7 @@ function showCourseBriefing() {
   $("#course-briefing").classList.remove("hidden");
   renderCourseBriefing();
   renderIntegrations();
+  focusSurface("#brief-title");
 }
 
 function showWorkspaceSetup() {
@@ -384,6 +425,7 @@ function showWorkspaceSetup() {
   $("#course").classList.add("hidden");
   $("#path-setup").classList.remove("hidden");
   renderWorkspaceSetup();
+  focusSurface("#setup-title");
 }
 
 async function selectCourse(courseId) {
@@ -510,6 +552,7 @@ async function selectPath(pathId) {
   $("#course").classList.remove("hidden");
   state.answerDirty = false;
   render();
+  focusSurface("#section-title");
 }
 
 function render() {
@@ -542,7 +585,7 @@ function renderSections() {
     button.type = "button";
     button.setAttribute("aria-current", section.id === state.sectionId ? "step" : "false");
     button.innerHTML = `<span class="status">${String(index).padStart(2, "0")}</span><span>${escape(section.title)}<br><small class="status">${escape(progress?.status ?? "not_started")}</small></span>`;
-    button.addEventListener("click", () => { state.sectionId = section.id; render(); });
+    button.addEventListener("click", () => { state.sectionId = section.id; render(); focusSurface("#section-title"); });
     const item = document.createElement("li");
     item.append(button);
     return item;
@@ -591,7 +634,7 @@ function renderAttempts(sectionId) {
     item.querySelector(".attempt-kind").textContent = attempt.kind;
     item.querySelector(".attempt-result").textContent = attemptLabel(attempt.result);
     item.querySelector(".attempt-answer").textContent = attempt.answer;
-    item.querySelector(".attempt-feedback").textContent = attempt.feedback ?? "Waiting for agent evaluation.";
+    item.querySelector(".attempt-feedback").textContent = attempt.feedback ?? "Waiting for guide evaluation.";
     list.append(item);
   }
 }
@@ -673,7 +716,7 @@ function markdownToHtml(markdown) {
       const type = callout[1].toLowerCase().replace(" ", "-");
       const content = [];
       while (index + 1 < lines.length && lines[index + 1].startsWith(">")) content.push(lines[++index].replace(/^>\s?/, ""));
-      output.push(`<aside class="callout callout-${type}"><strong>${calloutIcon(type)} ${escape(callout[1])}</strong><p>${inlineMarkdown(content.join(" "))}</p></aside>`);
+      output.push(`<aside class="callout callout-${type}"><strong><span aria-hidden="true">${calloutIcon(type)}</span> ${escape(callout[1])}</strong><p>${inlineMarkdown(content.join(" "))}</p></aside>`);
       continue;
     }
     if (!line.trim()) {
@@ -690,7 +733,10 @@ function markdownToHtml(markdown) {
     if (heading) {
       flushParagraph();
       flushList();
-      if (heading[1].length > 1) output.push(`<h3>${inlineMarkdown(heading[2])}</h3>`);
+      if (heading[1].length > 1) {
+        const level = Math.min(heading[1].length, 3);
+        output.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`);
+      }
       continue;
     }
     const ordered = line.match(/^\d+\.\s+(.+)/);
@@ -810,7 +856,7 @@ async function submitAnswer(event) {
   event.preventDefault();
   const questionId = event.currentTarget.dataset.questionId;
   try {
-    await api("/api/attempts", {
+    const attempt = await api("/api/attempts", {
       method: "POST",
       body: JSON.stringify({
         pathId: state.pathId,
@@ -822,6 +868,10 @@ async function submitAnswer(event) {
     state.overview = await api(`/api/paths/${encodeURIComponent(state.pathId)}/overview`);
     state.answerDirty = false;
     render();
+    $("#progress-summary").textContent = attempt.result === "submitted"
+      ? "Answer submitted. Waiting for guide evaluation."
+      : `Answer ${attempt.result}.`;
+    focusSurface("#progress-summary");
   } catch (error) {
     alert(error.message);
   }
