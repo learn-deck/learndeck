@@ -59,7 +59,7 @@ describe("LearnDeck HTTP API", () => {
     const pathResponse = await app(
       new Request("http://patchquest.test/api/courses/ddd-backend-foundations/paths", {
         method: "POST",
-        body: JSON.stringify({ coursePathId: "node-typescript", workspacePath: "/work/ddd-api", label: "DDD backend" }),
+        body: JSON.stringify({ coursePathId: "node-typescript", workspacePath: join(directory, "ddd-api"), label: "DDD backend" }),
       }),
     );
     expect(pathResponse.status).toBe(201);

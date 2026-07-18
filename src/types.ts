@@ -1,6 +1,14 @@
 export type QuestionKind = "diagnostic" | "exit" | "review";
 export type AttemptResult = "submitted" | "correct" | "partial" | "incorrect";
 export type SectionStatus = "not_started" | "active" | "revision" | "complete";
+export type CatalogueSource = "bundled" | "live" | "cached";
+
+export interface CatalogueProvenance {
+  source: CatalogueSource;
+  repository: string | null;
+  syncedAt: string | null;
+  warning: string | null;
+}
 
 export interface CoursePath {
   id: string;

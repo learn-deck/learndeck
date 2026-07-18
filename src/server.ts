@@ -1,3 +1,5 @@
+import { mkdir, stat } from "node:fs/promises";
+import { dirname, isAbsolute } from "node:path";
 import { CourseCatalog } from "./course";
 import { IntegrationError, IntegrationService, isIntegrationId } from "./integrations";
 import { CourseStore } from "./store";
@@ -16,7 +18,7 @@ export async function createApp(store = new CourseStore(), catalog?: CourseCatal
     try {
       if (url.pathname === "/api/bootstrap" && request.method === "POST") {
         const courses = await getCatalog();
-        return json({ ready: true, courses: courses.list(), integrations: await integrations.list() });
+        return json({ ready: true, courses: courses.list(), integrations: await integrations.list(), catalogue: courses.catalogue });
       }
       if (url.pathname === "/api/integrations" && request.method === "GET") return json(await integrations.list());
       // DELETE /api/integrations/:id/connect forgets only LearnDeck's own entry.
@@ -45,7 +47,12 @@ export async function createApp(store = new CourseStore(), catalog?: CourseCatal
         const courses = await getCatalog();
         const course = courses.get(decodeURIComponent(coursePathsRoute[1]));
         const body = await request.json();
-        return json(store.createPath(course, requireObject(body, ["coursePathId", "workspacePath"]) as { coursePathId: string; workspacePath: string; label?: string }), 201);
+        const input = requireObject(body, ["coursePathId", "workspacePath"]) as { coursePathId: string; workspacePath: string; label?: string };
+        if (!course.paths.some((path) => path.id === input.coursePathId)) throw new Error(`Unknown course path: ${input.coursePathId}`);
+        const workspacePath = input.workspacePath.trim();
+        const workspaceCreated = await prepareWorkspace(workspacePath);
+        const path = store.createPath(course, { ...input, workspacePath });
+        return json({ ...path, workspaceCreated }, 201);
       }
       const pathExportRoute = url.pathname.match(/^\/api\/paths\/([^/]+)\/export$/);
       if (pathExportRoute && request.method === "GET") {
@@ -85,6 +92,40 @@ export async function createApp(store = new CourseStore(), catalog?: CourseCatal
       return json({ error: message }, 400);
     }
   };
+}
+
+async function prepareWorkspace(workspacePath: string): Promise<boolean> {
+  if (!isAbsolute(workspacePath)) throw new Error(`workspacePath must be absolute: ${workspacePath}`);
+
+  const parent = dirname(workspacePath);
+  let parentExists = false;
+  try {
+    parentExists = (await stat(parent)).isDirectory();
+  } catch {
+    parentExists = false;
+  }
+  if (!parentExists) throw new Error(`workspacePath parent does not exist for ${workspacePath}: ${parent}`);
+
+  try {
+    await mkdir(workspacePath);
+    return true;
+  } catch (error) {
+    if (!isNodeError(error, "EEXIST")) {
+      const detail = error instanceof Error ? error.message : "unknown error";
+      throw new Error(`Could not create workspacePath ${workspacePath}: ${detail}`);
+    }
+  }
+
+  try {
+    if ((await stat(workspacePath)).isDirectory()) return false;
+  } catch {
+    // Report the original workspace path below when the target disappeared or is inaccessible.
+  }
+  throw new Error(`workspacePath already exists but is not a directory: ${workspacePath}`);
+}
+
+function isNodeError(error: unknown, code: string): error is NodeJS.ErrnoException {
+  return Boolean(error) && typeof error === "object" && "code" in error && (error as { code?: unknown }).code === code;
 }
 
 function courseForPath(catalog: CourseCatalog, store: CourseStore, pathId: string) {

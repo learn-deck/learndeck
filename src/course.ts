@@ -1,10 +1,11 @@
 import { mkdir, readdir, rename, rm, stat } from "node:fs/promises";
 import { dirname, join, resolve, sep } from "node:path";
 import { parse } from "yaml";
-import type { CourseDefinition, CourseOverview, CoursePath, CourseQuestion, CourseSection, QuestionKind } from "./types";
+import type { CatalogueProvenance, CourseDefinition, CourseOverview, CoursePath, CourseQuestion, CourseSection, QuestionKind } from "./types";
 
 const COURSE_FILENAME = "course.md";
 const GITHUB_REPOSITORY_ENV = "LEARNDECK_COURSE_REPOSITORY";
+const CACHE_METADATA_SUFFIX = ".metadata.json";
 
 interface MarkdownDocument {
   metadata: Record<string, unknown>;
@@ -15,9 +16,19 @@ export class CourseCatalog {
   private constructor(
     readonly directory: string,
     private readonly courses: Map<string, CourseDefinition>,
+    readonly catalogue: CatalogueProvenance,
   ) {}
 
   static async load(directory = courseDirectory()): Promise<CourseCatalog> {
+    return CourseCatalog.loadDirectory(directory, {
+      source: "bundled",
+      repository: null,
+      syncedAt: null,
+      warning: null,
+    });
+  }
+
+  private static async loadDirectory(directory: string, catalogue: CatalogueProvenance): Promise<CourseCatalog> {
     const entries = (await readdir(directory, { withFileTypes: true }))
       .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name)
@@ -31,7 +42,7 @@ export class CourseCatalog {
       if (courses.has(course.id)) throw new Error(`Duplicate course ID: ${course.id}`);
       courses.set(course.id, course);
     }
-    return new CourseCatalog(directory, courses);
+    return new CourseCatalog(directory, courses, catalogue);
   }
 
   static async loadConfigured(): Promise<CourseCatalog> {
@@ -40,11 +51,31 @@ export class CourseCatalog {
     const spec = parseGitHubRepository(repository);
     const cacheRoot = resolve(process.env.LEARNDECK_COURSE_CACHE_DIR ?? `${import.meta.dir}/../.learndeck/course-cache`);
     const cacheDirectory = join(cacheRoot, `${spec.owner}-${spec.repository}-${spec.branch}`);
+    const cacheMetadataPath = `${cacheDirectory}${CACHE_METADATA_SUFFIX}`;
     try {
       await syncGitHubMarkdownRepository(spec, cacheDirectory);
-      return CourseCatalog.load(join(cacheDirectory, "courses"));
+      const catalog = await CourseCatalog.loadDirectory(join(cacheDirectory, "courses"), {
+        source: "live",
+        repository,
+        syncedAt: new Date().toISOString(),
+        warning: null,
+      });
+      await writeCacheMetadata(cacheMetadataPath, { syncedAt: catalog.catalogue.syncedAt! });
+      return catalog;
     } catch (error) {
-      if (await isDirectory(join(cacheDirectory, "courses"))) return CourseCatalog.load(join(cacheDirectory, "courses"));
+      if (await isDirectory(join(cacheDirectory, "courses"))) {
+        const metadata = await readCacheMetadata(cacheMetadataPath);
+        const syncedAt = metadata?.syncedAt ?? null;
+        const warning = syncedAt
+          ? `Showing the last complete download from ${syncedAt}. GitHub sync failed.`
+          : "Showing the cached catalogue. GitHub sync failed.";
+        return CourseCatalog.loadDirectory(join(cacheDirectory, "courses"), {
+          source: "cached",
+          repository,
+          syncedAt,
+          warning,
+        });
+      }
       throw error;
     }
   }
@@ -290,6 +321,21 @@ async function isDirectory(path: string) {
   } catch {
     return false;
   }
+}
+
+async function readCacheMetadata(path: string): Promise<{ syncedAt: string } | undefined> {
+  try {
+    const value = JSON.parse(await Bun.file(path).text()) as { syncedAt?: unknown };
+    return typeof value.syncedAt === "string" && value.syncedAt ? { syncedAt: value.syncedAt } : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function writeCacheMetadata(path: string, metadata: { syncedAt: string }) {
+  const stagingPath = `${path}.next`;
+  await Bun.write(stagingPath, `${JSON.stringify(metadata)}\n`);
+  await rename(stagingPath, path);
 }
 
 export function getSection(course: CourseDefinition, sectionId: string): CourseSection {
