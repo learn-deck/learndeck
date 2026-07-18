@@ -54,7 +54,7 @@ export class IntegrationService {
   private readonly findExecutable: (name: string) => string | undefined;
   private readonly run: Runner;
 
-  constructor(readonly root = resolve(import.meta.dir, ".."), options: IntegrationOptions = {}) {
+  constructor(readonly root = resolve(process.env.LEARNDECK_ROOT ?? resolve(import.meta.dir, "..")), options: IntegrationOptions = {}) {
     this.homeDirectory = options.homeDirectory ?? homedir();
     this.operatingSystem = options.operatingSystem ?? platform();
     this.findExecutable = options.findExecutable ?? ((name) => Bun.which(name) ?? undefined);

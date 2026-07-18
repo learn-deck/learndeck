@@ -4,7 +4,7 @@ import { CourseCatalog } from "./course";
 import { IntegrationError, IntegrationService, isIntegrationId } from "./integrations";
 import { CourseStore } from "./store";
 
-const PUBLIC = `${import.meta.dir}/../public`;
+const PUBLIC = process.env.LEARNDECK_PUBLIC_DIR ?? `${import.meta.dir}/../public`;
 
 export async function createApp(store = new CourseStore(), catalog?: CourseCatalog, integrations = new IntegrationService()) {
   let resolvedCatalog = catalog;
