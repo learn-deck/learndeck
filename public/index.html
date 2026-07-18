@@ -1,87 +1,198 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light" />
-    <title>PatchQuest — Local course tracker</title>
+    <meta name="color-scheme" content="dark light" />
+    <title>LearnDeck — Your App For Learning With AI</title>
+    <link rel="stylesheet" href="/theme.css" />
     <link rel="stylesheet" href="/app.css" />
   </head>
   <body>
     <main class="shell">
       <header class="masthead">
-        <div>
-          <p class="eyebrow">Standalone local course app</p>
-          <h1>PatchQuest</h1>
+        <button id="brand-home" class="brand" type="button" aria-label="Open LearnDeck home">
+          <svg class="brand-mark generative-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <g class="outer-loop" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M24 5.5c10.6 0 18 9.1 13.8 19-2.8 6.4-8.8 9.6-15.8 18" />
+              <path d="M24 5.5c10.6 0 18 9.1 13.8 19-2.8 6.4-8.8 9.6-15.8 18" transform="rotate(120 24 24)" />
+              <path d="M24 5.5c10.6 0 18 9.1 13.8 19-2.8 6.4-8.8 9.6-15.8 18" transform="rotate(240 24 24)" />
+            </g>
+            <g class="inner-loop" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M24 12c6.5 0 10.9 5.6 8.4 11.5-1.6 3.7-4.7 5.7-9 10.6" />
+              <path d="M24 12c6.5 0 10.9 5.6 8.4 11.5-1.6 3.7-4.7 5.7-9 10.6" transform="rotate(120 24 24)" />
+              <path d="M24 12c6.5 0 10.9 5.6 8.4 11.5-1.6 3.7-4.7 5.7-9 10.6" transform="rotate(240 24 24)" />
+            </g>
+          </svg>
+          <strong>LearnDeck</strong>
+        </button>
+        <div class="header-tools">
+          <button id="theme-toggle" class="icon-button" type="button" aria-label="Use light theme" title="Use light theme">☼</button>
+          <button id="open-guides" class="quiet-button" type="button">AI guides</button>
+          <button id="open-setup" class="quiet-button" type="button">Explore courses</button>
         </div>
-        <p id="connection" class="connection">Loading course…</p>
       </header>
 
-      <section id="onboarding" class="setup" aria-labelledby="onboarding-title">
-        <div>
-          <p class="eyebrow">First launch</p>
-          <h2 id="onboarding-title">Connect a coding agent.</h2>
-          <p>PatchQuest can configure its local MCP server for a detected host. This only adds the PatchQuest entry; it never grants access to other files, services, or accounts.</p>
+      <section id="home" class="app-home" aria-labelledby="home-title">
+        <div id="welcome-screen" class="welcome-screen">
+          <svg class="welcome-mark generative-mark" viewBox="0 0 120 120" fill="none" aria-label="LearnDeck mark" role="img">
+            <g class="outer-loop" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M60 13c26.5 0 45 22.8 34.5 47.5-7 16-22 24-39.5 45" />
+              <path d="M60 13c26.5 0 45 22.8 34.5 47.5-7 16-22 24-39.5 45" transform="rotate(120 60 60)" />
+              <path d="M60 13c26.5 0 45 22.8 34.5 47.5-7 16-22 24-39.5 45" transform="rotate(240 60 60)" />
+            </g>
+            <g class="inner-loop" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M60 30c16.2 0 27.4 14.2 21.2 29.1-4.1 9.4-11.8 14.5-22.5 26.5" />
+              <path d="M60 30c16.2 0 27.4 14.2 21.2 29.1-4.1 9.4-11.8 14.5-22.5 26.5" transform="rotate(120 60 60)" />
+              <path d="M60 30c16.2 0 27.4 14.2 21.2 29.1-4.1 9.4-11.8 14.5-22.5 26.5" transform="rotate(240 60 60)" />
+            </g>
+          </svg>
+          <h1 id="home-title">Your App For Learning With AI</h1>
+          <p class="welcome-description">Turn curiosity into capability. Choose a course, build in your own space, and let your favorite AI agent ask sharper questions, give useful feedback, and help every new skill stick.</p>
+          <button id="start-learndeck" class="welcome-cta" type="button">Start Now <span aria-hidden="true">→</span></button>
+          <p id="start-status" class="welcome-proof">Your own repository <span>·</span> Local progress <span>·</span> No subscription</p>
         </div>
-        <div class="onboarding-actions">
-          <div id="integration-list" class="integration-list"></div>
-          <p id="integration-status" class="form-note">You can also continue without an agent and connect one later.</p>
-          <button id="continue-to-courses" type="button">Continue to course selection</button>
+
+        <section id="course-library" class="course-library hidden" aria-labelledby="library-title">
+          <div class="library-heading">
+            <div>
+              <p class="eyebrow">Open course library</p>
+              <h2 id="library-title">Find your next challenge.</h2>
+            </div>
+            <div class="library-actions"><p id="library-count" class="library-count"></p><button id="close-library" class="text-button" type="button">Back</button></div>
+          </div>
+          <div id="category-filters" class="category-filters" aria-label="Filter courses by category"></div>
+          <div id="course-grid" class="course-grid"></div>
+        </section>
+      </section>
+
+      <section id="agent-setup" class="agent-setup hidden" aria-labelledby="agent-setup-title">
+        <div class="agent-setup-copy">
+          <p class="eyebrow">Your learning space is ready</p>
+          <h1 id="agent-setup-title">Bring your AI guides into the learning loop.</h1>
+          <p>LearnDeck has prepared local progress and your available course library. Connect any detected guide now; every guide reads the same local course state, so you can switch without losing your place.</p>
+          <ol class="activation-steps" aria-label="First-start checklist">
+            <li><span>01</span><div><strong>Local progress</strong><p>Saved on this Mac, per course workspace.</p></div></li>
+            <li><span>02</span><div><strong>Course library</strong><p>Loaded from the configured Markdown catalogue and its local cache.</p></div></li>
+            <li><span>03</span><div><strong>AI guides</strong><p>Optional MCP connections you control.</p></div></li>
+          </ol>
+        </div>
+        <div class="agent-setup-card">
+          <p class="eyebrow">Step 1 of 1 · Optional</p>
+          <h2>Choose your AI guides.</h2>
+          <p>Selected guides receive one local LearnDeck MCP entry. No project code, passwords, or unrelated agent settings are shared or changed.</p>
+          <div id="agent-setup-list" class="agent-setup-list"></div>
+          <div id="active-guide-options" class="active-guide-options" aria-live="polite"></div>
+          <p id="agent-setup-status" class="form-note">You can connect a guide now or continue to the course library and add one later.</p>
+          <div class="agent-setup-actions">
+            <button id="connect-selected-guides" type="button">Connect selected guides <span aria-hidden="true">→</span></button>
+            <button id="continue-to-library" class="text-button" type="button">Continue to courses</button>
+          </div>
         </div>
       </section>
 
-      <section id="path-setup" class="setup hidden" aria-labelledby="setup-title">
-        <div>
-          <p class="eyebrow">First session</p>
-          <h2 id="setup-title">Choose a course and path.</h2>
-          <p>PatchQuest keeps progress local, separated by the course and learning path you choose.</p>
+      <section id="course-briefing" class="course-briefing hidden" aria-labelledby="brief-title">
+        <div class="briefing-intro">
+          <p class="eyebrow">Guided course · Node.js + TypeScript</p>
+          <h1 id="brief-title"></h1>
+          <p id="brief-description" class="brief-description"></p>
+          <dl class="course-facts" aria-label="Course facts">
+            <div><dt>Time</dt><dd id="brief-duration"></dd></div>
+            <div><dt>Pace</dt><dd id="brief-session-length"></dd></div>
+            <div><dt>Level</dt><dd id="brief-level"></dd></div>
+          </dl>
+          <div class="briefing-actions">
+            <button id="start-course" type="button">Start the course <span aria-hidden="true">→</span></button>
+            <p id="brief-resume-note" class="form-note"></p>
+          </div>
+          <details id="guide-disclosure" class="guide-disclosure">
+            <summary>Connect an AI guide <span>optional</span></summary>
+            <p>LearnDeck detects supported apps on this Mac. Connecting adds one local MCP entry and never shares your course work. You can switch guides at any time because progress stays local.</p>
+            <div id="integration-list" class="integration-list"></div>
+            <p id="integration-status" class="form-note">You can complete every lesson on your own, then connect a guide later.</p>
+          </details>
         </div>
-        <form id="path-form" class="path-form">
-          <label>
-            Course
-            <select id="course-choice" required></select>
-          </label>
-          <p id="course-description" class="form-note"></p>
-          <label>
-            Learning path
-            <select id="course-path" name="coursePathId" required></select>
-          </label>
-          <label>
-            Workspace or learning context
-            <input id="workspace" name="workspacePath" required placeholder="../my-course-workspace" autocomplete="off" />
-          </label>
-          <label>
-            A label for this path <span>(optional)</span>
-            <input name="label" placeholder="My first run" autocomplete="off" />
-          </label>
-          <button type="submit">Start this path</button>
-        </form>
+
+        <aside class="course-map" aria-label="Course at a glance">
+          <div class="course-map-heading">
+            <p class="eyebrow">What you will learn</p>
+            <p>One small backend, shaped from domain rule to an observable service.</p>
+          </div>
+          <ul id="brief-outcomes" class="outcome-list"></ul>
+          <div class="course-map-divider"></div>
+          <p class="eyebrow">Course map</p>
+          <ol id="brief-roadmap" class="brief-roadmap"></ol>
+          <div class="course-map-divider"></div>
+          <p class="eyebrow">Before you begin</p>
+          <ul id="brief-prerequisites" class="prerequisite-list"></ul>
+        </aside>
+      </section>
+
+      <section id="path-setup" class="workspace-setup hidden" aria-labelledby="setup-title">
+        <div class="setup-copy">
+          <p class="eyebrow">A single project</p>
+          <h1 id="setup-title">Choose the folder where you’ll build.</h1>
+          <p>LearnDeck will remember your progress locally. Your Node.js + TypeScript project stays in a separate folder that you own.</p>
+          <dl class="setup-facts">
+            <div><dt>Course</dt><dd id="setup-course-title"></dd></div>
+            <div><dt>Run yourself</dt><dd><code id="setup-server-command"></code></dd></div>
+          </dl>
+          <p class="setup-note"><span class="status-dot"></span> We will never run or install anything in your project without you.</p>
+        </div>
+        <div class="workspace-card">
+          <p class="eyebrow">Your project workspace</p>
+          <h2>Where will this backend live?</h2>
+          <form id="path-form" class="path-form">
+            <label for="workspace">Project folder</label>
+            <input id="workspace" name="workspacePath" required placeholder="../ddd-backend" autocomplete="off" />
+            <p class="form-note">Use a folder separate from LearnDeck. We only store this location with your local course progress.</p>
+            <button type="submit">Begin the first lesson <span aria-hidden="true">→</span></button>
+          </form>
+        </div>
       </section>
 
       <section id="course" class="course hidden" aria-live="polite">
         <aside class="sidebar">
-          <div class="path-switcher">
-            <label for="course-select">Course</label>
-            <select id="course-select"></select>
-            <p id="course-title"></p>
-            <label for="path-select">Learning path</label>
-            <select id="path-select"></select>
+          <div class="course-identity">
+            <p class="eyebrow">Your course</p>
+            <h2 id="course-title"></h2>
+            <p id="course-meta"></p>
+          </div>
+          <div class="workspace-summary">
+            <p class="eyebrow">Your project</p>
             <p id="workspace-label"></p>
-            <p id="server-command-wrap" class="path-command">When checks pass: <code id="server-command"></code></p>
+            <p id="server-command-wrap" class="path-command">You run: <code id="server-command"></code></p>
+            <button id="change-workspace" class="text-button" type="button">Use another workspace</button>
           </div>
           <ol id="section-list" class="section-list"></ol>
         </aside>
 
         <section class="lesson" aria-labelledby="section-title">
+          <div class="lesson-progress" aria-label="Lesson progress">
+            <div class="lesson-progress-copy">
+              <span id="section-position"></span>
+              <span id="section-status"></span>
+            </div>
+            <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Course progress">
+              <span id="progress-fill"></span>
+            </div>
+            <button id="zen-toggle" class="quiet-button zen-button" type="button">Focus mode</button>
+          </div>
           <div class="lesson-head">
             <p id="section-number" class="eyebrow"></p>
-            <h2 id="section-title"></h2>
+            <h1 id="section-title"></h1>
             <p id="section-goal" class="goal"></p>
           </div>
           <div class="action-block">
-            <p class="eyebrow">Build</p>
+            <p class="eyebrow">Your move</p>
             <p id="section-action"></p>
-            <div id="sources" class="sources"></div>
+            <details id="sources" class="sources">
+              <summary>Study notes <span id="sources-count"></span></summary>
+              <div id="sources-list"></div>
+            </details>
+          </div>
+          <div class="lesson-content">
+            <div id="lesson-content"></div>
           </div>
           <div id="progress-summary" class="progress-summary"></div>
           <form id="answer-form" class="answer-form">
@@ -94,13 +205,13 @@
             <div class="answer-footer">
               <label for="confidence">Confidence <output id="confidence-value">70</output>%</label>
               <input id="confidence" type="range" min="0" max="100" value="70" />
-              <button type="submit">Submit for review</button>
+              <button type="submit">Reflect &amp; submit <span aria-hidden="true">→</span></button>
             </div>
-            <p class="form-note">Your agent evaluates the submission through PatchQuest MCP. The result appears here when it is recorded.</p>
+            <p class="form-note">An AI guide can evaluate this through LearnDeck MCP. Its feedback appears here; learning solo is fine too.</p>
           </form>
           <section id="attempts" class="attempts" aria-labelledby="attempts-title">
             <p class="eyebrow">Your record</p>
-            <h3 id="attempts-title">Question history</h3>
+            <h2 id="attempts-title">Question history</h2>
             <div id="attempt-list"></div>
           </section>
         </section>
@@ -118,10 +229,13 @@
     </template>
     <template id="integration-template">
       <article class="integration-card">
-        <div>
-          <p class="integration-label"></p>
-          <p class="integration-state"></p>
-          <p class="integration-next"></p>
+        <div class="integration-identity">
+          <span class="integration-mark" aria-hidden="true"></span>
+          <div>
+            <p class="integration-label"></p>
+            <p class="integration-state"></p>
+            <p class="integration-next"></p>
+          </div>
         </div>
         <button class="integration-connect" type="button"></button>
       </article>

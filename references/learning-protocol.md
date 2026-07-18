@@ -1,6 +1,6 @@
 # Learning protocol and why it is effective
 
-PatchQuest uses retrieval, short practice, feedback, and revisits rather than
+LearnDeck uses retrieval, short practice, feedback, and revisits rather than
 long passive chapters. The protocol is evidence-informed, but it makes no
 claim that one method, interval, or score works identically for every learner.
 

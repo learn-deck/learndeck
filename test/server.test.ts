@@ -6,7 +6,7 @@ import { createApp } from "../src/server";
 import { IntegrationService } from "../src/integrations";
 import { CourseStore } from "../src/store";
 
-describe("PatchQuest HTTP API", () => {
+describe("LearnDeck HTTP API", () => {
   let directory: string;
   let store: CourseStore;
   let app: Awaited<ReturnType<typeof createApp>>;
@@ -28,12 +28,20 @@ describe("PatchQuest HTTP API", () => {
   test("creates a path and accepts a UI answer", async () => {
     const page = await app(new Request("http://patchquest.test/"));
     expect(page.status).toBe(200);
-    expect(await page.clone().text()).toContain("Connect a coding agent");
-    expect(await page.text()).toContain("Choose a course and path");
+    expect(await page.clone().text()).toContain("Start Now");
+    expect(await page.clone().text()).toContain("Bring your AI guides into the learning loop");
+    expect(await page.clone().text()).toContain("Connect selected guides");
+    expect(await page.clone().text()).toContain("Connect an AI guide");
+    expect(await page.text()).toContain("Choose the folder where you’ll build");
 
     const integrations = await app(new Request("http://patchquest.test/api/integrations"));
     expect(integrations.status).toBe(200);
     expect((await integrations.json()).map((item: { id: string }) => item.id)).toContain("cursor");
+
+    const bootstrap = await app(new Request("http://patchquest.test/api/bootstrap", { method: "POST" }));
+    expect(bootstrap.status).toBe(200);
+    expect((await bootstrap.json()).ready).toBe(true);
+
     const connected = await app(new Request("http://patchquest.test/api/integrations/cursor/connect", { method: "POST" }));
     expect(connected.status).toBe(200);
     expect((await connected.json()).configured).toBe(true);
@@ -44,12 +52,14 @@ describe("PatchQuest HTTP API", () => {
 
     const ddd = await app(new Request("http://patchquest.test/api/courses/ddd-backend-foundations"));
     expect(ddd.status).toBe(200);
-    expect((await ddd.json()).sections).toHaveLength(8);
+    const course = await ddd.json();
+    expect(course.sections).toHaveLength(8);
+    expect(course.sections[0].content).toContain("Set up your backend");
 
     const pathResponse = await app(
       new Request("http://patchquest.test/api/courses/ddd-backend-foundations/paths", {
         method: "POST",
-        body: JSON.stringify({ coursePathId: "go", workspacePath: "/work/go-api", label: "Go course path" }),
+        body: JSON.stringify({ coursePathId: "node-typescript", workspacePath: "/work/ddd-api", label: "DDD backend" }),
       }),
     );
     expect(pathResponse.status).toBe(201);

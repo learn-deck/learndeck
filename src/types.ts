@@ -10,11 +10,20 @@ export interface CoursePath {
   workspaceHint?: string;
 }
 
+export interface CourseOverview {
+  duration: string;
+  sessionLength: string;
+  level: string;
+  outcomes: string[];
+  prerequisites: string[];
+}
+
 export interface CourseQuestion {
   id: string;
   kind: QuestionKind;
   prompt: string;
   reference: string;
+  rubric: string[];
 }
 
 export interface CourseSection {
@@ -22,6 +31,7 @@ export interface CourseSection {
   title: string;
   goal: string;
   action: string;
+  content: string;
   sources: string[];
   questions: CourseQuestion[];
 }
@@ -31,6 +41,9 @@ export interface CourseDefinition {
   id: string;
   title: string;
   description: string;
+  category: string;
+  tags: string[];
+  overview: CourseOverview;
   paths: CoursePath[];
   sections: CourseSection[];
 }

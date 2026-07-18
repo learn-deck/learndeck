@@ -1,15 +1,14 @@
-# Seeded courses
+# Course packs
 
-PatchQuest loads every `*.json` manifest in this directory. Each manifest is an
-independent course that shares the same local UI, SQLite progress store, and
-MCP server.
+Every direct child directory is one LearnDeck course pack. A valid pack has a
+`course.md` file and one or more ordered `modules/*.md` files. The DDD pack is
+the included example; it can be removed or copied without changing the runner.
 
-`ddd-backend-foundations.json` is an example seed. Create another with:
+Create a new pack with:
 
 ```sh
 bun run seed -- <course-id> "Course title"
 ```
 
-Then add the course's own source material and point its section `sources` and
-question `reference` fields at that material. Restart the UI and MCP server
-after adding a manifest.
+Read [the course-pack standard](../docs/course-authoring.md) before authoring
+or publishing a course.

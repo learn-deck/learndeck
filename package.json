@@ -1,8 +1,8 @@
 {
-  "name": "patchquest",
-  "version": "0.3.0",
+  "name": "learndeck",
+  "version": "0.4.0",
   "private": false,
-  "description": "A local, agent-guided course tracker with a browser UI, SQLite progress, and MCP.",
+  "description": "A local, agent-guided learning app with a browser UI, SQLite progress, Markdown course packs, and MCP.",
   "type": "module",
   "scripts": {
     "dev": "bun --watch src/server.ts",
@@ -11,7 +11,7 @@
     "mcp": "bun src/mcp.ts",
     "seed": "bun src/seed.ts",
     "test": "bun test",
-    "verify": "bun test && bun build ./src/server.ts --target=bun --outdir=/private/tmp/patchquest-build && bun build ./src/mcp.ts --target=bun --outdir=/private/tmp/patchquest-build && bun build ./src/seed.ts --target=bun --outdir=/private/tmp/patchquest-build && bun build ./src/integrations.ts --target=bun --outdir=/private/tmp/patchquest-build && bun build ./public/app.js --target=browser --outdir=/private/tmp/patchquest-build"
+    "verify": "bun test && bun build ./src/server.ts --target=bun --outdir=/private/tmp/learndeck-build && bun build ./src/mcp.ts --target=bun --outdir=/private/tmp/learndeck-build && bun build ./src/seed.ts --target=bun --outdir=/private/tmp/learndeck-build && bun build ./src/integrations.ts --target=bun --outdir=/private/tmp/learndeck-build && bun build ./public/app.js --target=browser --outdir=/private/tmp/learndeck-build"
   },
   "keywords": [
     "course-tracker",
@@ -23,6 +23,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "yaml": "^2.9.0",
     "zod": "^3.25.0"
   },
   "engines": {

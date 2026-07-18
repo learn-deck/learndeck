@@ -1,78 +1,74 @@
-# MCP integration
+# LearnDeck MCP integration
 
-PatchQuest uses a local stdio MCP server. It shares the same
-`.patchquest/progress.db` as the browser UI, so an agent's evaluation appears in
-the learner's current page without copying answers through chat. The server
-loads every manifest in `courses/`, making the MCP course-agnostic.
+LearnDeck exposes one local stdio MCP server. It shares the same local SQLite
+database as the UI, so an agent's evaluation is visible in the browser without
+copying answers through chat.
 
-## Connect from the standalone app
+## Connect from the app
 
-Start PatchQuest with `bun run app`, open its local URL, and use the
-**Connect** button for a detected host:
+Start `bun run app`, open the local URL, then press **Start Now**. LearnDeck
+prepares the local course/progress space and offers every detected guide. Select
+one or more guides, then explicitly connect them; detection is local-only and
+does not launch an agent or read credentials. The explicit connection adds only
+LearnDeck's `learndeck` MCP entry:
 
-- **Claude Code:** runs its supported user-scope MCP command, so PatchQuest is
-  available from any workspace after restarting Claude Code.
-- **Cursor:** adds only the `patchquest` entry to `~/.cursor/mcp.json`,
-  preserving other servers. Restart Cursor afterwards.
+| Host | Detection | Explicit connection |
+| --- | --- | --- |
+| Codex | `codex` CLI, `Codex.app`, or `~/.codex/` | `codex mcp add learndeck -- <bun> <mcp.ts>` |
+| Cursor | launcher, `Cursor.app`, or `~/.cursor/` | merges only `learndeck` into `~/.cursor/mcp.json` |
+| Claude Code | `claude` CLI or its configuration | uses its user-scope stdio MCP command |
 
-The UI does not scan arbitrary folders, read credentials, start an agent, or
-change a configuration until the learner clicks Connect.
+Restart the selected host after connecting. LearnDeck never overwrites another
+MCP server, installs a host, starts a learner service, or executes learner code.
+The learner may select a different connected guide later from **AI guides**.
+All guides share the same local SQLite progress, so switching never loses
+course state or answer history.
 
-## Connect another MCP host
+## Manual setup
 
-Start the server through the agent host, not manually in a terminal. The host
-owns the stdio process and completes the MCP handshake.
+For another MCP client, use its equivalent of:
 
 ```json
 {
   "mcpServers": {
-    "patchquest": {
+    "learndeck": {
       "command": "/absolute/path/to/bun",
-      "args": ["/absolute/path/to/patchquest/src/mcp.ts"]
+      "args": ["/absolute/path/to/learndeck/src/mcp.ts"]
     }
   }
 }
 ```
 
-Use absolute paths so an MCP host can launch the server from any workspace. Set
-`PATCHQUEST_DB_PATH` in the MCP server environment only when it must use a
-non-default database; the UI and MCP must use exactly the same path.
+Set `LEARNDECK_DB_PATH` in both the UI and MCP process only when they must use
+a non-default shared database. `PATCHQUEST_DB_PATH` remains a temporary alias
+for existing local runs.
 
 ## Tools
 
 | Tool | Purpose |
 | --- | --- |
-| `patchquest_list_courses` | List locally seeded courses before choosing one. |
-| `patchquest_get_course` | Read one course's paths, ordered sections, actions, questions, and source references. |
-| `patchquest_list_paths` | See a learner's existing paths for the selected course. |
-| `patchquest_create_path` | Create a path only after the learner chooses its course, path, and workspace/context in the UI. |
-| `patchquest_get_progress` | Read section status, pending submissions, feedback, and completed count. |
-| `patchquest_get_next_activity` | Get one next section/question instead of dumping the whole course. |
-| `patchquest_record_evidence` | Record a learner-reported path, command result, or other evidence. |
-| `patchquest_evaluate_answer` | Evaluate one UI-submitted answer with source-linked feedback. |
+| `learndeck_list_courses` | List locally loaded Markdown course packs before selection. |
+| `learndeck_get_course` | Read a course's runtime, ordered modules, actions, questions, and sources. |
+| `learndeck_list_paths` | Read existing local learning records for one course. |
+| `learndeck_create_path` | Create a local learning record after the learner confirms a workspace. |
+| `learndeck_get_progress` | Read section state, submissions, feedback, and completion count. |
+| `learndeck_get_next_activity` | Return one next module/question. |
+| `learndeck_record_evidence` | Store learner-reported code paths or command results. |
+| `learndeck_evaluate_answer` | Evaluate exactly one answer submitted through the UI. |
 
-## Interaction contract
+## Required agent behavior
 
-1. The agent calls `patchquest_list_courses`; the learner chooses a course and
-   path in the browser.
-2. For a coding course that declares commands, the agent runs only its named
-   read-only checks, reports the result, and suggests—not starts—the learner's
-   development command.
-3. The agent reads the next activity through MCP and guides one small action.
-4. The learner submits their answer in the browser.
-5. The agent reads the submitted attempt, evaluates it using the named source,
-   and calls `patchquest_evaluate_answer`.
-6. The learner sees the feedback and status in the browser. A partial or
-   incorrect answer remains part of the record; the learner submits a revision.
-
-PatchQuest's stdio transport follows the MCP tool model: a host discovers tools
-with `tools/list` and invokes them with `tools/call`. Tools use validated input
-schemas and report execution problems as actionable tool results. See the
-[MCP tools specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools).
-
-## Boundaries
-
-The server is intentionally local and does not run user code, inspect a
-workspace, install packages, or expose an HTTP MCP endpoint. Agent hosts should
-show the learner which tool calls are being made and retain normal confirmation
-controls for writes.
+1. Read the course briefing and progress before teaching. For the bundled DDD
+   course, resolve the declared Node.js + TypeScript runtime rather than asking
+   the learner to choose a language.
+2. Ask one bounded question or action at a time.
+3. Direct answers to the browser UI; evaluate only attempts still marked
+   `submitted`.
+4. Be a Socratic tutor, not a ghostwriter. Use the named Markdown source and
+   author-written question rubric when evaluating. Feedback states what is
+   solid, the observed answer, exact gap or confirmation, one correction or
+   next question, and a next action. The learner chooses whether to revise or
+   continue.
+5. Record only learner-reported evidence. Never install dependencies, run the
+   learner server, execute submitted code, or inspect outside the confirmed
+   workspace.

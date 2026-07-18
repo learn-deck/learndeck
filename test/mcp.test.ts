@@ -11,27 +11,28 @@ test("MCP exposes the learner-guidance tools over stdio", async () => {
     command: process.execPath,
     args: [resolve(import.meta.dir, "../src/mcp.ts")],
     cwd: resolve(import.meta.dir, ".."),
-    env: { ...process.env, PATCHQUEST_DB_PATH: join(directory, "progress.db") },
+    env: { ...process.env, LEARNDECK_DB_PATH: join(directory, "progress.db") },
   });
-  const client = new Client({ name: "patchquest-test", version: "0.3.0" });
+  const client = new Client({ name: "learndeck-test", version: "0.4.0" });
   try {
     await client.connect(transport);
     const listed = await client.listTools();
     expect(listed.tools.map((tool) => tool.name)).toEqual([
-      "patchquest_list_courses",
-      "patchquest_get_course",
-      "patchquest_list_paths",
-      "patchquest_create_path",
-      "patchquest_get_progress",
-      "patchquest_get_next_activity",
-      "patchquest_record_evidence",
-      "patchquest_evaluate_answer",
+      "learndeck_list_courses",
+      "learndeck_get_course",
+      "learndeck_list_paths",
+      "learndeck_create_path",
+      "learndeck_get_progress",
+      "learndeck_get_next_activity",
+      "learndeck_record_evidence",
+      "learndeck_evaluate_answer",
     ]);
-    const courses = await client.callTool({ name: "patchquest_list_courses", arguments: {} });
+    const courses = await client.callTool({ name: "learndeck_list_courses", arguments: {} });
     expect(courses.isError).toBeFalsy();
     expect(JSON.stringify(courses.structuredContent)).toContain("ddd-backend-foundations");
-    const course = await client.callTool({ name: "patchquest_get_course", arguments: { courseId: "ddd-backend-foundations" } });
+    const course = await client.callTool({ name: "learndeck_get_course", arguments: { courseId: "ddd-backend-foundations" } });
     expect(course.isError).toBeFalsy();
+    expect(JSON.stringify(course.structuredContent)).toContain("rubric");
   } finally {
     await client.close();
     rmSync(directory, { recursive: true, force: true });

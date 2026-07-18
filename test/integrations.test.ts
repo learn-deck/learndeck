@@ -15,7 +15,7 @@ describe("IntegrationService", () => {
     rmSync(directory, { recursive: true, force: true });
   });
 
-  test("writes one PatchQuest entry into Cursor's global MCP configuration", async () => {
+  test("writes one LearnDeck entry into Cursor's global MCP configuration", async () => {
     const configPath = join(directory, ".cursor", "mcp.json");
     mkdirSync(join(directory, ".cursor"));
     writeFileSync(configPath, JSON.stringify({ mcpServers: { existing: { command: "example" } } }));
@@ -32,7 +32,7 @@ describe("IntegrationService", () => {
     const configuration = JSON.parse(await Bun.file(configPath).text());
     expect(connected.configured).toBe(true);
     expect(configuration.mcpServers.existing.command).toBe("example");
-    expect(configuration.mcpServers.patchquest).toEqual({ command: process.execPath, args: ["/opt/patchquest/src/mcp.ts"] });
+    expect(configuration.mcpServers.learndeck).toEqual({ command: process.execPath, args: ["/opt/patchquest/src/mcp.ts"] });
   });
 
   test("uses Claude Code's user-scope MCP command only after connect is requested", async () => {
@@ -50,7 +50,31 @@ describe("IntegrationService", () => {
     expect(await service.connect("claude-code")).toMatchObject({ configured: true });
     expect(invocation).toEqual({
       command: "/usr/local/bin/claude",
-      args: ["mcp", "add", "--scope", "user", "--transport", "stdio", "patchquest", "--", process.execPath, "/opt/patchquest/src/mcp.ts"],
+      args: ["mcp", "add", "--scope", "user", "--transport", "stdio", "learndeck", "--", process.execPath, "/opt/patchquest/src/mcp.ts"],
+    });
+  });
+
+  test("detects configured Codex and uses its documented MCP command only after connect", async () => {
+    const configDirectory = join(directory, ".codex");
+    mkdirSync(configDirectory);
+    const configPath = join(configDirectory, "config.toml");
+    writeFileSync(configPath, "[mcp_servers.learndeck]\ncommand = 'bun'\n");
+    const configured = new IntegrationService("/opt/patchquest", { homeDirectory: directory });
+    expect((await configured.list()).find((item) => item.id === "codex")).toMatchObject({ detected: true, configured: true, configPath });
+
+    let invocation: { command: string; args: string[] } | undefined;
+    const service = new IntegrationService("/opt/patchquest", {
+      homeDirectory: join(directory, "new-home"),
+      findExecutable: (name) => name === "codex" ? "/usr/local/bin/codex" : undefined,
+      run: async (command, args) => {
+        invocation = { command, args };
+        return { exitCode: 0, stderr: "" };
+      },
+    });
+    expect(await service.connect("codex")).toMatchObject({ configured: true });
+    expect(invocation).toEqual({
+      command: "/usr/local/bin/codex",
+      args: ["mcp", "add", "learndeck", "--", process.execPath, "/opt/patchquest/src/mcp.ts"],
     });
   });
 });

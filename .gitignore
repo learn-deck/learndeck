@@ -1,3 +1,5 @@
 node_modules/
 .patchquest/
+.learndeck/
+.env
 .DS_Store

@@ -1,0 +1,66 @@
+:root {
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-xxl: 64px;
+  --font-sans: "Avenir Next", Avenir, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Iowan Old Style", "New York", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-raised: 0 18px 48px rgba(0, 0, 0, .22);
+  --transition-fast: 150ms ease;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-surface-canvas: #0e1219;
+  --color-surface-base: #151b24;
+  --color-surface-raised: #1b2330;
+  --color-surface-subtle: #252f3d;
+  --color-surface-code: #0b1017;
+  --color-content-primary: #f6f2e9;
+  --color-content-secondary: #bbc4d1;
+  --color-content-tertiary: #8b98a9;
+  --color-border-subtle: #2b3645;
+  --color-border-strong: #435166;
+  --color-interactive: #f1b84c;
+  --color-interactive-strong: #ffc966;
+  --color-interactive-contrast: #1d1608;
+  --color-feedback-success: #55d9a4;
+  --color-feedback-success-surface: #103b32;
+  --color-feedback-warning: #ffc45b;
+  --color-feedback-warning-surface: #3c2c0c;
+  --color-feedback-error: #ff928e;
+  --color-feedback-error-surface: #482020;
+  --color-callout-note: #70a9ff;
+  --color-callout-deep: #c69cff;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-surface-canvas: #f7f7f3;
+  --color-surface-base: #fffef9;
+  --color-surface-raised: #ffffff;
+  --color-surface-subtle: #edf0f4;
+  --color-surface-code: #111925;
+  --color-content-primary: #1d2632;
+  --color-content-secondary: #566476;
+  --color-content-tertiary: #748296;
+  --color-border-subtle: #dce3eb;
+  --color-border-strong: #b7c2d0;
+  --color-interactive: #b7670c;
+  --color-interactive-strong: #914f08;
+  --color-interactive-contrast: #ffffff;
+  --color-feedback-success: #18794e;
+  --color-feedback-success-surface: #e6f6ed;
+  --color-feedback-warning: #935e00;
+  --color-feedback-warning-surface: #fff4d6;
+  --color-feedback-error: #b42318;
+  --color-feedback-error-surface: #fee9e7;
+  --color-callout-note: #1e63d9;
+  --color-callout-deep: #7447bb;
+}

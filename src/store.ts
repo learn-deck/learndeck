@@ -50,7 +50,7 @@ type AttemptRow = {
 export class CourseStore {
   readonly db: Database;
 
-  constructor(path = process.env.PATCHQUEST_DB_PATH ?? resolve(import.meta.dir, "../.patchquest/progress.db")) {
+  constructor(path = process.env.LEARNDECK_DB_PATH ?? process.env.PATCHQUEST_DB_PATH ?? resolve(import.meta.dir, "../.learndeck/progress.db")) {
     mkdirSync(dirname(path), { recursive: true });
     this.db = new Database(path, { create: true });
     this.db.exec("PRAGMA journal_mode = WAL;");

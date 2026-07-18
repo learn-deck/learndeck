@@ -4,19 +4,19 @@ import { z } from "zod";
 import { CourseCatalog } from "./course";
 import { CourseStore } from "./store";
 
-const catalog = await CourseCatalog.load();
+const catalog = await CourseCatalog.loadConfigured();
 const store = new CourseStore();
 const server = new McpServer({
-  name: "patchquest",
-  version: "0.3.0",
+  name: "learndeck",
+  version: "0.4.0",
   instructions:
-    "Use PatchQuest to guide a learner through a visible local course. List courses first, read progress before teaching, ask one question at a time, and only evaluate an answer after the learner submitted it in the UI. Never run learner code or start a server through this MCP.",
+    "Use LearnDeck as a Socratic guide through a visible local course. List courses first, read progress before teaching, and ask one bounded question at a time instead of supplying the solution. Only evaluate an answer after the learner submitted it in the UI. Evaluate against the author-written question rubric and source: say what is solid, name the precise gap, and offer one next question or revision. The learner chooses whether to revise or continue. Never run learner code or start a server through this MCP.",
 });
 
 server.registerTool(
-  "patchquest_list_courses",
+  "learndeck_list_courses",
   {
-    title: "List PatchQuest courses",
+    title: "List LearnDeck courses",
     description: "List every locally seeded course available to the UI and MCP.",
     inputSchema: {},
   },
@@ -24,9 +24,9 @@ server.registerTool(
 );
 
 server.registerTool(
-  "patchquest_get_course",
+  "learndeck_get_course",
   {
-    title: "Get a PatchQuest course",
+    title: "Get a LearnDeck course",
     description: "Read one course's paths, ordered sections, actions, questions, and source references.",
     inputSchema: { courseId: z.string() },
   },
@@ -34,7 +34,7 @@ server.registerTool(
 );
 
 server.registerTool(
-  "patchquest_list_paths",
+  "learndeck_list_paths",
   {
     title: "List learning paths",
     description: "List the learner's local paths for one course.",
@@ -44,7 +44,7 @@ server.registerTool(
 );
 
 server.registerTool(
-  "patchquest_create_path",
+  "learndeck_create_path",
   {
     title: "Create a learning path",
     description: "Create a local path after the learner has explicitly chosen its course path and workspace or learning context.",
@@ -59,7 +59,7 @@ server.registerTool(
 );
 
 server.registerTool(
-  "patchquest_get_progress",
+  "learndeck_get_progress",
   {
     title: "Get learning progress",
     description: "Read all section states, answer submissions, feedback, and progress counts for one local path.",
@@ -69,7 +69,7 @@ server.registerTool(
 );
 
 server.registerTool(
-  "patchquest_get_next_activity",
+  "learndeck_get_next_activity",
   {
     title: "Get the next activity",
     description: "Return the one section and question that should be discussed next for a learning path.",
@@ -79,7 +79,7 @@ server.registerTool(
 );
 
 server.registerTool(
-  "patchquest_record_evidence",
+  "learndeck_record_evidence",
   {
     title: "Record learner evidence",
     description: "Record a learner-reported code path, command result, or other evidence for one section. Use only after the learner provides it.",
@@ -94,10 +94,10 @@ server.registerTool(
 );
 
 server.registerTool(
-  "patchquest_evaluate_answer",
+  "learndeck_evaluate_answer",
   {
     title: "Evaluate a submitted answer",
-    description: "Evaluate exactly one learner-submitted UI answer. Feedback must name the target, observed answer, exact gap or confirmation, and a course reference.",
+    description: "Evaluate exactly one learner-submitted UI answer against its author-written rubric. Feedback must name what is solid, the precise gap or confirmation, one correction or Socratic next question, and a course reference. The learner retains the choice to revise or continue.",
     inputSchema: {
       attemptId: z.number().int().positive(),
       result: z.enum(["correct", "partial", "incorrect"]),
@@ -127,7 +127,7 @@ function call<T>(operation: () => T) {
     return result(operation());
   } catch (error) {
     return {
-      content: [{ type: "text" as const, text: error instanceof Error ? error.message : "PatchQuest could not complete that operation." }],
+      content: [{ type: "text" as const, text: error instanceof Error ? error.message : "LearnDeck could not complete that operation." }],
       isError: true,
     };
   }

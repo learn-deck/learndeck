@@ -21,15 +21,15 @@ describe("CourseStore", () => {
     rmSync(directory, { recursive: true, force: true });
   });
 
-  test("keeps progress and answer history separate for each course path", () => {
+  test("keeps progress and answer history separate for each project workspace", () => {
     const node = store.createPath(course, {
       coursePathId: "node-typescript",
       workspacePath: "/work/node-api",
       label: "Node API",
     });
-    const go = store.createPath(course, {
-      coursePathId: "go",
-      workspacePath: "/work/go-api",
+    const secondWorkspace = store.createPath(course, {
+      coursePathId: "node-typescript",
+      workspacePath: "/work/second-ddd-api",
     });
 
     const answer = store.submitAnswer(course, {
@@ -47,15 +47,15 @@ describe("CourseStore", () => {
     });
 
     const nodeOverview = store.overview(course, node.id);
-    const goOverview = store.overview(course, go.id);
+    const secondOverview = store.overview(course, secondWorkspace.id);
     expect(nodeOverview.attempts).toHaveLength(1);
     expect(nodeOverview.progress.find((item) => item.sectionId === "start")?.status).toBe("active");
-    expect(goOverview.attempts).toHaveLength(0);
-    expect(goOverview.progress.find((item) => item.sectionId === "start")?.status).toBe("not_started");
+    expect(secondOverview.attempts).toHaveLength(0);
+    expect(secondOverview.progress.find((item) => item.sectionId === "start")?.status).toBe("not_started");
   });
 
   test("completes a section only after a correct exit answer", () => {
-    const path = store.createPath(course, { coursePathId: "bun-typescript", workspacePath: "/work/bun-api" });
+    const path = store.createPath(course, { coursePathId: "node-typescript", workspacePath: "/work/ddd-api" });
     const diagnostic = store.submitAnswer(course, {
       pathId: path.id,
       questionId: "start-boundary",
@@ -69,7 +69,7 @@ describe("CourseStore", () => {
     const exit = store.submitAnswer(course, {
       pathId: path.id,
       questionId: "start-evidence",
-      answer: "I chose Bun, work in /work/bun-api, run bun run dev, and progress is tied to a path so routes do not mix.",
+      answer: "My project is /work/ddd-api, I run npm run dev, and LearnDeck keeps progress tied to this project so course evidence does not mix.",
     });
     store.evaluateAttempt(course, {
       attemptId: exit.id,

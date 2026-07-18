@@ -1,6 +1,6 @@
 # Security boundary
 
-PatchQuest is a local course runner. Its browser server binds only to
+LearnDeck is a local course runner. Its browser server binds only to
 `127.0.0.1`; the MCP integration uses local stdio. It stores selected workspace
 paths, learner answers, feedback, and progress in an ignored SQLite database.
 
@@ -16,6 +16,6 @@ their normal approval controls for writes.
 
 The standalone app may detect Claude Code or Cursor from their local command,
 application, or MCP configuration signals. It returns only connection status to
-the browser. A Connect click can add the `patchquest` MCP entry to that host's
+the browser. A Connect click can add the `learndeck` MCP entry to that host's
 user configuration; it does not read credentials, alter other MCP entries, or
 launch the host application.
