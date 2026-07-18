@@ -8,6 +8,8 @@
   --font-sans: "Avenir Next", Avenir, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-display: "Iowan Old Style", "New York", "Palatino Linotype", Palatino, Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --color-content-on-code: #d6e2f0;
+  --color-content-on-code-muted: #aab8c9;
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
@@ -26,7 +28,7 @@
   --color-content-secondary: #bbc4d1;
   --color-content-tertiary: #8b98a9;
   --color-border-subtle: #2b3645;
-  --color-border-strong: #435166;
+  --color-border-strong: #5f7085;
   --color-interactive: #f1b84c;
   --color-interactive-strong: #ffc966;
   --color-interactive-contrast: #1d1608;
@@ -49,10 +51,10 @@
   --color-surface-code: #111925;
   --color-content-primary: #1d2632;
   --color-content-secondary: #566476;
-  --color-content-tertiary: #748296;
+  --color-content-tertiary: #647286;
   --color-border-subtle: #dce3eb;
-  --color-border-strong: #b7c2d0;
-  --color-interactive: #b7670c;
+  --color-border-strong: #8290a1;
+  --color-interactive: #a85d0a;
   --color-interactive-strong: #914f08;
   --color-interactive-contrast: #ffffff;
   --color-feedback-success: #18794e;
