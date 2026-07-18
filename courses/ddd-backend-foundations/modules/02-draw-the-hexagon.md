@@ -101,6 +101,7 @@ The correct direction translates HTTP at the edge and keeps the domain plain:
 
 ```ts
 // domain/booking.ts — right
+type Booking = { roomId: string; startsAt: number; endsAt: number };
 type BookingCommand = { roomId: string; startsAt: number; endsAt: number };
 
 export function canBook(command: BookingCommand, existing: readonly Booking[]) {
@@ -114,6 +115,12 @@ The wrong version lets Express's request shape reach a domain decision, so the
 rule depends on transport. The right version accepts domain data; an outer
 adapter translates the request and the inner code remains callable without
 Express.
+
+Cockburn's names for the two sides are worth keeping: a **driving** adapter
+(an HTTP handler, a test) calls the application through a port; a **driven**
+adapter (a repository, a clock) is called by the application through a port it
+defines. In both cases the port belongs to the inside and the adapter to the
+outside—only who initiates the call changes.
 
 Use the original [Ports and Adapters article](../../../references/source-index.md#hexagonal)
 for the direction, not as a folder-name ritual.

@@ -48,7 +48,9 @@ When might they be the same value, and why should the model not depend on that?
    its location and configuration boundary.
 3. Map persisted data at the adapter edge. Reconstruct the domain object before
    handing it to inner code.
-4. Decide and document the transaction boundary for one use case.
+4. Decide and document the transaction boundary for one use case. A useful
+   rule of thumb from Vernon's aggregate guidance: one transaction changes one
+   aggregate; anything wider deserves a written justification.
 5. Run the relevant tests and your status route. Record the evidence and any
    persistence-specific failures.
 
@@ -76,6 +78,15 @@ row type and database naming outside the port signature.
 Why this decision? `toDomain` reconstructs the object the booking rule
 understands before it reaches inner code. SQL names and storage types stay in the
 adapter, so replacing the store does not force a change to the invariant.
+
+> [!TIP]
+> Be honest about concurrency: "find overlapping, then save" is two steps, so
+> two simultaneous requests can both pass the check and double-book the room.
+> This is exactly why the transaction boundary you document in step 4 matters.
+> Run the check and the insert inside one transaction, or back the invariant
+> with a database uniqueness/exclusion constraint at the adapter edge. The
+> domain still owns the rule; the transaction is how persistence keeps it true
+> under concurrent writes.
 
 ## What this is NOT
 

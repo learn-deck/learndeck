@@ -39,6 +39,13 @@ saw, and what remains outside the claim.
 > important boundaries and outcomes are covered. Read the report alongside
 > the cases, not instead of them.
 
+```learndeck
+type: textarea
+id: confidence-limits
+label: Two things my suite does not prove
+placeholder: e.g. concurrent requests, real rate data, behaviour beyond 20 kg
+```
+
 ## Build
 
 1. Run `npm test` and record the command plus its passing `Test Files` and

@@ -55,12 +55,17 @@ be wrong, such as JSON input becoming a pricing request or a domain failure
 becoming an HTTP response. Tests should not mock away the code whose behaviour
 they claim to prove.
 
-A fake is a small working substitute with believable behaviour, such as an
-in-memory rate table. A mock records or scripts interactions and can be useful
-at a genuine boundary, but a mock-heavy test may pass while the real outcome is
-wrong. A spy records calls; a call count or call order is only meaningful when
-that interaction is itself the contract. Otherwise, assert the result a user
-can observe.
+Test doubles differ in what they claim. A fake is a small working substitute
+with believable behaviour, such as an in-memory rate table. A stub returns
+pre-arranged answers so a test can reach the path under study; it makes no
+claim about how it was called. A spy additionally records the calls it
+receives so a test can inspect them afterwards. A mock is set up in advance
+with expected interactions and the test fails verification when those
+expectations are not met. Interaction assertions from spies and mocks are only
+meaningful when the interaction is itself the contract; a mock-heavy test can
+pass while the outcome a caller receives is wrong. Otherwise, assert the
+observable result. Giving a fake deliberately different data from production
+makes the substitution itself observable in the asserted outcome.
 
 Table-driven cases make a family of related inputs visible. Boundary cases
 should include the values on both sides of a rule, not only a typical middle
@@ -68,8 +73,11 @@ value. Failure-path tests should name the invalid input and the promised
 distinction, rather than merely asserting that “something threw”.
 
 Coverage is a map of executed code, not a certificate of correct behaviour.
-High line coverage can coexist with missing boundaries, weak assertions, an
-untested HTTP translation, or a test suite that exercises only happy paths.
-The final evidence should state the command, the result, the important cases,
-and the limits of the confidence claim.
+It reports which statements, branches, functions, and lines the selected tests
+executed; line coverage can be complete while an untaken branch hides a wrong
+comparison, and executed code proves nothing if the assertions are weak. High
+coverage can coexist with missing boundaries, an untested HTTP translation, or
+a suite that exercises only happy paths. The final evidence should state the
+command, the result, the important cases, and the limits of the confidence
+claim.
 

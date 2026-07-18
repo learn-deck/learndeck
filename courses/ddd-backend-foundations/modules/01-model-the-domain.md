@@ -51,7 +51,11 @@ rule? Give one example of each for a small task or booking service.
 3. Define one use case in application language: input, successful outcome, and
    expected domain failures.
 4. Create a domain type or aggregate that protects one invariant without
-   importing an HTTP framework, database client, or logger.
+   importing an HTTP framework, database client, or logger. In DDD terms, an
+   aggregate is the consistency boundary: everything the invariant needs to
+   stay true is checked inside it, in one operation. A small value object—an
+   immutable type compared by its values, such as a `TimeRange` that refuses
+   `endsAt <= startsAt`—is often the cheapest first guard.
 5. If a guide is connected, ask it to record the domain-note and code paths;
    otherwise record those paths in the evidence form or in `NOTES.md` in your
    workspace. Then explain the invariant in your own words.
@@ -73,6 +77,12 @@ export function overlaps(existing: Booking, candidate: Booking): boolean {
     && candidate.startsAt < existing.endsAt;
 }
 ```
+
+Times here are epoch milliseconds and each booking is a half-open interval
+`[startsAt, endsAt)`, so a booking that starts exactly when another ends does
+not overlap. Writing that convention down in your domain note is itself a
+ubiquitous-language decision: everyone, including your tests, now means the
+same thing by "overlap".
 
 Your next analogous decision: decide what your domain operation should return
 when `overlaps` is true. Write the result type and one expectation for a second

@@ -51,6 +51,30 @@ reserve inventory, or send a message?
    recorded. Do not add background retries just to satisfy the exercise.
 5. Add one test for the duplicate or retry decision and record the result.
 
+## Worked example: name the expected failure, let the unexpected one surface
+
+Here is one small failure decision fully worked for `CreateBooking`:
+
+```ts
+type Booking = { roomId: string; startsAt: number; endsAt: number };
+
+export type CreateBookingResult =
+  | { kind: "created"; booking: Booking }
+  | { kind: "rejected"; reason: "room-already-booked" };
+```
+
+Why this decision? A double booking is not an accident—it is the domain doing
+its job—so it belongs in the result type where every caller must handle it,
+and where module 03's adapter turned it into a stable `409`. A transient
+adapter failure (the database is briefly unreachable) is deliberately *not* a
+result variant: the adapter throws, the failure surfaces, and whether a retry
+is safe depends on what side effects already happened—which is why you choose
+an idempotency boundary next, instead of wrapping everything in a retry loop.
+
+Your next analogous decision: for the duplicate case, decide what a retried
+`POST /bookings` carrying the same idempotency key should return—the original
+outcome, replayed, not a second booking.
+
 Use [AWS's retry and backoff guidance](../../../references/source-index.md#reliability)
 and [the Transactional Outbox pattern](../../../references/source-index.md#reliability)
 to reason about failure modes, not to claim exactly-once delivery.

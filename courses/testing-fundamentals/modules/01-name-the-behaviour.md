@@ -44,12 +44,16 @@ failure would leave a reader unsure which behaviour broke.
 
 ## Worked example 1 — make one decision, then fade it
 
-Here is a complete decision for the express option:
+Here is a complete decision for the express option. Import the `Parcel` type
+alongside `priceParcel`; annotating the variable keeps TypeScript from widening
+`zone: "B"` to `string`:
 
 ```ts
-it("adds the express surcharge to the parcel price", () => {
+import { priceParcel, type Parcel } from "../src/parcel-pricing";
+
+it("adds the express surcharge to a 2 kg zone B parcel", () => {
   // arrange
-  const parcel = { weightKg: 2, zone: "B", options: ["express"] };
+  const parcel: Parcel = { weightKg: 2, zone: "B", options: ["express"] };
 
   // act
   const result = priceParcel(parcel);
@@ -58,6 +62,11 @@ it("adds the express surcharge to the parcel price", () => {
   expect(result.total).toBe(16);
 });
 ```
+
+Your module 00 implementation ignores `options`, so this test fails first with
+a visible mismatch: expected 16, received 10. That is the red step working for
+you. Extend `priceParcel` with the shared scenario's option surcharges — €6 for
+`express`, €3 for `fragile` — and run the suite again.
 
 Pause before reading on. Write the next focused test yourself for the same
 parcel with the `fragile` option. What should its total be, and which part of
@@ -77,10 +86,12 @@ HTTP endpoint parses JSON; that is a different boundary and a later module.
    `adds the express surcharge to a 2 kg zone B parcel`. Keep the input visible
    in arrange, one pricing call in act, and the price or deliberate failure in
    assert.
-3. Run `npm test`. The visible output must list those two case names separately
-   and end with `Test Files  1 passed` and `Tests  2 passed`. If
-   a test fails, fix the behaviour or its stated expectation deliberately;
-   do not weaken the assertion just to get green.
+3. Run `npm test`. The visible output must list each case name separately and
+   end with `Test Files  1 passed` and a `Tests` count matching your cases —
+   two at minimum, three if you kept the fragile exercise. When a new option
+   case fails against the module 00 implementation, that is the expected red
+   step: extend the pricing behaviour deliberately. Never weaken an assertion
+   just to get green.
 4. Ask yourself whether each test could fail for a different reason. If the
    answer is yes, split it and make the new behaviour explicit.
 

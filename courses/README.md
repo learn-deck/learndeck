@@ -1,8 +1,9 @@
 # Course packs
 
 Every direct child directory is one LearnDeck course pack. A valid pack has a
-`course.md` file and one or more ordered `modules/*.md` files. The DDD pack is
-the included example; it can be removed or copied without changing the runner.
+`course.md` file and one or more ordered `modules/*.md` files. The DDD pack
+(`ddd-backend-foundations`) is the reference implementation of the format; any
+bundled pack can be removed or copied without changing the runner.
 
 Create a new pack with:
 

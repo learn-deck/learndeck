@@ -70,7 +70,24 @@ Create `package.json` with this content:
 Install the learner-run tools yourself:
 
 ```sh
-npm install --save-dev vitest tsx @vitest/coverage-v8
+npm install --save-dev vitest tsx typescript @types/node @vitest/coverage-v8
+```
+
+Create `tsconfig.json` so the editor and TypeScript agree on modern modules and
+Node types; without it, `import.meta` and the `node:` imports show false errors:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  }
+}
 ```
 
 Create `test/parcel-pricing.test.ts`:
@@ -150,6 +167,14 @@ export function priceParcel(parcel: Parcel): ParcelPrice {
 }
 ```
 
+> [!TIP]
+> Strictly, the smallest change that makes this one test pass is
+> `return { total: 10 };`. Hard-coding the answer and letting the next failing
+> test force real logic is a legitimate TDD move. We jump straight to the small
+> zone table because module 01 immediately adds cases that would force it, but
+> notice what the honest claim is either way: one green test proves only the
+> 2 kg zone B example, not the whole pricing rule.
+
 Run `npm test` again. The exact useful output is now:
 
 ```text
@@ -175,11 +200,22 @@ The terminal must print
 `Parcel-pricing server listening at http://127.0.0.1:3000`, and `curl` must
 return exactly `{"status":"ok"}`. Stop the server after checking it.
 
+```learndeck
+type: checklist
+id: start-failure-ready
+label: Before you build
+items:
+  - Node.js 20 or newer and npm are available on my machine.
+  - The parcel-pricing folder is separate from LearnDeck.
+  - I saw the named test fail before I implemented the behaviour.
+```
+
 ## Build
 
-1. Create the project at `package.json`, `src/parcel-pricing.ts`, and
-   `test/parcel-pricing.test.ts`. Keep the production code and tests easy to
-   find; do not create an architecture catalogue.
+1. Create the project at `package.json`, `tsconfig.json`,
+   `src/parcel-pricing.ts`, and `test/parcel-pricing.test.ts`. Keep the
+   production code and tests easy to find; do not create an architecture
+   catalogue.
 2. Write a test for the 2 kg, zone B, no-options example. Write the expected
    €10 before implementing the pricing behaviour.
 3. Run `npm test` and keep the visible failure: the test name and the mismatch
@@ -201,8 +237,8 @@ continue** in the app.
 ## Definition of done
 
 - A separate parcel-pricing workspace contains `package.json`,
-  `src/parcel-pricing.ts`, and `test/parcel-pricing.test.ts`; the test runs with
-  Vitest.
+  `tsconfig.json`, `src/parcel-pricing.ts`, and `test/parcel-pricing.test.ts`;
+  the test runs with Vitest.
 - The 2 kg, zone B, no-options behaviour failed before its implementation existed.
 - The same test passes after the smallest implementation change.
 - `npm run dev` returns `200 {"status":"ok"}` from `GET /health`.

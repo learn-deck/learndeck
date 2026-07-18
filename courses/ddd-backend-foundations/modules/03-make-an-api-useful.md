@@ -42,7 +42,8 @@ formatting difficult to test and change independently?
 > The domain rejects a genuine double booking. These are different failures,
 > so they deserve different messages and tests.
 
-1. Choose one command endpoint for the use case from step 01.
+1. Choose one command endpoint for the use case you named in module 01 and
+   wired in module 02.
 2. In the HTTP adapter, parse and validate only transport-shaped input.
 3. Translate the request to the application input, call the use case, and map
    known domain failures to stable responses.
@@ -52,6 +53,43 @@ formatting difficult to test and change independently?
    command. Run `npm run dev` yourself and record the route, command, and
    observed result; otherwise keep that record in the evidence form or in
    `NOTES.md` in your workspace.
+
+## Worked example: two different failures, two deliberate responses
+
+Here is one small response decision fully worked for `POST /bookings`. The
+adapter distinguishes malformed transport input from a rejected domain
+decision:
+
+```ts
+// adapters/http/bookings.ts
+const result = await createBooking(command, repository);
+
+if (result.kind === "rejected") {
+  response.writeHead(409, { "content-type": "application/problem+json" });
+  response.end(JSON.stringify({
+    type: "urn:ddd-backend:problem:room-already-booked",
+    title: "Room already booked",
+    status: 409,
+    detail: `Room ${command.roomId} is already booked for that time.`,
+  }));
+  return;
+}
+
+response.writeHead(201, { "content-type": "application/json" });
+response.end(JSON.stringify(result.booking));
+```
+
+Why this decision? A body that is not valid JSON never reaches `createBooking`;
+the adapter answers `400` on its own, because malformed transport input is the
+transport's problem. A well-formed request that loses the booking rule gets a
+stable `409 Conflict` problem response (RFC 9457's `application/problem+json`
+shape), so a client can tell "fix my request" apart from "the room is taken"
+without parsing prose. The use case returned `{ kind: "rejected", reason:
+"room-already-booked" }` and never saw a status code.
+
+Your next analogous decision: choose the success representation. Decide what
+`201 Created` should return for your endpoint—and which fields of the domain
+object the response deliberately exposes.
 
 Use the HTTP references in [the source index](../../../references/source-index.md#http)
 to reason about resource semantics and problem responses.

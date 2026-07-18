@@ -40,22 +40,30 @@ behaviour a caller relies on.
 
 ## Worked example 2 — fade from an interaction to an outcome
 
-Here is the brittle decision a test author might make:
+Here is the brittle decision a test author might make with the module 03 seam:
 
 ```ts
-expect(rateLookup.getBase).toHaveBeenCalledWith("B");
-expect(rateLookup.getBase).toHaveBeenCalledTimes(1);
+import { vi } from "vitest";
+import { zoneRateFake } from "./fixtures/zone-rates";
+
+const getBase = vi.spyOn(zoneRateFake, "getBase");
+const result = priceParcel({ weightKg: 2, zone: "B", options: [] }, zoneRateFake);
+
+expect(getBase).toHaveBeenCalledWith("B");
+expect(getBase).toHaveBeenCalledTimes(1);
 ```
 
 Your turn: rewrite the meaningful part of this test so it proves what the
 caller receives for a 2 kg zone B parcel. Keep an interaction assertion only if
 the lookup call itself is a documented contract.
 
-The stronger default is an outcome such as `expect(result.total).toBe(10)`,
-with the parcel input visible in arrange. The implementation may later cache,
-batch, or replace the lookup without changing the price contract. A call-order
-assertion is useful only when ordering is observable and required, not because
-the spy makes it easy to inspect.
+The stronger default is an outcome: `expect(result.total).toBe(4)` through the
+module 03 fake, or `toBe(10)` through the production rates, with the parcel
+input visible in arrange. The implementation may later cache, batch, or replace
+the lookup without changing the price contract, and the call-count assertion
+above would break on a harmless memoisation. A call-order or call-count
+assertion is useful only when that interaction is observable and required, not
+because the spy makes it easy to inspect.
 
 ## Build
 

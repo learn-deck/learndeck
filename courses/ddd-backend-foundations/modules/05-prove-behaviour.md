@@ -42,11 +42,15 @@ might obscure?
 > rejected.” It does not need an HTTP server or database to make that business
 > promise easy to understand.
 
-1. Write one domain-level test for the invariant from step 01.
-2. Write one use-case test using the in-memory adapter from step 02.
-3. Add one HTTP boundary test for a deliberate input or error mapping.
-4. Run the project test command, `npm test`, yourself.
-5. Record test paths, command output summary, and what each test is allowed to
+1. Pick one test runner and wire it to `npm test` in your `package.json`.
+   Vitest is a fine default for a TypeScript project; Node's built-in
+   `node:test` also works. Install it yourself—LearnDeck never installs
+   packages. The snippets below use Vitest's API; translate freely.
+2. Write one domain-level test for the invariant from module 01.
+3. Write one use-case test using the in-memory adapter from module 02.
+4. Add one HTTP boundary test for a deliberate input or error mapping.
+5. Run the project test command, `npm test`, yourself.
+6. Record test paths, command output summary, and what each test is allowed to
    prove. Do not label a passing test as proof of every production concern.
 
 ## What this is NOT
@@ -55,6 +59,8 @@ The wrong test asserts private implementation details and call order:
 
 ```ts
 // wrong
+import { expect, it, vi } from "vitest";
+
 it("checks before saving", async () => {
   const find = vi.spyOn(repo, "findOverlapping");
   const save = vi.spyOn(repo, "save");
@@ -67,6 +73,8 @@ The right test asserts the booking behaviour a learner or caller can observe:
 
 ```ts
 // right
+import { expect, it } from "vitest";
+
 it("rejects an overlapping booking", async () => {
   const result = await createBooking(input, repoWithExistingBooking);
   expect(result).toEqual({ kind: "rejected", reason: "room-already-booked" });

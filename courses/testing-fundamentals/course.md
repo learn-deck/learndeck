@@ -10,7 +10,7 @@ tags:
   - Node.js
   - Vitest
 overview:
-  duration: 6–7 hours
+  duration: 5–7 hours
   sessionLength: 45–60 minutes per module
   level: Early-career backend developers
   outcomes:

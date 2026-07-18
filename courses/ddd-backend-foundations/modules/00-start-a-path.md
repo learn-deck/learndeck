@@ -26,6 +26,11 @@ questions:
 
 # 00 · Set up your backend
 
+## Outcome
+
+I can run one Node.js + TypeScript backend workspace with a visible status
+route and explain why it lives apart from LearnDeck's progress data.
+
 You only need one project for this course: a small Node.js + TypeScript backend.
 LearnDeck remembers your answers locally; your project folder holds the code you
 will build. Keeping them separate lets you retry, rename, or delete the project
@@ -57,7 +62,7 @@ without touching the course itself.
   "private": true,
   "type": "module",
   "scripts": { "dev": "tsx --watch src/server.ts" },
-  "devDependencies": { "tsx": "latest", "typescript": "latest" }
+  "devDependencies": { "tsx": "^4.19.0", "typescript": "^5.6.0" }
 }
 ```
 
@@ -96,7 +101,7 @@ type: checklist
 id: start-ready
 label: Before you continue
 items:
-  - Node.js and npm are available on my Mac.
+  - Node.js 22 or newer and npm are available on my machine.
   - My backend project folder is separate from LearnDeck.
   - I know the status route I will make visible.
 ```
