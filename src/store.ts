@@ -364,7 +364,10 @@ export class CourseStore {
     getSection(course, input.sectionId);
     const ref = input.ref?.trim() || null;
     const evidence = this.addEvidence(input.pathId, input.sectionId, note, ref, "learner");
-    this.setProgress(input.pathId, input.sectionId, "active", note);
+    // Evidence must never downgrade a section the learner already moved past.
+    const current = this.progress(input.pathId).find((item) => item.sectionId === input.sectionId)?.status;
+    const status = current === "self_reviewed" || current === "complete" || current === "revision" ? current : "active";
+    this.setProgress(input.pathId, input.sectionId, status, note);
     this.log(input.pathId, "learner", "evidence_recorded", { sectionId: input.sectionId, note, ref, source: "learner" });
     return evidence;
   }
