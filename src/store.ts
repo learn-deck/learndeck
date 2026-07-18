@@ -6,12 +6,15 @@ import { getQuestion, getSection } from "./course";
 import type {
   AttemptResult,
   CourseDefinition,
+  EvidenceRecord,
+  EvidenceSource,
   LearningPath,
   NextActivity,
   PathOverview,
   QuestionAttempt,
   PathExport,
   PathResetResult,
+  SelfReviewResult,
   SectionProgress,
   SectionStatus,
 } from "./types";
@@ -30,6 +33,7 @@ type ProgressRow = {
   section_id: string;
   status: SectionStatus;
   evidence: string | null;
+  evidence_source: EvidenceSource | null;
   review_question: string | null;
   updated_at: string;
 };
@@ -49,6 +53,17 @@ type AttemptRow = {
   evaluated_at: string | null;
 };
 
+type EvidenceRow = {
+  id: number;
+  path_id: string;
+  section_id: string;
+  note: string;
+  ref: string | null;
+  source: EvidenceSource;
+  review_question: string | null;
+  recorded_at: string;
+};
+
 export class CourseStore {
   readonly db: Database;
 
@@ -65,6 +80,11 @@ export class CourseStore {
   }
 
   private migrate() {
+    const sectionProgressNeedsMigration = this.tableNeedsValue("section_progress", "self_reviewed");
+    const questionAttemptsNeedMigration = this.tableNeedsValue("question_attempts", "self_reviewed");
+    if (sectionProgressNeedsMigration) this.db.exec("ALTER TABLE section_progress RENAME TO section_progress_legacy;");
+    if (questionAttemptsNeedMigration) this.db.exec("ALTER TABLE question_attempts RENAME TO question_attempts_legacy;");
+
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS learning_paths (
         id TEXT PRIMARY KEY,
@@ -79,7 +99,7 @@ export class CourseStore {
       CREATE TABLE IF NOT EXISTS section_progress (
         path_id TEXT NOT NULL REFERENCES learning_paths(id) ON DELETE CASCADE,
         section_id TEXT NOT NULL,
-        status TEXT NOT NULL CHECK (status IN ('not_started', 'active', 'revision', 'complete')),
+        status TEXT NOT NULL CHECK (status IN ('not_started', 'active', 'revision', 'self_reviewed', 'complete')),
         evidence TEXT,
         review_question TEXT,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -93,7 +113,7 @@ export class CourseStore {
         kind TEXT NOT NULL CHECK (kind IN ('diagnostic', 'exit', 'review')),
         answer TEXT NOT NULL,
         confidence INTEGER CHECK (confidence IS NULL OR confidence BETWEEN 0 AND 100),
-        result TEXT NOT NULL CHECK (result IN ('submitted', 'correct', 'partial', 'incorrect')),
+        result TEXT NOT NULL CHECK (result IN ('submitted', 'correct', 'partial', 'incorrect', 'self_reviewed')),
         feedback TEXT,
         reference TEXT NOT NULL,
         submitted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -107,7 +127,57 @@ export class CourseStore {
         payload TEXT NOT NULL,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
+      CREATE TABLE IF NOT EXISTS evidence (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        path_id TEXT NOT NULL REFERENCES learning_paths(id) ON DELETE CASCADE,
+        section_id TEXT NOT NULL,
+        note TEXT NOT NULL,
+        ref TEXT,
+        source TEXT NOT NULL CHECK (source IN ('learner', 'guide')),
+        review_question TEXT,
+        recorded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
     `);
+
+    if (sectionProgressNeedsMigration) {
+      this.db.exec(`
+        INSERT INTO section_progress (path_id, section_id, status, evidence, review_question, updated_at)
+        SELECT path_id, section_id, status, evidence, review_question, updated_at
+        FROM section_progress_legacy;
+        DROP TABLE section_progress_legacy;
+      `);
+    }
+    if (questionAttemptsNeedMigration) {
+      this.db.exec(`
+        INSERT INTO question_attempts (id, path_id, section_id, question_id, kind, answer, confidence, result, feedback, reference, submitted_at, evaluated_at)
+        SELECT id, path_id, section_id, question_id, kind, answer, confidence, result, feedback, reference, submitted_at, evaluated_at
+        FROM question_attempts_legacy;
+        DROP TABLE question_attempts_legacy;
+      `);
+    }
+
+    // Older databases stored one unlabelled evidence value on section_progress.
+    // Preserve it as guide evidence when the additive evidence table is first introduced.
+    this.db.exec(`
+      INSERT INTO evidence (path_id, section_id, note, source, review_question, recorded_at)
+      SELECT progress.path_id, progress.section_id, progress.evidence, 'guide', progress.review_question, progress.updated_at
+      FROM section_progress AS progress
+      WHERE progress.evidence IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM evidence
+          WHERE evidence.path_id = progress.path_id
+            AND evidence.section_id = progress.section_id
+            AND evidence.note = progress.evidence
+            AND evidence.source = 'guide'
+        );
+    `);
+  }
+
+  private tableNeedsValue(tableName: "section_progress" | "question_attempts", value: string) {
+    const row = this.db
+      .query<{ sql: string | null }, [string]>("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?")
+      .get(tableName);
+    return Boolean(row?.sql && !row.sql.includes(value));
   }
 
   createPath(course: CourseDefinition, input: { coursePathId: string; workspacePath: string; label?: string }): LearningPath {
@@ -172,14 +242,12 @@ export class CourseStore {
       path,
       progress,
       attempts: this.attempts(pathId),
-      evidence: progress
-        .filter((item): item is SectionProgress & { evidence: string } => Boolean(item.evidence))
-        .map((item) => ({
-          sectionId: item.sectionId,
-          evidence: item.evidence,
-          ...(item.reviewQuestion ? { reviewQuestion: item.reviewQuestion } : {}),
-          updatedAt: item.updatedAt,
-        })),
+      evidence: this.evidence(pathId).map((item) => ({
+        ...item,
+        evidence: item.note,
+        ...(item.reviewQuestion ? { reviewQuestion: item.reviewQuestion } : {}),
+        updatedAt: item.recordedAt,
+      })),
     };
   }
 
@@ -198,6 +266,7 @@ export class CourseStore {
       path,
       progress,
       attempts,
+      evidence: this.evidence(pathId),
       completedSections: progress.filter((item) => item.status === "complete").length,
       totalSections: course.sections.length,
     };
@@ -207,10 +276,10 @@ export class CourseStore {
     const progress = this.progress(pathId);
     for (const section of course.sections) {
       const state = progress.find((entry) => entry.sectionId === section.id);
-      if (state?.status !== "complete") {
-        const unanswered = section.questions.find((question) => !this.hasEvaluatedAttempt(pathId, question.id));
-        return { section, question: unanswered ?? section.questions.at(-1)!, progress: state };
-      }
+      const selfReviewedExit = state?.status === "self_reviewed" && this.hasSelfReviewedExitAttempt(pathId, section.id);
+      if (state?.status === "complete" || selfReviewedExit) continue;
+      const unanswered = section.questions.find((question) => !this.hasEvaluatedAttempt(pathId, question.id));
+      return { section, question: unanswered ?? section.questions.at(-1)!, progress: state };
     }
     const finalSection = course.sections.at(-1)!;
     return { section: finalSection, question: finalSection.questions.at(-1)!, progress: progress.at(-1) };
@@ -242,7 +311,7 @@ export class CourseStore {
 
   evaluateAttempt(
     course: CourseDefinition,
-    input: { attemptId: number; result: Exclude<AttemptResult, "submitted">; feedback: string; evidence?: string; reviewQuestion?: string },
+    input: { attemptId: number; result: Exclude<AttemptResult, "submitted" | "self_reviewed">; feedback: string; evidence?: string; reviewQuestion?: string },
   ): QuestionAttempt {
     const feedback = input.feedback.trim();
     if (!feedback) throw new Error("Source-linked feedback is required.");
@@ -257,7 +326,9 @@ export class CourseStore {
       .get(input.result, feedback, input.attemptId);
 
     const status: SectionStatus = input.result === "correct" && question.kind === "exit" ? "complete" : input.result === "correct" ? "active" : "revision";
-    this.setProgress(attempt.pathId, section.id, status, input.evidence, input.reviewQuestion);
+    const evidence = input.evidence?.trim() || undefined;
+    if (evidence) this.addEvidence(attempt.pathId, section.id, evidence, null, "guide", input.reviewQuestion);
+    this.setProgress(attempt.pathId, section.id, status, evidence, input.reviewQuestion);
     this.log(attempt.pathId, "agent", "answer_evaluated", {
       attemptId: input.attemptId,
       questionId: question.id,
@@ -276,19 +347,62 @@ export class CourseStore {
     const path = this.getPath(input.pathId);
     if (path.courseId !== course.id) throw new Error("This path belongs to a different course.");
     getSection(course, input.sectionId);
+    this.addEvidence(input.pathId, input.sectionId, evidence, null, "guide", input.reviewQuestion);
     this.setProgress(input.pathId, input.sectionId, "active", evidence, input.reviewQuestion);
     this.log(input.pathId, "agent", "evidence_recorded", { sectionId: input.sectionId, evidence });
     return this.progress(input.pathId).find((item) => item.sectionId === input.sectionId)!;
   }
 
+  recordLearnerEvidence(
+    course: CourseDefinition,
+    input: { pathId: string; sectionId: string; note: string; ref?: string },
+  ): EvidenceRecord {
+    const note = input.note.trim();
+    if (!note) throw new Error("A note is required.");
+    const path = this.getPath(input.pathId);
+    if (path.courseId !== course.id) throw new Error("This path belongs to a different course.");
+    getSection(course, input.sectionId);
+    const ref = input.ref?.trim() || null;
+    const evidence = this.addEvidence(input.pathId, input.sectionId, note, ref, "learner");
+    this.setProgress(input.pathId, input.sectionId, "active", note);
+    this.log(input.pathId, "learner", "evidence_recorded", { sectionId: input.sectionId, note, ref, source: "learner" });
+    return evidence;
+  }
+
+  selfReviewAttempt(course: CourseDefinition, attemptId: number): SelfReviewResult {
+    const attempt = this.getAttempt(attemptId);
+    const path = this.getPath(attempt.pathId);
+    if (path.courseId !== course.id) throw new Error("This attempt belongs to a different course.");
+    if (attempt.result !== "submitted") throw new Error("Only submitted answers may be self-reviewed.");
+    const { section, question } = getQuestion(course, attempt.questionId);
+    const reviewed = this.db
+      .query<AttemptRow, [number]>(
+        "UPDATE question_attempts SET result = 'self_reviewed', evaluated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *",
+      )
+      .get(attemptId);
+    if (!reviewed) throw new Error(`Unknown attempt: ${attemptId}`);
+    if (question.kind === "exit") this.setProgress(attempt.pathId, section.id, "self_reviewed");
+    this.log(attempt.pathId, "learner", "answer_self_reviewed", { attemptId, questionId: question.id, result: "self_reviewed" });
+    return { attemptId, result: "self_reviewed" };
+  }
+
   private progress(pathId: string): SectionProgress[] {
     return this.db
-      .query<ProgressRow, [string]>("SELECT * FROM section_progress WHERE path_id = ? ORDER BY rowid")
+      .query<ProgressRow, [string]>(
+        `SELECT progress.*,
+                (SELECT source FROM evidence
+                 WHERE evidence.path_id = progress.path_id AND evidence.section_id = progress.section_id
+                 ORDER BY evidence.id DESC LIMIT 1) AS evidence_source
+         FROM section_progress AS progress
+         WHERE progress.path_id = ?
+         ORDER BY progress.rowid`,
+      )
       .all(pathId)
       .map((row) => ({
         sectionId: row.section_id,
         status: row.status,
         evidence: row.evidence ?? undefined,
+        evidenceSource: row.evidence_source ?? undefined,
         reviewQuestion: row.review_question ?? undefined,
         updatedAt: row.updated_at,
       }));
@@ -301,6 +415,13 @@ export class CourseStore {
       .map(mapAttempt);
   }
 
+  private evidence(pathId: string): EvidenceRecord[] {
+    return this.db
+      .query<EvidenceRow, [string]>("SELECT * FROM evidence WHERE path_id = ? ORDER BY id")
+      .all(pathId)
+      .map(mapEvidence);
+  }
+
   private hasEvaluatedAttempt(pathId: string, questionId: string) {
     return Boolean(
       this.db
@@ -309,6 +430,35 @@ export class CourseStore {
         )
         .get(pathId, questionId)?.count,
     );
+  }
+
+  private hasSelfReviewedExitAttempt(pathId: string, sectionId: string) {
+    return Boolean(
+      this.db
+        .query<{ count: number }, [string, string]>(
+          "SELECT COUNT(*) AS count FROM question_attempts WHERE path_id = ? AND section_id = ? AND kind = 'exit' AND result = 'self_reviewed'",
+        )
+        .get(pathId, sectionId)?.count,
+    );
+  }
+
+  private addEvidence(
+    pathId: string,
+    sectionId: string,
+    note: string,
+    ref: string | null,
+    source: EvidenceSource,
+    reviewQuestion?: string,
+  ): EvidenceRecord {
+    const row = this.db
+      .query<EvidenceRow, [string, string, string, string | null, EvidenceSource, string | null]>(
+        `INSERT INTO evidence (path_id, section_id, note, ref, source, review_question)
+         VALUES (?, ?, ?, ?, ?, ?)
+         RETURNING *`,
+      )
+      .get(pathId, sectionId, note, ref, source, reviewQuestion?.trim() || null);
+    if (!row) throw new Error("Evidence could not be recorded.");
+    return mapEvidence(row);
   }
 
   private setProgress(pathId: string, sectionId: string, status: SectionStatus, evidence?: string, reviewQuestion?: string) {
@@ -352,5 +502,18 @@ function mapAttempt(row: AttemptRow): QuestionAttempt {
     reference: row.reference,
     submittedAt: row.submitted_at,
     evaluatedAt: row.evaluated_at ?? undefined,
+  };
+}
+
+function mapEvidence(row: EvidenceRow): EvidenceRecord {
+  return {
+    id: row.id,
+    pathId: row.path_id,
+    sectionId: row.section_id,
+    note: row.note,
+    ref: row.ref,
+    source: row.source,
+    recordedAt: row.recorded_at,
+    ...(row.review_question ? { reviewQuestion: row.review_question } : {}),
   };
 }

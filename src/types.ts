@@ -1,6 +1,7 @@
 export type QuestionKind = "diagnostic" | "exit" | "review";
-export type AttemptResult = "submitted" | "correct" | "partial" | "incorrect";
-export type SectionStatus = "not_started" | "active" | "revision" | "complete";
+export type AttemptResult = "submitted" | "correct" | "partial" | "incorrect" | "self_reviewed";
+export type SectionStatus = "not_started" | "active" | "revision" | "self_reviewed" | "complete";
+export type EvidenceSource = "learner" | "guide";
 
 export interface CoursePath {
   id: string;
@@ -62,6 +63,7 @@ export interface SectionProgress {
   sectionId: string;
   status: SectionStatus;
   evidence?: string;
+  evidenceSource?: EvidenceSource;
   reviewQuestion?: string;
   updatedAt: string;
 }
@@ -85,6 +87,7 @@ export interface PathOverview {
   path: LearningPath;
   progress: SectionProgress[];
   attempts: QuestionAttempt[];
+  evidence: EvidenceRecord[];
   completedSections: number;
   totalSections: number;
 }
@@ -103,10 +106,32 @@ export interface PathResetResult {
 }
 
 export interface PathEvidence {
+  id: number;
+  pathId: string;
   sectionId: string;
+  note: string;
   evidence: string;
+  ref: string | null;
+  source: EvidenceSource;
+  recordedAt: string;
   reviewQuestion?: string;
   updatedAt: string;
+}
+
+export interface EvidenceRecord {
+  id: number;
+  pathId: string;
+  sectionId: string;
+  note: string;
+  ref: string | null;
+  source: EvidenceSource;
+  recordedAt: string;
+  reviewQuestion?: string;
+}
+
+export interface SelfReviewResult {
+  attemptId: number;
+  result: "self_reviewed";
 }
 
 export interface PathExport {
