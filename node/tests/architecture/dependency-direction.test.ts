@@ -46,6 +46,30 @@ describe("dependency direction", () => {
   );
 
   it.each([
+    ['import "@patchquest/mission-control";', "Mission Control package import"],
+    ['export * from "@patchquest/workshop";', "Workshop package re-export"],
+    [
+      'void import("../../../mission-control/src/domain/mission.js");',
+      "relative Mission Control dynamic import",
+    ],
+    [
+      'import "../../../workshop/src/domain/attempt.js";',
+      "relative Workshop import",
+    ],
+  ])(
+    "keeps Verification isolated from other applications: %s (%s)",
+    (source) => {
+      for (const layer of ["domain", "application"])
+        expect(
+          findArchitectureViolations(
+            source,
+            `apps/verification/src/${layer}/forbidden.ts`,
+          ),
+        ).not.toEqual([]);
+    },
+  );
+
+  it.each([
     ['import Fastify from "fastify";', "framework"],
     ['import pg from "pg";', "database"],
     ['import amqp from "amqplib";', "broker"],
@@ -82,18 +106,14 @@ describe("dependency direction", () => {
   ])(
     "rejects an infrastructure dependency in domain/application: %s (%s)",
     (source) => {
-      expect(
-        findArchitectureViolations(
-          source,
-          "apps/mission-control/src/domain/forbidden.ts",
-        ),
-      ).toHaveLength(1);
-      expect(
-        findArchitectureViolations(
-          source,
-          "apps/mission-control/src/application/forbidden.ts",
-        ),
-      ).toHaveLength(1);
+      for (const application of ["mission-control", "verification"])
+        for (const layer of ["domain", "application"])
+          expect(
+            findArchitectureViolations(
+              source,
+              `apps/${application}/src/${layer}/forbidden.ts`,
+            ),
+          ).toHaveLength(1);
     },
   );
 
@@ -167,14 +187,14 @@ describe("dependency direction", () => {
     ["WebAssembly.instantiate(bytes);", "WebAssembly"],
     ['module["require"]("node:child_process");', "module require"],
   ])("rejects indirect production capability access via %s (%s)", (source) => {
-    for (const layer of ["domain", "application"]) {
-      expect(
-        findArchitectureViolations(
-          source,
-          `apps/mission-control/src/${layer}/forbidden.ts`,
-        ),
-      ).not.toEqual([]);
-    }
+    for (const application of ["mission-control", "verification"])
+      for (const layer of ["domain", "application"])
+        expect(
+          findArchitectureViolations(
+            source,
+            `apps/${application}/src/${layer}/forbidden.ts`,
+          ),
+        ).not.toEqual([]);
   });
 
   it.each([
@@ -207,12 +227,13 @@ describe("dependency direction", () => {
   ])(
     "does not confuse an allowed local/property name with a runtime global: %s (%s)",
     (source) => {
-      expect(
-        findArchitectureViolations(
-          source,
-          "apps/mission-control/src/application/allowed.ts",
-        ),
-      ).toEqual([]);
+      for (const application of ["mission-control", "verification"])
+        expect(
+          findArchitectureViolations(
+            source,
+            `apps/${application}/src/application/allowed.ts`,
+          ),
+        ).toEqual([]);
     },
   );
 
@@ -226,6 +247,15 @@ describe("dependency direction", () => {
       "apps/mission-control/src/application/use-case.ts",
     ],
     ['import "../../index.js";', "apps/mission-control/src/domain/model.ts"],
+    [
+      'import "../application/use-case.js";',
+      "apps/verification/src/domain/verification-run.ts",
+    ],
+    [
+      'import "../infrastructure/provider.js";',
+      "apps/verification/src/application/verify-artifact.ts",
+    ],
+    ['import "../../index.js";', "apps/verification/src/domain/model.ts"],
   ])("rejects an outward layer import from %s (%s)", (source, importer) => {
     expect(findArchitectureViolations(source, importer)).toHaveLength(1);
   });
@@ -237,6 +267,49 @@ describe("dependency direction", () => {
         "apps/mission-control/src/application/use-case.ts",
       ),
     ).toEqual([]);
+  });
+
+  it("allows Verification to use only the canonical contracts package entrypoint", () => {
+    expect(
+      findArchitectureViolations(
+        'import type { EventEnvelope } from "@patchquest/contracts"; import { createHash } from "node:crypto";',
+        "apps/verification/src/domain/verification-run.ts",
+      ),
+    ).toEqual([]);
+    expect(
+      findArchitectureViolations(
+        'import type { EventEnvelope } from "@patchquest/contracts"; import "../domain/verification-run.js";',
+        "apps/verification/src/application/verify-artifact.ts",
+      ),
+    ).toEqual([]);
+  });
+
+  it.each([
+    ['import "@patchquest/messaging";', "non-contract workspace package"],
+    [
+      'import "../../../../packages/contracts/src/index.js";',
+      "contracts source-path coupling",
+    ],
+    [
+      'import "../../../../packages/messaging/src/index.js";',
+      "relative package escape",
+    ],
+    [
+      'import "../../../../scripts/check-architecture.js";',
+      "repository script escape",
+    ],
+    [
+      'import "../../../../node_modules/typescript/lib/typescript.js";',
+      "node_modules escape",
+    ],
+  ])("rejects Verification production escape via %s (%s)", (source) => {
+    for (const layer of ["domain", "application"])
+      expect(
+        findArchitectureViolations(
+          source,
+          `apps/verification/src/${layer}/forbidden.ts`,
+        ),
+      ).not.toEqual([]);
   });
 
   it.each([
@@ -278,6 +351,7 @@ describe("dependency direction", () => {
   const proxyBridgeImporters = [
     "apps/mission-control/src/domain/proxy-detection.ts",
     "apps/workshop/src/domain/proxy-detection.ts",
+    "apps/verification/src/domain/proxy-detection.ts",
   ];
 
   it.each(proxyBridgeImporters)(
@@ -289,11 +363,11 @@ describe("dependency direction", () => {
     },
   );
 
-  it("normalizes a Windows-style proxy bridge path before matching it", () => {
+  it("normalizes a Windows-style Verification proxy bridge path before matching it", () => {
     expect(
       findArchitectureViolations(
         canonicalProxyBridge,
-        "apps\\mission-control\\src\\domain\\nested\\..\\proxy-detection.ts",
+        "apps\\verification\\src\\domain\\nested\\..\\proxy-detection.ts",
       ),
     ).toEqual([]);
   });
@@ -302,7 +376,7 @@ describe("dependency direction", () => {
     expect(
       findArchitectureViolations(
         canonicalProxyBridge,
-        "apps/mission-control/src/domain/proxy-detector.ts",
+        "apps/verification/src/domain/proxy-detector.ts",
       ),
     ).not.toEqual([]);
   });
@@ -313,6 +387,8 @@ describe("dependency direction", () => {
     "apps/mission-control/src/application/other.ts",
     "apps/mission-control/src/infrastructure/other.ts",
     "apps/workshop/src/domain/json-topology.ts",
+    "apps/verification/src/domain/json-topology.ts",
+    "apps/verification/src/application/other.ts",
     "packages/messaging/src/other.ts",
   ])(
     "rejects node:util/types everywhere outside an exact bridge: %s",
@@ -406,19 +482,16 @@ describe("dependency direction", () => {
       "import assertions",
     ],
   ])("rejects a non-canonical bridge program via %s (%s)", (source) => {
-    expect(
-      findArchitectureViolations(
-        source,
-        "apps/workshop/src/domain/proxy-detection.ts",
-      ),
-    ).toContain(
-      "apps/workshop/src/domain/proxy-detection.ts: proxy-detection bridge must contain only the exact node:util/types import and exported isRuntimeProxy predicate",
-    );
+    for (const importer of proxyBridgeImporters)
+      expect(findArchitectureViolations(source, importer)).toContain(
+        `${importer}: proxy-detection bridge must contain only the exact node:util/types import and exported isRuntimeProxy predicate`,
+      );
   });
 
   it.each([
     "apps/mission-control/src/domain/json-topology.ts",
     "apps/workshop/src/domain/json-topology.ts",
+    "apps/verification/src/domain/json-topology.ts",
   ])("allows %s to call its local bridge wrapper", (importer) => {
     expect(
       findArchitectureViolations(

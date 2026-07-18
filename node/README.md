@@ -27,9 +27,14 @@ outgoing events, and a confidential lease-response replay port makes exact
 post-commit redelivery return the original opaque token without placing it in
 the aggregate or outbox. Those behaviors are executable and offline-tested, but
 there is still no Workshop HTTP process, encrypted durable replay adapter, or
-other durable adapter. Verification and Review—including execution of
-`check-allowed-scope`—remains the separate planned Phase 4C slice. No database,
-broker, Fastify, provider SDK, or other infrastructure is present.
+other durable adapter. Phase 4C implements Verification and Review's
+`VerificationRun`/`CompletionReview`, strict translators and trusted-port result
+boundaries, persisted checkpoint and retryability semantics, exact mementos,
+transactional use-case ordering, and abstract acceptance seams. These behaviors
+are executable and offline-tested, including ownership of
+`check-allowed-scope`; live gate execution and workspace/scope resolution remain
+Phase 6 adapter work. No durable database/inbox/outbox, broker, Fastify,
+provider SDK, cancellation routing, or Phase 4C learning module is present.
 
 ```sh
 nvm use

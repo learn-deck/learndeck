@@ -45,7 +45,8 @@ attempt. Phase 2 will define each probe's exact fixture state and attempt budget
   attempt as `ARTIFACT_SUBMITTED`. The later trusted `check-allowed-scope` gate
   produces a failed verdict and Completion Review issues `REQUEST_REVISION`.
   Phase 4B's executable behavioral seam proves the Workshop half only; Phase 4C
-  verification execution remains deferred.
+  domain/application work is in progress, while live verification execution is
+  deferred to a Phase 6 adapter.
 - **Lease expiry:** let a leased attempt reach `now >= expiresAt` without
   submission; stale ownership is rejected and a new attempt is authorized only
   when budget remains.

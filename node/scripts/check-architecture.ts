@@ -16,6 +16,7 @@ const applicationNames = new Set([
 const proxyDetectionBridgeImporters = new Set([
   "apps/mission-control/src/domain/proxy-detection.ts",
   "apps/workshop/src/domain/proxy-detection.ts",
+  "apps/verification/src/domain/proxy-detection.ts",
 ]);
 
 export function normalizeImporterPath(importer: string): string {

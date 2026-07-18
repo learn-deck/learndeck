@@ -33,6 +33,12 @@ Commands, events, projections, artifact submissions, verification bindings,
 completion reviews, and human decisions carry the same digest; no context may
 silently recalculate a different gate set.
 
+Verification also checkpoints gate results in this ascending `gateId` order,
+regardless of the order in which the immutable array arrived. The digest
+algorithm does not itself imply execution, but using its already normative
+code-point order gives restart checkpoints one portable sequence. Acceptance-fixture
+`gateExecutions` lists configure outcomes and do not override that sequence.
+
 ## Version 1 commands
 
 | `commandId`           | Required input and result semantics                                                                                                                                                                          |
@@ -48,3 +54,14 @@ verification cannot obtain a gate result because its execution infrastructure
 is unavailable or the mission is cancelled. Implementations may use different
 tools, but their stack documentation MUST publish the trusted mapping and
 produce the same contract-level check result and bounded evidence fields.
+
+The Verification application accepts only the registered `commandId`; it does
+not accept a path, shell fragment, package script, or replacement implementation
+from mission input. Each run/gate checkpoint has one stable persisted
+idempotency key, reused when the abstract trusted gate-result port is retried
+after response loss. That port is keyed by the immutable verification binding,
+artifact, registry key, configured timeout/evidence caps, and checkpoint key.
+The public start command contains neither `workspaceReference` nor
+`allowedScope`: resolving those trusted materials and executing the registry
+mapping is Phase 6 adapter work, not a Phase 4C runtime claim. Phase 4C validates
+and durably checkpoints one returned result before requesting the next.

@@ -29,6 +29,7 @@ available modules begin at [Learn PatchQuest with my local agent](../../course/e
 - [ADR 0006: at-least-once delivery](decisions/0006-at-least-once-delivery.md)
 - [ADR 0007: sandboxing is deferred](decisions/0007-sandbox-deferral.md)
 - [ADR 0008: portable gate commands](decisions/0008-portable-gate-commands.md)
+- [ADR 0009: restartable verification and evidence integrity](decisions/0009-restartable-verification-evidence-integrity.md)
 
 ## Showcase design
 

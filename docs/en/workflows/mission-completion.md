@@ -10,8 +10,10 @@ is not a domain entity, broker callback, gateway concern, or shared package.
 Phase 4 delivery is deliberately split by bounded context. Phase 4A delivered
 Mission Control. Phase 4B delivers only Workshop's `Attempt`/`RunnerLease`,
 private commands, translators, memento, ports, and application ordering. Phase
-4C will implement Verification and Review's `VerificationRun` and
-`CompletionReview`.
+4C delivers Verification and Review's `VerificationRun` and
+`CompletionReview`, strict boundaries, exact mementos, abstract ports,
+transactional application ordering, and offline domain/application/acceptance
+tests. It does not claim live adapters or service execution.
 The split does not change the released public v1 inventory: twelve HTTP
 operations, three inter-context commands, and twelve published events.
 
@@ -50,10 +52,22 @@ commands, which are not exposed wholesale.
    `verification.aborted.v1`; this is not a failed gate and opens no completion
    review. `retryable` reports whether the same bound work may be attempted
    again; it never means the aborted run itself can be converted into a verdict.
+   An abort may carry a separately materialized bounded diagnostics digest and
+   detail, but it never fabricates a check result; self-verifier rejection before
+   execution carries no evidence-bundle digest.
    The trusted `check-allowed-scope` gate is where a syntactically valid
-   out-of-scope artifact fails. Phase 4B does not execute that Phase 4C gate.
-7. `CompletionReview` binds the verdict and evidence, records one immutable
-   recommendation, and publishes `review.recommendation-issued.v1`.
+   out-of-scope artifact fails. Phase 4B records no such result; Phase 4C
+   validates and consumes the trusted port result, while Phase 6 will execute
+   the live gate.
+   Phase 4C advances one trusted gate result per persisted checkpoint in ascending
+   `gateId` order; live gate execution and workspace/scope resolution remain
+   Phase 6 adapter work. Only after all results exist does it build the bundle;
+   mandatory `FAIL` or `TIMEOUT` results fail the run, while optional failures
+   remain evidence without changing a passing verdict.
+7. `CompletionReview` binds the exact verdict event and evidence, derives one
+   immutable recommendation (`PASSED` to `APPROVE`, `FAILED` to
+   `REQUEST_REVISION`), and publishes `review.recommendation-issued.v1` caused
+   by that verdict event. No review follows an abort.
 8. Mission Control presents the bound result and recommendation to a human.
    Approval of a passing result completes the mission. Rejection archives that
    attempt's artifact, terminal verification outcome, review binding, and human
@@ -101,6 +115,15 @@ conflict, not an idempotent duplicate. A verification run has one
 first-wins terminal outcome: a materially different verdict or abort is rejected
 even when it arrives under a new message ID. Each causal hop records the exact
 predecessor ID needed by the next fact.
+
+For Verification, the first accepted start command remains the direct cause of
+the terminal verdict or abort across checkpoint resumes. The same run ID and
+same normalized bound inputs under a different command ID are a semantic
+duplicate: they return the recorded run without another execution or event;
+different inputs conflict. The review recommendation is instead directly
+caused by the recorded verdict event. Private trusted cancellation can request
+the non-retryable `MISSION_CANCELLED` abort, but no fourth public inter-context
+command is added and adapter-level cancellation routing remains deferred.
 
 Workshop private requests derive direct causation from their own request IDs
 and must reuse the attempt seed's correlation ID. The aggregate transition

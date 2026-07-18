@@ -21,11 +21,11 @@
 | Attempt Outcome       | The single terminal result of an attempt.                                                                                                              | Workshop                   |
 | Revocation            | An authority action that ends a `READY` or `LEASED` attempt as `REVOKED`; it is not a lease-owner abandon or failure.                                  | Workshop                   |
 | Verification Plan     | The checks derived from the immutable acceptance gates.                                                                                                | Verification and Review    |
-| Acceptance Check      | One deterministic verification step and its bounded evidence.                                                                                          | Verification and Review    |
+| Acceptance Check      | One deterministic gate checkpoint, executed in canonical `gateId` order and committed with its stable idempotency key and bounded result evidence.     | Verification and Review    |
 | Artifact Digest       | A content-derived identity for the submitted artifact.                                                                                                 | Shared contract identifier |
 | Verdict               | `PASSED` or `FAILED`, derived only from completed acceptance checks.                                                                                   | Verification and Review    |
 | Verification Aborted  | A technical outcome where infrastructure or cancellation prevented a gate verdict; never a failed gate.                                                | Verification and Review    |
-| Evidence Bundle       | Bounded check results and digests supporting a verdict.                                                                                                | Verification and Review    |
+| Evidence Bundle       | The complete ordered check-result set and digest, assembled only after every gate has a committed result.                                              | Verification and Review    |
 | Completion Review     | Evaluation binding one exact artifact, verification run, verdict, and evidence bundle for a mission revision.                                          | Verification and Review    |
 | Review Recommendation | One immutable `APPROVE` or `REQUEST_REVISION` advice issued by Completion Review; not a human decision.                                                | Verification and Review    |
 | Controlled Replay     | An operator-authorized, idempotent, audited replacement of one dead-lettered message after optimistic state and contract checks.                       | Operations contract        |

@@ -55,9 +55,18 @@ offline-tested, including aggregate-owned event provenance, confidential
 lease-response replay interfaces, and the behavioral seam where Workshop
 accepts an out-of-scope artifact for later independent verification. This is
 domain and application behavior, not an HTTP service or durable delivery claim.
-Verification and Review—including execution of `check-allowed-scope`—remains the
-separate planned Phase 4C slice; encrypted durable replay storage and other
-adapters are not implemented, and this is not a public release.
+Phase 4C now makes Verification and Review's `VerificationRun`,
+`CompletionReview`, strict public/private and trusted-port boundaries,
+checkpoint ordering, check-result/evidence handling, trusted retryability,
+idempotency, provenance, exact mementos, transactional use-case ordering, and
+abstract acceptance seams executable and offline-tested.
+The context owns `check-allowed-scope`, but live workspace/scope resolution and
+gate execution remain Phase 6 adapter work because the public start command
+carries neither material.
+Phase 5 durable persistence/inbox/outbox and encrypted replay storage, Phase 6
+Fastify/database/broker/provider adapters and cancellation wiring, and the
+corresponding learning modules are not implemented. This is not a public
+release.
 
 PatchQuest is a fresh, independently authored project. No earlier course files,
 package metadata, configuration, or Git history are imported. Earlier courses
