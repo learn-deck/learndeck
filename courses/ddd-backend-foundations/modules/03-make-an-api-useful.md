@@ -48,8 +48,10 @@ formatting difficult to test and change independently?
    known domain failures to stable responses.
 4. Add a status/health route. If your project includes a tiny frontend, have it
    call or display that route; it is a visibility aid, not the course product.
-5. Ask the agent to check the documented Node.js development command. Run
-   `npm run dev` yourself and record the route, command, and observed result.
+5. If a guide is connected, ask it to check the documented Node.js development
+   command. Run `npm run dev` yourself and record the route, command, and
+   observed result; otherwise keep that record in the evidence form or in
+   `NOTES.md` in your workspace.
 
 Use the HTTP references in [the source index](../../../references/source-index.md#http)
 to reason about resource semantics and problem responses.
@@ -73,3 +75,7 @@ Before answering, check that:
 - Malformed transport input stops at the HTTP boundary with a deliberate response.
 - A double booking or other invariant failure produces a distinct stable response.
 - You recorded the command, route, and observed results in your workspace or answer.
+
+After you submit your answer, choose **Mark as self-reviewed and continue** if
+you are working without a connected guide. Guide evaluation is optional, not
+required; if a guide is connected, you may request feedback instead.

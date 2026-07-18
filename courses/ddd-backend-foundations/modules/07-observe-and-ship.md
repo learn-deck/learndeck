@@ -50,8 +50,9 @@ unsafe?
 3. Write a short runbook in your workspace: dependencies, development command,
    test command, configuration required, and one expected failure signal.
 4. Run the server and test suite yourself; record the commands and outcomes.
-5. Ask the agent for an evidence review limited to this course's boundaries,
-   tests, failure decision, and runbook.
+5. If a guide is connected, ask it for an evidence review limited to this
+   course's boundaries, tests, failure decision, and runbook; otherwise keep
+   that review in the evidence form or in `NOTES.md` in your workspace.
 
 ## Final evidence
 
@@ -89,3 +90,7 @@ Before answering, check that:
 - A status route runs separately from a business-correctness check.
 - A workspace runbook names dependencies, development and test commands, configuration, and one failure signal.
 - The final evidence list contains a small repository, runnable status route, passing suite, and your own architecture explanation.
+
+After you submit your answer, choose **Mark as self-reviewed and continue** if
+you are working without a connected guide. Guide evaluation is optional, not
+required; if a guide is connected, you may request feedback instead.

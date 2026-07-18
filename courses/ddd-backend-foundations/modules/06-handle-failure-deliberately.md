@@ -73,3 +73,7 @@ Before answering, check that:
 - One expected domain failure is explicit in the application result.
 - One side effect has a named idempotency or deduplication boundary and retry rule.
 - A duplicate or retry decision has a test and recorded result.
+
+After you submit your answer, choose **Mark as self-reviewed and continue** if
+you are working without a connected guide. Guide evaluation is optional, not
+required; if a guide is connected, you may request feedback instead.

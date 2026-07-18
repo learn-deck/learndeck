@@ -128,3 +128,7 @@ Before answering, check that:
 - A persistence adapter maps storage rows to domain objects at its edge.
 - One transaction boundary is written down for a booking use case.
 - Tests and the status route were run, with persistence-specific results recorded honestly.
+
+After you submit your answer, choose **Mark as self-reviewed and continue** if
+you are working without a connected guide. Guide evaluation is optional, not
+required; if a guide is connected, you may request feedback instead.

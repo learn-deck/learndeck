@@ -99,3 +99,7 @@ Before answering, check that:
 - A use-case test runs through the in-memory adapter.
 - An HTTP boundary test covers one deliberate input or error mapping.
 - `npm test` was run and each test's evidence and limitation are recorded.
+
+After you submit your answer, choose **Mark as self-reviewed and continue** if
+you are working without a connected guide. Guide evaluation is optional, not
+required; if a guide is connected, you may request feedback instead.
