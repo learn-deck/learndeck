@@ -11,7 +11,7 @@
     "mcp": "bun src/mcp.ts",
     "seed": "bun src/seed.ts",
     "test": "bun test",
-    "verify": "bun test && bun build ./src/server.ts --target=bun --outdir=/private/tmp/learndeck-build && bun build ./src/mcp.ts --target=bun --outdir=/private/tmp/learndeck-build && bun build ./src/seed.ts --target=bun --outdir=/private/tmp/learndeck-build && bun build ./src/integrations.ts --target=bun --outdir=/private/tmp/learndeck-build && bun build ./public/app.js --target=browser --outdir=/private/tmp/learndeck-build"
+    "verify": "bun test && bun build ./src/server.ts --target=bun --outdir=.learndeck/verify-build && bun build ./src/mcp.ts --target=bun --outdir=.learndeck/verify-build && bun build ./src/seed.ts --target=bun --outdir=.learndeck/verify-build && bun build ./src/integrations.ts --target=bun --outdir=.learndeck/verify-build && bun build ./public/app.js --target=browser --outdir=.learndeck/verify-build"
   },
   "keywords": [
     "course-tracker",
