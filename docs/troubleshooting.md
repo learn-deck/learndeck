@@ -82,10 +82,10 @@ Codex and Claude Code receive the entry through their CLI commands; Cursor's
 JSON file is updated by merging only the `learndeck` entry. The MCP entry
 points to this clone's `src/mcp.ts` and uses the running Bun executable.
 
-To disconnect a guide, use `DELETE /api/integrations/:id/connect`. LearnDeck
-removes only its own `learndeck` entry and preserves other MCP entries. The
-browser currently exposes connect controls but no disconnect control, so use
-the local API when you need to disconnect one.
+To disconnect a guide, use the Disconnect control on the AI guides screen or
+call `DELETE /api/integrations/:id/connect`. Either way LearnDeck removes only
+its own `learndeck` entry, preserves other MCP entries, and names the config
+file it changed.
 
 **Fix:** Fully restart the selected Codex, Claude Code, or Cursor host, then
 ask it to use LearnDeck. If it was not connected from the app, return to the
@@ -136,8 +136,9 @@ UI and MCP process must use the same override.
 - `DELETE /api/paths/:id` resets that path, including its attempts, evidence,
   and progress rows.
 
-The browser currently has no export or reset button, so call these local API
-routes directly when needed. For a full manual backup, stop the app and copy
+The browser exposes both as Export progress and Reset path controls on the
+course surface; the API routes above do the same thing directly. For a full
+manual backup, stop the app and copy
 the database file to a safe location. To reset all local progress, stop the app
 and delete `.learndeck/progress.db`; the next start creates a new empty
 database. Deleting it removes all local learning paths, section progress,
