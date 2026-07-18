@@ -50,8 +50,21 @@ unsafe?
 3. Write a short runbook in your workspace: dependencies, development command,
    test command, configuration required, and one expected failure signal.
 4. Run the server and test suite yourself; record the commands and outcomes.
-5. Ask the agent for a release-readiness review limited to this course's
-   evidence: boundaries, tests, failure decision, and runbook.
+5. Ask the agent for an evidence review limited to this course's boundaries,
+   tests, failure decision, and runbook.
+
+## Final evidence
+
+Finish this course with four concrete items:
+
+- A small, honest repository containing only the code and documentation you can explain.
+- A runnable status route, with the command and observed response recorded.
+- A passing test suite, with its command and scope stated honestly.
+- A short architecture explanation in your own words covering the domain, ports, adapters, and one trade-off.
+
+This is **not production readiness**. It is a bounded learning project with
+evidence that another developer can inspect and run; it does not prove scale,
+security, reliability, or operational readiness.
 
 Use [OpenTelemetry's observability overview](../../../references/source-index.md#observability)
 and [The Twelve-Factor App](../../../references/source-index.md#operations) as
@@ -67,3 +80,12 @@ not log, and one condition your health route cannot prove.
 
 From a cold checkout of your workspace, what minimum instructions let another
 developer run tests and the development server safely?
+
+## Definition of done
+
+Before answering, check that:
+
+- Structured logs include a useful operation signal while omitting secrets and unnecessary personal data.
+- A status route runs separately from a business-correctness check.
+- A workspace runbook names dependencies, development and test commands, configuration, and one failure signal.
+- The final evidence list contains a small repository, runnable status route, passing suite, and your own architecture explanation.

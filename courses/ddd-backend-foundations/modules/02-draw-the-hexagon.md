@@ -53,6 +53,68 @@ direction has been reversed? What makes that costly to change or test?
 5. Confirm that the inner code has no imports of the web framework, SQL driver,
    or environment package.
 
+## Worked example: let the inside name the port
+
+Here is one small dependency decision fully worked for `CreateBooking`:
+
+```ts
+type Booking = { roomId: string; startsAt: number; endsAt: number };
+
+export interface BookingRepository {
+  findOverlapping(roomId: string, startsAt: number, endsAt: number): Promise<Booking | null>;
+}
+
+export class InMemoryBookingRepository implements BookingRepository {
+  constructor(private readonly bookings: Booking[]) {}
+
+  async findOverlapping(roomId: string, startsAt: number, endsAt: number) {
+    return this.bookings.find((booking) =>
+      booking.roomId === roomId && booking.startsAt < endsAt && startsAt < booking.endsAt,
+    ) ?? null;
+  }
+}
+```
+
+Your next analogous decision: choose the next capability this use case needs,
+such as saving a new booking. Write its port signature and the in-memory method,
+keeping the operation named after booking behaviour rather than SQL.
+
+Why this decision? The use case asks whether the room and time are available,
+so the port exposes exactly that capability. The in-memory adapter implements
+the same inside-facing contract; a database adapter can replace it at the edge
+without changing the booking decision.
+
+## What this is NOT
+
+The wrong direction makes the domain depend on the HTTP framework:
+
+```ts
+// domain/booking.ts — wrong
+import type { Request } from "express";
+
+export function canBook(request: Request): boolean {
+  return request.body.roomId !== undefined;
+}
+```
+
+The correct direction translates HTTP at the edge and keeps the domain plain:
+
+```ts
+// domain/booking.ts — right
+type BookingCommand = { roomId: string; startsAt: number; endsAt: number };
+
+export function canBook(command: BookingCommand, existing: readonly Booking[]) {
+  return existing.every((booking) =>
+    booking.roomId !== command.roomId || booking.endsAt <= command.startsAt || command.endsAt <= booking.startsAt,
+  );
+}
+```
+
+The wrong version lets Express's request shape reach a domain decision, so the
+rule depends on transport. The right version accepts domain data; an outer
+adapter translates the request and the inner code remains callable without
+Express.
+
 Use the original [Ports and Adapters article](../../../references/source-index.md#hexagonal)
 for the direction, not as a folder-name ritual.
 
@@ -66,3 +128,12 @@ database's API?
 
 Classify each as a port or adapter: `TaskRepository`, PostgreSQL query client,
 system clock, and Fastify handler.
+
+## Definition of done
+
+Before answering, check that:
+
+- One use case calls a port owned by the inner application/domain boundary.
+- One in-memory adapter implements that port and is wired at the outer composition point.
+- The inner code has no web framework, SQL driver, or environment-package imports.
+- You can name the caller, port owner, adapter, and dependency direction for one booking decision.
