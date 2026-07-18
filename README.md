@@ -1,88 +1,69 @@
-# PatchQuest: an Agent Workshop
+# PatchQuest: Self-Learn Backend Development with DDD and Hexagonal Architecture in Node.js, Go, and Bun
 
-English · [Español](docs/es/README.md)
+PatchQuest is a Markdown-only course for learning to build a small backend
+well: model the domain first, put infrastructure behind ports, test behaviour,
+persist deliberately, and make the system observable. Choose one path—**Node.js
++ TypeScript**, **Go**, or **Bun + TypeScript**—and build the same ideas in your
+own workspace.
 
-PatchQuest is a technology-neutral reference for learning domain-driven design,
-hexagonal architecture, and reliable microservices through a current agentic
-workflow.
+There is deliberately no starter application, generated schema, lockfile, or
+hidden test harness in this repository. The course provides references,
+questions, and a local-agent protocol. Your code belongs in the workspace you
+choose; the course tracks that path in a private local SQLite database.
 
-## Clone it. Open your agent. Say “Let's start.”
+## Start with a coding agent
 
-PatchQuest is designed as a first-person, repository-native course. After
-cloning it, open the repository with a coding agent that reads `AGENTS.md` and
-local Agent Skills, then say:
+Clone this repository, open it with a coding agent that reads `AGENTS.md`, and
+say:
 
 > Let's start.
 
-The local [`learn-patchquest`](.agents/skills/learn-patchquest/SKILL.md) guide
-takes you through one visual, hands-on module at a time. You inspect the real
-contracts, make bounded changes, retrieve and self-evaluate what you learned,
-run the real verification gates, and resume from an ignored local progress
-record with scheduled reviews. Start with
-[my guided learning path](course/en/README.md).
+The agent first asks you to choose **Node.js + TypeScript**, **Go**, or **Bun +
+TypeScript**. It then confirms your code workspace, checks only that path’s
+dependencies, creates or resumes `<workspace>/.patchquest/progress.db`, and
+suggests the right development-server command for your project. It does not
+install dependencies or start a server without your approval.
 
-A human opens a coding mission. A runner leases an attempt and submits a patch.
-An independent verifier checks that exact artifact. A human decides whether the
-verified result completes the mission.
+## The self-learn protocol
 
-The design makes the difficult parts visible: immutable acceptance gates,
-renewable leases, bounded retries, idempotent submission, independent
-verification, human approval, and end-to-end audit history.
+The course uses a short evidence-based loop:
 
-## Start here
+1. Answer a small question from memory before reading the next source.
+2. Read one compact reference or inspect one bounded code area.
+3. Write, structure, run, or test one small piece in your chosen workspace.
+4. Explain why it works, self-check it, and answer an exit question.
+5. Receive source-linked feedback, revise if needed, and return later for a
+   related recall question.
 
-- [Learn with your local agent](course/en/README.md)
-- [Domain guide](docs/en/README.md)
-- [Canonical shipping-quote mission](docs/en/workflows/canonical-demo.md)
-- [Context map](docs/en/domain/context-map.md)
-- [Language-neutral contracts](contracts/README.md)
-- [Node implementation status](node/README.md)
+This is effective because retrieval exposes gaps that rereading can hide,
+spaced revisits make knowledge more durable, worked examples can be faded as
+knowledge grows, and specific feedback makes a correction actionable. Those
+are design constraints, not a promise about anyone’s speed or retention; see
+[the learning protocol](references/learning-protocol.md) and its primary
+sources.
 
-The root is implementation-neutral. `node/` will become the first complete
-implementation; future stacks must satisfy the same root contracts and
-acceptance scenarios.
+## Course map
 
-## Current status
+| Step | Learn by doing | Questions included |
+| --- | --- | --- |
+| [00 · Start a path](course/modules/00-start-a-path.md) | Choose language, workspace, database, and a visible dev loop. | Setup and path questions |
+| [01 · Model the domain](course/modules/01-model-the-domain.md) | Define language, use cases, and invariants before routes. | Ownership and invariant questions |
+| [02 · Draw the hexagon](course/modules/02-draw-the-hexagon.md) | Separate domain, application, ports, and adapters. | Dependency-direction questions |
+| [03 · Make an API useful](course/modules/03-make-an-api-useful.md) | Build one thin endpoint and a minimal visible status surface. | Boundary and error questions |
+| [04 · Persist through a port](course/modules/04-persist-through-a-port.md) | Add a repository port and replaceable adapter. | Transaction and persistence questions |
+| [05 · Prove behaviour](course/modules/05-prove-behaviour.md) | Add fast domain tests and a few boundary tests. | Test-value questions |
+| [06 · Handle failure deliberately](course/modules/06-handle-failure-deliberately.md) | Model expected failures, idempotency, and retries. | Failure-classification questions |
+| [07 · Observe and ship](course/modules/07-observe-and-ship.md) | Add useful logs, a health check, and a small release checklist. | Operational reasoning questions |
 
-PatchQuest has a contract-first foundation and an executable Node verification
-spine. The English domain model, architecture, decisions, contract inventory,
-and sixteen deterministic acceptance scenarios are available. Phase 4A makes
-the shared TypeScript v1 transport boundary and Mission Control's Mission and
-completion-process behavior executable and offline-tested. Phase 4B likewise
-makes Workshop's `Attempt`/`RunnerLease`, strict boundaries, versioned memento,
-ports, transactional use-case ordering, and four-event factory executable and
-offline-tested, including aggregate-owned event provenance, confidential
-lease-response replay interfaces, and the behavioral seam where Workshop
-accepts an out-of-scope artifact for later independent verification. This is
-domain and application behavior, not an HTTP service or durable delivery claim.
-Phase 4C now makes Verification and Review's `VerificationRun`,
-`CompletionReview`, strict public/private and trusted-port boundaries,
-checkpoint ordering, check-result/evidence handling, trusted retryability,
-idempotency, provenance, exact mementos, transactional use-case ordering, and
-abstract acceptance seams executable and offline-tested.
-The context owns `check-allowed-scope`, but live workspace/scope resolution and
-gate execution remain Phase 6 adapter work because the public start command
-carries neither material.
-Phase 5 durable persistence/inbox/outbox and encrypted replay storage, Phase 6
-Fastify/database/broker/provider adapters and cancellation wiring, and the
-corresponding learning modules are not implemented. This is not a public
-release.
+## References
 
-PatchQuest is a fresh, independently authored project. No earlier course files,
-package metadata, configuration, or Git history are imported. Earlier courses
-are used only to identify lessons worth teaching; the provenance checks are
-recorded in [ADR 0001](docs/en/decisions/0001-independent-origin.md).
+- [Language paths and dependency checks](references/language-paths.md)
+- [Per-workspace progress database](references/progress-database.md)
+- [Learning protocol and research sources](references/learning-protocol.md)
+- [Architecture and backend source index](references/source-index.md)
 
-## Principles
+## Repository promise
 
-- Domain language is provider-neutral; coding agents are adapters.
-- Producing, verifying, and approving work are separate responsibilities.
-- At-least-once delivery is expected, so handlers are idempotent.
-- Traces explain behavior but never determine domain truth.
-- The default demo uses trusted, repository-owned fixtures, not arbitrary host
-  code execution.
-
-## License
-
-Code is licensed under [Apache License 2.0](LICENSE). Documentation is currently
-distributed under the same repository license.
+This repository contains only references and Markdown. Learner code, generated
+files, local progress, and dependencies live outside it. The public course page
+is at [kevinmamaqi.com/patchquest](https://kevinmamaqi.com/patchquest/).

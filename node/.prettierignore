@@ -1,5 +1,0 @@
-node_modules
-**/dist
-package-lock.json
-../.agents/skills/learn-patchquest/assets/session-log.md
-../.agents/skills/learn-patchquest/references/evaluated-learning-log.example.md

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Learn PatchQuest"
-  short_description: "Learn PatchQuest one guided module at a time"
-  default_prompt: "Use $learn-patchquest to start or continue my guided PatchQuest course."

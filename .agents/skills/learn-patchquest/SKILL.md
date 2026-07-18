@@ -1,69 +1,75 @@
 ---
 name: learn-patchquest
-description: Guide or resume a learner through PatchQuest one evidence-based activity at a time inside their own clone. Use when the learner explicitly asks to start, learn, review, or continue PatchQuest; asks for the next PatchQuest module; returns for a scheduled PatchQuest retrieval; or says a generic "continue" while `.patchquest/progress.json` already exists in the current repository.
+description: Guide a learner through PatchQuest's Node.js + TypeScript, Go, or Bun + TypeScript backend path one small, evidence-backed action at a time. Use when the learner says "Let's start", asks to learn or continue PatchQuest, asks for the next step, or returns with a PatchQuest workspace.
 ---
 
 # Learn PatchQuest
 
-Act as the learner's local guide. Let the learner retrieve, inspect, change,
-explain, and verify; do not lecture through the course or silently do exercises.
+PatchQuest is a self-learn backend course. The course repository is Markdown
+only; the learner owns a separate code workspace and its private local progress
+database. Teach, evaluate, and record—do not silently build the course for the
+learner.
 
-## Start or resume
+## Start exactly this way
 
-1. Locate the repository root and read `AGENTS.md`.
-2. Read `course/en/module-catalog.json`, then
-   `references/learning-protocol.md` completely.
-3. When no local state exists and the learner begins, run
-   `cd node && npm run learning:init`. `.patchquest/progress.json` is the sole
-   authority. When it exists, validate it and roll over to one fresh open
-   session as the protocol specifies. If one retrieval is
-   `awaiting_revision`, or if recovery is `pending` or
-   `bytes_restored_recheck_pending`, resume that same open session and saved
-   context; do not roll over until the correction or recovery is finalized. A missing or stale
-   `.patchquest/learning-log.md` is repaired from progress and never blocks
-   startup.
-4. Read only the selected ready module and the smallest sources needed for its
-   next activity. Never imply that a `planned` module is executable.
-5. On first setup, use `node/.nvmrc`, require Node 24.11.0 and npm 11.6.1, then
-   help run `cd node && npm ci && npm run verify`; record actual results,
-   including blockers.
+1. Read `AGENTS.md`, `README.md`, `references/language-paths.md`, and
+   `references/progress-database.md`.
+2. If the learner said only “Let's start,” ask exactly this and wait:
 
-When the learner says only “let's start,” or says “continue” with existing
-PatchQuest progress, begin with exactly one small action from state or the
-protocol. Do not answer with a course dump or module menu.
+   > Which path do you want to follow today: **Node.js + TypeScript**, **Go**,
+   > or **Bun + TypeScript**?
 
-## Guide the activity
+3. After their answer, ask for an existing code workspace or offer a concrete
+   sibling path such as `../patchquest-node`, `../patchquest-go`, or
+   `../patchquest-bun`. Confirm the path before reading or writing it.
+4. Run only the read-only checks for that language. Report present and missing
+   dependencies clearly. Do not install anything unless the learner asks.
+5. Check `sqlite3 --version`. With permission, initialise or open
+   `<workspace>/.patchquest/progress.db` by following the reference. Store the
+   chosen language and absolute workspace path. If SQLite is unavailable, stop
+   before teaching because the promised local progress record cannot be kept.
+6. Offer the language-appropriate `dev` command as a suggestion; do not start
+   it yourself. If there is no project yet, say that step 00 will create the
+   minimal visible surface first.
+7. Read only module 00. Ask its diagnostic question. Give one next action, not
+   a list of the whole course.
 
-- Adapt support per concept: worked example, faded cue, then independent work.
-- Begin each ready module with its no-stakes diagnostic prompt before active
-  work or any proof/check. After bounded activities and every required passing check, ask the
-  separate source-closed mastery prompt with confidence, self-explanation, and
-  criterion-keyed self-evaluation; wait for each attempt before evaluating it.
-- Give high-information correction and separately evaluate the revised
-  retrieval when an answer is partial or wrong.
-- Persist loop phase, stable record IDs, one open session, and pending action
-  after every learner turn. Propose changes in a separate draft, then use
-  `npm run learning:checkpoint` to validate the append-only transition and
-  atomically replace the authority. Read
-  `course/learning-state.schema.json` and
-  `references/evaluated-state.example.json` before the first state mutation.
-- Execute required gates only through `npm run learning:check`; never author a
-  check record by hand. The command records the actual repository revision,
-  exit code, catalogued command, and canonical gate digest.
-- Complete or reschedule a due review only after a new evaluated
-  `delayed-review` attempt (and accurate revision when needed) for that exact
-  prompt in the current session.
-- Run only safe repository commands. Never execute untrusted submitted code or
-  weaken a gate to complete a lesson.
-- Treat ignored `.patchquest/progress.json` as the only learner authority and
-  `.patchquest/learning-log.md` as a disposable generated view. Follow
-  `references/state-migration.md` for atomic draft commits, backups, and
-  unsupported versions. Never edit the generated view.
-- Finish with one bounded pending action and the scheduled review rationale.
+## One learning turn
 
-The learner owns the work. Do not say “you built” for something they only read,
-and do not mark completion without evidence-linked activity runs, rubric
-criteria, required checks, a post-proof accurate mastery retrieval or revision,
-first-person explanation, and a queued delayed review. Automated validation
-checks structure, chronology, and links; it does not prove that prose answers
-are semantically correct. Evaluate them against the named repository sources.
+1. Read the selected module and only the source it names.
+2. Ask its diagnostic question before explaining the material. Wait for an
+   answer.
+3. Record the answer, the learner's confidence, your feedback, result, and
+   cited source in the workspace database.
+4. Give one bounded action. It may ask the learner to create a directory, a
+   file, a test, or a code structure **inside the confirmed workspace**. Record
+   every requested path as an artifact.
+5. Ask the exit question only after the requested command or code evidence is
+   available. Compare the answer with the module and named source, not with an
+   imagined implementation.
+6. If correct, record `correct` and complete the step when its evidence exists.
+   If partial or incorrect, record that result, name the precise gap, cite one
+   source, ask for a source-closed revision, and record the revision as a new
+   attempt. Do not mark completion until the revision is accurate.
+7. Leave one next action and one related review question for a later session.
+
+## Evaluation rubric
+
+Use plain, specific feedback:
+
+- **Target:** the idea or evidence the question asked for.
+- **Observed:** what the learner actually supplied.
+- **Gap:** one concrete missing or incorrect distinction.
+- **Correction:** a source-linked explanation and a smaller retry.
+- **Next:** one action the learner can complete now.
+
+Do not award correctness merely for confident language, a passing command, or a
+plausible architecture diagram. Do not call generic generated code production
+ready. The agent evaluates meaning; the learner still owns engineering judgment.
+
+## Resume
+
+When a learner returns, ask for or read their confirmed workspace. Open only
+that path’s database. Continue an incomplete step first; otherwise ask the
+stored related-review question before opening a new step. Never mix progress
+between paths or languages.

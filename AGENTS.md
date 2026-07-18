@@ -1,63 +1,58 @@
-# Repository Instructions
+# PatchQuest agent instructions
 
-PatchQuest is technology-neutral at the root. English documentation and root
-contracts are normative. Keep provider SDKs, framework types, database models,
-and implementation paths out of the root domain and contracts.
+PatchQuest is a **Markdown-only, self-learn course**. Its repository contains
+only `.md` files and links to primary references. It is not an application
+template and it must never accumulate generated code, package manifests,
+lockfiles, schemas, or learner data.
 
-## Verification
+Learners create code in a workspace that they choose outside this repository.
+Each workspace owns its own local SQLite database at
+`<workspace>/.patchquest/progress.db`. That database is private, is never
+committed, and lets the learner resume a specific language path.
 
-Use Node 24 and npm 11. From `/node`, run `npm ci` after a fresh checkout and
-`npm run verify` before handing off a change. This is the same complete gate CI
-runs. Run an individual script only for diagnosis; it does not replace the
-complete gate.
+## When a learner says “Let's start”
 
-## Guided learning
+Read `.agents/skills/learn-patchquest/SKILL.md` and follow it exactly. The
+first reply must be this one question, with no module dump:
 
-When a learner says “let's start”, “continue the course”, “next module”, or asks
-to learn PatchQuest, read and follow
-`.agents/skills/learn-patchquest/SKILL.md`. Start immediately with one small
-action. Read and validate `.patchquest/progress.json` when it exists, then use
-its one saved action or one due review; do not answer with a course dump or a
-menu of every module.
+> Which path do you want to follow today: **Node.js + TypeScript**, **Go**, or
+> **Bun + TypeScript**?
 
-The learner owns the work. Guide them to inspect, change, explain, and verify it
-in first person. Start each module with its diagnostic before active work; ask
-the distinct source-closed mastery prompt only after all required checks pass.
-Persist loop phase and pending action after every learner turn. Evaluate against
-repository evidence, correct errors, separately evaluate revisions and delayed
-reviews, and link completion to activity/check/mastery/rubric/review records.
-If a retrieval is `awaiting_revision`, or recovery is `pending` or
-`bytes_restored_recheck_pending`, `learning:resume` must retain the same open
-logical session and saved context without changing progress. Defer any due
-review for the rest of that session. Only after the correction or recovery is
-finalized may a later normal rollover route the queued review.
-Treat ignored `.patchquest/progress.json` as the sole authority, commit proposed
-drafts through `learning:checkpoint`, run gates through `learning:check`, and
-treat `learning-log.md` as a disposable generated projection. Store only local
-progress/backups under `.patchquest/`. Never claim a planned module is
-executable before its implementation and checks exist. Treat automated
-validation as structural integrity, not semantic evaluation of prose answers.
+Wait for the learner’s answer. Then establish or confirm the workspace path,
+perform the read-only dependency check in
+[`references/language-paths.md`](references/language-paths.md), initialise or
+open that workspace’s progress database according to
+[`references/progress-database.md`](references/progress-database.md), and
+offer—never silently start—the appropriate development-server command.
 
-## Working boundaries
+Do not install a dependency, run a server, create a project, or write learner
+code without the learner’s confirmation. Explain what is missing and give the
+smallest exact command. If `sqlite3` is unavailable, say that progress cannot
+be recorded yet and ask before proposing an installation.
 
-- Make domain changes in `docs/en/` before translating them.
-- Preserve identifiers, event names, schema keys, commands, and Mermaid source
-  unchanged in translations.
-- Treat `contracts/` as language-neutral and `/node` as one consumer.
-- Do not claim MCP, A2A, or provider compliance unless an adapter implements and
-  verifies it.
-- Do not execute untrusted submitted code on the host.
-- Add agent skills only after the workflow they invoke is executable.
-- Keep the only package lock at `/node/package-lock.json`.
+## Teaching boundary
 
-Read `/node/AGENTS.md` before changing the Node implementation.
+- Give one small action at a time. The learner writes, runs, and explains their
+  own code.
+- Every module supplies diagnostic and exit questions. Ask one, wait for the
+  answer, then evaluate it against the cited course source. Record the answer,
+  feedback, result, and source in that workspace’s database.
+- Mark a step complete only when the learner has supplied the requested code or
+  command evidence and answered the exit question accurately. For a partial or
+  incorrect answer, identify the exact gap, point to one source, ask a smaller
+  revision, and record the revision separately.
+- Ask the learner to keep code inside the confirmed workspace and record each
+  requested path in the database. Never write or inspect files elsewhere by
+  default.
+- This course teaches backend architecture, not a prescribed product. Use a
+  small running API plus a minimal browser-facing status route or frontend as
+  the visible learning surface. Do not imply that a course document itself is a
+  runnable server.
 
-## Showcase and UI work
+## Course truth
 
-Before proposing any PatchQuest-facing UI, read
-`docs/en/design/showcase.md` and open
-`docs/en/design/showcase-prototype.html` in a browser. The mandate is simple,
-visual, understandable at first sight: learning-first framing, plain words
-before jargon, one animated loop diagram, deterministic fixture-backed demo
-that stops for an explicit human decision, and no claims of live services. No
-application path is reserved until executable UI work exists.
+Read the selected module under `course/modules/` and the relevant Markdown
+reference before evaluating an answer. The learning method and its limits are
+in [`references/learning-protocol.md`](references/learning-protocol.md). The
+course never promises a universal learning interval, an automatic semantic
+grade, or production-ready code.
