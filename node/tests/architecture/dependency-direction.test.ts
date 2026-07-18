@@ -27,6 +27,44 @@ describe("dependency direction", () => {
   });
 
   it.each([
+    ['import "@patchquest/mission-control";', "package import"],
+    [
+      'export * from "../../mission-control/src/index.js";',
+      "relative re-export",
+    ],
+    ['void import("@patchquest/verification");', "dynamic import"],
+  ])(
+    "keeps Workshop isolated from other applications via %s (%s)",
+    (source) => {
+      expect(
+        findArchitectureViolations(
+          source,
+          "apps/workshop/src/application/forbidden.ts",
+        ),
+      ).not.toEqual([]);
+    },
+  );
+
+  it.each([
+    ['import Fastify from "fastify";', "framework"],
+    ['import pg from "pg";', "database"],
+    ['import amqp from "amqplib";', "broker"],
+    ['import OpenAI from "openai";', "provider SDK"],
+    ['import { spawn } from "node:child_process";', "host process"],
+    ['import { request } from "node:https";', "host network"],
+    ['fetch("https://example.test");', "global network"],
+    ['process.getBuiltinModule("node:child_process");', "runtime recovery"],
+  ])("rejects Workshop production capability mutation %s (%s)", (source) => {
+    for (const layer of ["domain", "application"])
+      expect(
+        findArchitectureViolations(
+          source,
+          `apps/workshop/src/${layer}/forbidden.ts`,
+        ),
+      ).not.toEqual([]);
+  });
+
+  it.each([
     ['import Fastify from "fastify";', "Fastify"],
     ['import pg from "pg";', "PostgreSQL"],
     ['import amqp from "amqplib";', "RabbitMQ"],
@@ -230,19 +268,173 @@ describe("dependency direction", () => {
     ).toEqual([]);
   });
 
-  it("allows node:util/types only for trap-free proxy detection in json-topology", () => {
-    const source = 'import { isProxy } from "node:util/types";';
+  const canonicalProxyBridge = [
+    'import { isProxy } from "node:util/types";',
+    "",
+    "export function isRuntimeProxy(value: object): boolean {",
+    "  return isProxy(value);",
+    "}",
+  ].join("\n");
+  const proxyBridgeImporters = [
+    "apps/mission-control/src/domain/proxy-detection.ts",
+    "apps/workshop/src/domain/proxy-detection.ts",
+  ];
+
+  it.each(proxyBridgeImporters)(
+    "accepts the exact bounded-context proxy bridge at %s",
+    (importer) => {
+      expect(
+        findArchitectureViolations(canonicalProxyBridge, importer),
+      ).toEqual([]);
+    },
+  );
+
+  it("normalizes a Windows-style proxy bridge path before matching it", () => {
+    expect(
+      findArchitectureViolations(
+        canonicalProxyBridge,
+        "apps\\mission-control\\src\\domain\\nested\\..\\proxy-detection.ts",
+      ),
+    ).toEqual([]);
+  });
+
+  it("rejects the canonical bridge program at a non-canonical path", () => {
+    expect(
+      findArchitectureViolations(
+        canonicalProxyBridge,
+        "apps/mission-control/src/domain/proxy-detector.ts",
+      ),
+    ).not.toEqual([]);
+  });
+
+  it.each([
+    "apps/mission-control/src/domain/json-topology.ts",
+    "apps/mission-control/src/domain/other.ts",
+    "apps/mission-control/src/application/other.ts",
+    "apps/mission-control/src/infrastructure/other.ts",
+    "apps/workshop/src/domain/json-topology.ts",
+    "packages/messaging/src/other.ts",
+  ])(
+    "rejects node:util/types everywhere outside an exact bridge: %s",
+    (importer) => {
+      expect(
+        findArchitectureViolations(
+          'import { isProxy } from "node:util/types";',
+          importer,
+        ),
+      ).not.toEqual([]);
+    },
+  );
+
+  it.each([
+    ['import types from "node:util/types";', "default import"],
+    ['import * as types from "node:util/types";', "namespace import"],
+    [
+      'import { isProxy as detectProxy } from "node:util/types";',
+      "aliased import",
+    ],
+    ['import { isProxy, isDate } from "node:util/types";', "extra binding"],
+    ['import { isDate } from "node:util/types";', "wrong binding"],
+    ['import type { isProxy } from "node:util/types";', "type-only import"],
+    ['export { isProxy } from "node:util/types";', "re-export"],
+    ['export * from "node:util/types";', "wildcard re-export"],
+    ['void import("node:util/types");', "dynamic import"],
+    ['import types = require("node:util/types");', "TypeScript import-equals"],
+  ])("rejects a non-exact host import via %s (%s)", (source) => {
+    for (const importer of proxyBridgeImporters)
+      expect(findArchitectureViolations(source, importer)).not.toEqual([]);
+  });
+
+  it.each([
+    [
+      'import { isProxy } from "node:util/types"; export { isProxy };',
+      "raw named export",
+    ],
+    [
+      'import { isProxy } from "node:util/types"; export default isProxy;',
+      "direct default export",
+    ],
+    [
+      'import { isProxy } from "node:util/types"; export const detector = { isProxy };',
+      "container export",
+    ],
+    [
+      'import { isProxy } from "node:util/types"; const detector = isProxy; export { detector };',
+      "alias export",
+    ],
+    [
+      'import { isProxy } from "node:util/types"; export function isRuntimeProxy(value: object): boolean { return (() => isProxy(value))(); }',
+      "capturing closure call",
+    ],
+    [
+      'import { isProxy } from "node:util/types"; const detector = (value: object) => isProxy(value); export function isRuntimeProxy(value: object): boolean { return detector(value); }',
+      "closure declaration",
+    ],
+    [`${canonicalProxyBridge}\nconst extra = true;`, "extra declaration"],
+    [
+      `${canonicalProxyBridge}\nfunction extra() { return false; }`,
+      "extra function",
+    ],
+    [`${canonicalProxyBridge}\nclass Extra {}`, "extra class"],
+    [
+      `import { isDate } from "node:util/types";\n${canonicalProxyBridge}`,
+      "extra import",
+    ],
+    [`${canonicalProxyBridge}\nvoid 0;`, "extra statement"],
+    [
+      'import { isProxy } from "node:util/types"; export function isRuntimeProxy(value: unknown): boolean { return isProxy(value as object); }',
+      "altered parameter signature",
+    ],
+    [
+      'import { isProxy } from "node:util/types"; export function detectProxy(value: object): boolean { return isProxy(value); }',
+      "altered API name",
+    ],
+    [
+      'import { isProxy } from "node:util/types"; export function isRuntimeProxy(value: object): boolean { return !isProxy(value); }',
+      "altered body",
+    ],
+    [
+      'import { isProxy } from "node:util/types"; export function isRuntimeProxy(value: object): boolean { return isProxy.call(undefined, value); }',
+      "altered call",
+    ],
+    [
+      'import { isProxy } from "node:util/types" with { type: "json" }; export function isRuntimeProxy(value: object): boolean { return isProxy(value); }',
+      "import attributes",
+    ],
+    [
+      'import { isProxy } from "node:util/types" assert { type: "json" }; export function isRuntimeProxy(value: object): boolean { return isProxy(value); }',
+      "import assertions",
+    ],
+  ])("rejects a non-canonical bridge program via %s (%s)", (source) => {
     expect(
       findArchitectureViolations(
         source,
-        "apps/mission-control/src/domain/json-topology.ts",
+        "apps/workshop/src/domain/proxy-detection.ts",
+      ),
+    ).toContain(
+      "apps/workshop/src/domain/proxy-detection.ts: proxy-detection bridge must contain only the exact node:util/types import and exported isRuntimeProxy predicate",
+    );
+  });
+
+  it.each([
+    "apps/mission-control/src/domain/json-topology.ts",
+    "apps/workshop/src/domain/json-topology.ts",
+  ])("allows %s to call its local bridge wrapper", (importer) => {
+    expect(
+      findArchitectureViolations(
+        'import { isRuntimeProxy } from "./proxy-detection.js"; export function inspect(value: object): boolean { return isRuntimeProxy(value); }',
+        importer,
       ),
     ).toEqual([]);
-    for (const importer of [
-      "apps/mission-control/src/domain/other.ts",
-      "apps/mission-control/src/application/other.ts",
-    ])
-      expect(findArchitectureViolations(source, importer)).toHaveLength(1);
+  });
+
+  it("leaves ordinary application exports unaffected", () => {
+    expect(
+      findArchitectureViolations(
+        "export function isRuntimeProxy(value: object): boolean { return Boolean(value); } export const detector = { enabled: true };",
+        "apps/workshop/src/application/ordinary-export.ts",
+      ),
+    ).toEqual([]);
   });
 
   it.each([

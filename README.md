@@ -48,9 +48,16 @@ PatchQuest has a contract-first foundation and an executable Node verification
 spine. The English domain model, architecture, decisions, contract inventory,
 and sixteen deterministic acceptance scenarios are available. Phase 4A makes
 the shared TypeScript v1 transport boundary and Mission Control's Mission and
-completion-process behavior executable and offline-tested. Workshop,
-Verification and Review, adapters, and infrastructure are not implemented yet,
-and this is not a public release.
+completion-process behavior executable and offline-tested. Phase 4B likewise
+makes Workshop's `Attempt`/`RunnerLease`, strict boundaries, versioned memento,
+ports, transactional use-case ordering, and four-event factory executable and
+offline-tested, including aggregate-owned event provenance, confidential
+lease-response replay interfaces, and the behavioral seam where Workshop
+accepts an out-of-scope artifact for later independent verification. This is
+domain and application behavior, not an HTTP service or durable delivery claim.
+Verification and Review—including execution of `check-allowed-scope`—remains the
+separate planned Phase 4C slice; encrypted durable replay storage and other
+adapters are not implemented, and this is not a public release.
 
 PatchQuest is a fresh, independently authored project. No earlier course files,
 package metadata, configuration, or Git history are imported. Earlier courses

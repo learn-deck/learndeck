@@ -23,6 +23,19 @@ implementation.
 The twelve past-tense events are facts published by their owning contexts.
 Internal application commands do not become transport contracts.
 
+Phase 4B does not change that inventory. Workshop translates the existing
+public `workshop.revoke-attempt.v1` message into its private `RevokeAttempt`
+command after boundary validation. The private command is aggregate language,
+not another AsyncAPI message or HTTP operation.
+
+The v1 artifact command carries changed paths but does not assign allowed-scope
+policy to Workshop. Workshop accepts syntactically valid normalized
+repository-relative paths and publishes the submitted artifact; Verification's
+trusted `check-allowed-scope` gate owns compliance. Exact lease-response replay
+is likewise an internal confidential Workshop seam and does not add a public
+operation or message. Raw lease tokens never enter integration events or
+aggregate mementos.
+
 `docs/en/contracts/gate-command-registry.md` normatively defines gate-set
 canonicalization and the portable v1 `commandId` registry. A `commandId` is a
 registry key, never executable text supplied by a mission. Each stack maps the

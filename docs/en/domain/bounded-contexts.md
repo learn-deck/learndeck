@@ -30,16 +30,80 @@ Published events: `mission.opened.v1`, `mission.retry-authorized.v1`,
 
 Workshop owns the `Attempt` aggregate and `RunnerLease` value object.
 
-An attempt belongs to exactly one mission revision and starting revision. It has
-at most one active lease and one terminal outcome. A lease has an opaque token,
-owner, capability set, and expiry supplied by the service's durable,
-authoritative time source. Only its owner may renew, abandon, fail, or submit.
-Expired leases cannot submit. Submission is idempotent for an attempt and
-artifact digest. Runner capabilities must cover the mission request, and attempt
-numbers cannot exceed the authorized budget.
+An attempt belongs to exactly one mission revision and starting revision and
+retains the complete immutable work contract received when it is created. It
+has at most one active lease and one terminal outcome. Runner capabilities must
+cover every requested capability, and the attempt number must be positive and
+cannot exceed the authorized attempt budget.
+
+A lease has an opaque lease ID and token, one owner, the capabilities declared
+at acquisition, its original positive duration in seconds, and an expiry
+calculated from the service's durable authoritative time. The requested
+duration is bounded by the public v1 contract. A lease is already expired when
+authoritative `now >= expiresAt`; equality does not leave a final instant in
+which the owner may act.
+
+Only the current unexpired lease owner, presenting the matching opaque token,
+may heartbeat, abandon, fail, or submit. A heartbeat records activity and
+renews the lease atomically: the new expiry is authoritative heartbeat time plus
+the original lease duration. It does not accept a new duration and recording
+the heartbeat cannot commit separately from renewal. An expired lease cannot be
+renewed or used to abandon, fail, or submit.
+
+The state transitions are closed:
+
+| Current status      | Accepted transition                                                                                                                                  |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `READY`             | `LeaseAttempt` produces `LEASED`; private `RevokeAttempt` produces `REVOKED`.                                                                        |
+| `LEASED`            | An owner heartbeat remains `LEASED`; owner submission produces `ARTIFACT_SUBMITTED`; owner abandon/fail produces `ABANDONED`/`FAILED`.               |
+| `LEASED`            | `ExpireLease` produces `LEASE_EXPIRED` only when authoritative `now >= expiresAt`; private `RevokeAttempt` produces `REVOKED`.                       |
+| Any terminal status | No different outcome may replace `ARTIFACT_SUBMITTED`, `ABANDONED`, `FAILED`, `LEASE_EXPIRED`, or `REVOKED`; the same attempt is never leased again. |
+
+`READY` has no lease owner, so `AbandonAttempt` and `FailAttempt` are not
+supported from `READY`. Revocation is different: it is an authority action used
+to stop an unleased `READY` attempt or a leased `LEASED` attempt, not an
+owner-authenticated runner action.
+
+Artifact submission is idempotent for an attempt and artifact digest. Repeating
+the exact successful submission returns the recorded receipt without another
+state change or event; a different digest conflicts and cannot replace the
+terminal artifact. Workshop validates that every changed path is an
+NFC-normalized, repository-relative path, but it does **not** decide whether
+those paths comply with the immutable allowed scope. A syntactically valid
+out-of-scope artifact is stored and published, and the attempt ends as
+`ARTIFACT_SUBMITTED`; the Verification and Review context's trusted
+`check-allowed-scope` gate owns the later pass/fail decision. First submission
+publishes both the immutable artifact fact and the terminal attempt outcome.
+
+Every accepted Workshop operation is recorded through one aggregate-owned
+provenance chain. Private operations carry no caller-selectable causation: their
+direct causation is their request ID, and their correlation ID must equal the
+attempt seed's correlation ID. Public create and revoke commands retain their
+validated envelope causation. Outgoing event IDs, timestamps, correlation, and
+causation are persisted with the transition that produced them; the application
+publishes only that recorded provenance. Artifact submission records its event
+as caused by the request and the following attempt-ended event as caused by the
+artifact event ID. Transition message and event IDs are unique, and rehydration
+rejects any broken correlation, causation, chronology, or event chain.
+
+An exact redelivery of a committed lease request returns the original typed
+lease response, including the same opaque raw token, without another state
+change or event. The raw token never enters the aggregate memento, public event,
+or outbox. A confidential response-replay record keyed by request ID and
+canonical fingerprint is committed atomically with aggregate, outbox, and inbox
+state. Phase 5 durable storage for that private record must be encrypted,
+access-controlled, and excluded from logs and published telemetry.
 
 Commands: `CreateAttempt`, `LeaseAttempt`, `RenewLease`, `RecordHeartbeat`,
-`SubmitArtifact`, `AbandonAttempt`, `ExpireLease`, `FailAttempt`.
+`SubmitArtifact`, `AbandonAttempt`, `ExpireLease`, `FailAttempt`,
+`RevokeAttempt`.
+
+These are private Workshop application/domain commands. The public
+`heartbeatAttempt` operation maps to one atomic heartbeat-and-renewal use case.
+The private `RevokeAttempt` command is the validated recipient-side translation
+of `workshop.revoke-attempt.v1`; naming it here does not add a public HTTP
+operation or a fourth integration command. PatchQuest v1 still exposes exactly
+the three inter-context commands owned by Mission Control.
 
 Published events: `workshop.attempt-ready.v1`,
 `workshop.attempt-leased.v1`, `workshop.artifact-submitted.v1`,

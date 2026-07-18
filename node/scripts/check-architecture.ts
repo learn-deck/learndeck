@@ -13,6 +13,15 @@ const applicationNames = new Set([
   "workshop",
   "verification",
 ]);
+const proxyDetectionBridgeImporters = new Set([
+  "apps/mission-control/src/domain/proxy-detection.ts",
+  "apps/workshop/src/domain/proxy-detection.ts",
+]);
+
+export function normalizeImporterPath(importer: string): string {
+  return path.posix.normalize(importer.replaceAll("\\", "/"));
+}
+
 function isAllowedProductionSpecifier(
   specifier: string,
   importer: string,
@@ -22,7 +31,94 @@ function isAllowedProductionSpecifier(
     specifier === "@patchquest/contracts" ||
     specifier === "node:crypto" ||
     (specifier === "node:util/types" &&
-      importer === "apps/mission-control/src/domain/json-topology.ts")
+      proxyDetectionBridgeImporters.has(importer))
+  );
+}
+
+function isExactProxyDetectionImport(node: ts.Node): boolean {
+  if (
+    !ts.isImportDeclaration(node) ||
+    !ts.isStringLiteral(node.moduleSpecifier) ||
+    node.moduleSpecifier.text !== "node:util/types"
+  )
+    return false;
+  const clause = node.importClause;
+  if (
+    !clause ||
+    clause.isTypeOnly ||
+    clause.name ||
+    node.attributes ||
+    !clause.namedBindings ||
+    !ts.isNamedImports(clause.namedBindings) ||
+    clause.namedBindings.elements.length !== 1
+  )
+    return false;
+  const imported = clause.namedBindings.elements[0];
+  return Boolean(
+    imported &&
+    !imported.isTypeOnly &&
+    !imported.propertyName &&
+    imported.name.text === "isProxy",
+  );
+}
+
+function hasOnlyExportModifier(node: ts.FunctionDeclaration): boolean {
+  const modifiers = ts.getModifiers(node) ?? [];
+  return (
+    modifiers.length === 1 && modifiers[0]?.kind === ts.SyntaxKind.ExportKeyword
+  );
+}
+
+function isExactProxyPredicate(node: ts.Node): boolean {
+  if (
+    !ts.isFunctionDeclaration(node) ||
+    !hasOnlyExportModifier(node) ||
+    node.name?.text !== "isRuntimeProxy" ||
+    node.asteriskToken ||
+    node.questionToken ||
+    node.typeParameters ||
+    node.parameters.length !== 1 ||
+    node.type?.kind !== ts.SyntaxKind.BooleanKeyword ||
+    !node.body ||
+    node.body.statements.length !== 1
+  )
+    return false;
+  const parameter = node.parameters[0];
+  if (
+    !parameter ||
+    (ts.getModifiers(parameter)?.length ?? 0) !== 0 ||
+    !ts.isIdentifier(parameter.name) ||
+    parameter.name.text !== "value" ||
+    parameter.dotDotDotToken ||
+    parameter.questionToken ||
+    parameter.initializer ||
+    parameter.type?.kind !== ts.SyntaxKind.ObjectKeyword
+  )
+    return false;
+  const statement = node.body.statements[0];
+  if (!statement || !ts.isReturnStatement(statement) || !statement.expression)
+    return false;
+  const expression = statement.expression;
+  return (
+    ts.isCallExpression(expression) &&
+    !expression.questionDotToken &&
+    !expression.typeArguments &&
+    ts.isIdentifier(expression.expression) &&
+    expression.expression.text === "isProxy" &&
+    expression.arguments.length === 1 &&
+    expression.arguments[0] !== undefined &&
+    ts.isIdentifier(expression.arguments[0]) &&
+    expression.arguments[0].text === "value"
+  );
+}
+
+function isExactProxyDetectionBridge(sourceFile: ts.SourceFile): boolean {
+  return (
+    sourceFile.statements.length === 2 &&
+    sourceFile.statements[0] !== undefined &&
+    isExactProxyDetectionImport(sourceFile.statements[0]) &&
+    sourceFile.statements[1] !== undefined &&
+    isExactProxyPredicate(sourceFile.statements[1])
   );
 }
 
@@ -115,6 +211,7 @@ export function findArchitectureViolations(
   source: string,
   importer: string,
 ): string[] {
+  importer = normalizeImporterPath(importer);
   const violations: string[] = [];
   const [importerArea, importerName] = importer.split(/[\\/]/);
   const importerParts = importer.split(/[\\/]/);
@@ -131,6 +228,13 @@ export function findArchitectureViolations(
     true,
     ts.ScriptKind.TS,
   );
+  const isProxyDetectionBridge = proxyDetectionBridgeImporters.has(importer);
+  const hasExactProxyDetectionBridge =
+    isProxyDetectionBridge && isExactProxyDetectionBridge(sourceFile);
+  if (isProxyDetectionBridge && !hasExactProxyDetectionBridge)
+    violations.push(
+      `${importer}: proxy-detection bridge must contain only the exact node:util/types import and exported isRuntimeProxy predicate`,
+    );
   const scopeBindings = new Map<ts.Node, Set<string>>();
   const addBinding = (
     scope: ts.Node | undefined,
@@ -264,6 +368,13 @@ export function findArchitectureViolations(
     ) {
       expression = node.moduleSpecifier;
     } else if (
+      ts.isImportEqualsDeclaration(node) &&
+      ts.isExternalModuleReference(node.moduleReference) &&
+      node.moduleReference.expression &&
+      ts.isStringLiteral(node.moduleReference.expression)
+    ) {
+      expression = node.moduleReference.expression;
+    } else if (
       ts.isCallExpression(node) &&
       node.arguments.length === 1 &&
       node.arguments[0] !== undefined &&
@@ -281,9 +392,16 @@ export function findArchitectureViolations(
         isAllowedProductionSpecifier(expression.text, importer);
       if (!allowedProductionSpecifier) {
         violations.push(
-          `${importer}: ${importerLayer} may import only bounded-context relative modules, @patchquest/contracts, node:crypto, or the json-topology node:util/types exception; received ${expression.text}`,
+          `${importer}: ${importerLayer} may import only bounded-context relative modules, @patchquest/contracts, node:crypto, or the exact proxy-detection bridge dependency; received ${expression.text}`,
         );
       }
+      if (
+        expression.text === "node:util/types" &&
+        !(hasExactProxyDetectionBridge && node === sourceFile.statements[0])
+      )
+        violations.push(
+          `${importer}: node:util/types is restricted to the exact bounded-context proxy-detection bridge program`,
+        );
       const target = targetArea(expression.text, importer);
       if (target && allowedProductionSpecifier) {
         const {
@@ -359,7 +477,7 @@ export async function verifyArchitecture(): Promise<number> {
   ];
   const violations: string[] = [];
   for (const file of files) {
-    const relative = path.relative(nodeRoot, file);
+    const relative = normalizeImporterPath(path.relative(nodeRoot, file));
     violations.push(
       ...findArchitectureViolations(await readFile(file, "utf8"), relative),
     );

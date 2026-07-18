@@ -2,12 +2,11 @@ import { createHash } from "node:crypto";
 import { isRuntimeProxy } from "./proxy-detection.js";
 
 export type JsonObject = Readonly<Record<string, unknown>>;
+type JsonEntry = readonly [string, unknown];
 
-type JsonDataEntry = readonly [key: string, value: unknown];
-
-function ordinaryJsonObjectEntries(
+function ordinaryObjectEntries(
   value: unknown,
-): readonly JsonDataEntry[] | undefined {
+): readonly JsonEntry[] | undefined {
   if (
     typeof value !== "object" ||
     value === null ||
@@ -16,7 +15,7 @@ function ordinaryJsonObjectEntries(
     Object.getPrototypeOf(value) !== Object.prototype
   )
     return undefined;
-  const entries: JsonDataEntry[] = [];
+  const entries: JsonEntry[] = [];
   for (const key of Reflect.ownKeys(value)) {
     if (typeof key !== "string") return undefined;
     const descriptor = Object.getOwnPropertyDescriptor(value, key);
@@ -27,9 +26,7 @@ function ordinaryJsonObjectEntries(
   return entries;
 }
 
-function ordinaryDenseArrayValues(
-  value: unknown,
-): readonly unknown[] | undefined {
+function ordinaryArrayValues(value: unknown): readonly unknown[] | undefined {
   if (
     typeof value !== "object" ||
     value === null ||
@@ -71,7 +68,7 @@ function ordinaryDenseArrayValues(
 }
 
 export function isJsonObject(value: unknown): value is JsonObject {
-  return ordinaryJsonObjectEntries(value) !== undefined;
+  return ordinaryObjectEntries(value) !== undefined;
 }
 
 export function hasExactOwnKeys(
@@ -79,7 +76,7 @@ export function hasExactOwnKeys(
   required: readonly string[],
   optional: readonly string[] = [],
 ): boolean {
-  const entries = ordinaryJsonObjectEntries(value);
+  const entries = ordinaryObjectEntries(value);
   if (!entries) return false;
   const allowed = new Set([...required, ...optional]);
   const actual = new Set(entries.map(([key]) => key));
@@ -90,20 +87,11 @@ export function hasExactOwnKeys(
 }
 
 export function isDenseJsonArray(value: unknown): value is readonly unknown[] {
-  return ordinaryDenseArrayValues(value) !== undefined;
+  return ordinaryArrayValues(value) !== undefined;
 }
 
-export function canonicalizeJsonContent(value: unknown): string {
+export function canonicalizeJson(value: unknown): string {
   return canonicalize(value, new Set<object>());
-}
-
-export function hasJsonContentTopology(value: unknown): boolean {
-  try {
-    canonicalizeJsonContent(value);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 function canonicalize(value: unknown, ancestors: Set<object>): string {
@@ -114,7 +102,9 @@ function canonicalize(value: unknown, ancestors: Set<object>): string {
       return JSON.stringify(value);
     case "number":
       if (!Number.isFinite(value) || Object.is(value, -0))
-        throw new TypeError("Normalized JSON content requires finite numbers.");
+        throw new TypeError(
+          "Normalized JSON requires finite non-negative-zero numbers.",
+        );
       return JSON.stringify(value);
     case "undefined":
     case "function":
@@ -125,36 +115,50 @@ function canonicalize(value: unknown, ancestors: Set<object>): string {
       break;
   }
   if (isRuntimeProxy(value))
-    throw new TypeError("Normalized JSON content rejects proxies.");
+    throw new TypeError("Normalized JSON rejects proxies.");
   if (ancestors.has(value))
-    throw new TypeError("Normalized JSON content cannot contain cycles.");
+    throw new TypeError("Normalized JSON rejects cycles.");
   ancestors.add(value);
   try {
-    const arrayValues = ordinaryDenseArrayValues(value);
-    if (arrayValues)
-      return `[${arrayValues
-        .map((child) => canonicalize(child, ancestors))
-        .join(",")}]`;
-    const objectEntries = ordinaryJsonObjectEntries(value);
-    if (objectEntries) {
-      return `{${[...objectEntries]
+    const array = ordinaryArrayValues(value);
+    if (array)
+      return `[${array.map((child) => canonicalize(child, ancestors)).join(",")}]`;
+    const entries = ordinaryObjectEntries(value);
+    if (entries)
+      return `{${[...entries]
         .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
         .map(
           ([key, child]) =>
             `${JSON.stringify(key)}:${canonicalize(child, ancestors)}`,
         )
         .join(",")}}`;
-    }
-    throw new TypeError(
-      "Normalized content rejects custom prototypes and non-JSON containers.",
-    );
+    throw new TypeError("Normalized JSON rejects custom containers.");
   } finally {
     ancestors.delete(value);
   }
 }
 
-export function jsonContentFingerprint(value: unknown): string {
-  return createHash("sha256")
-    .update(canonicalizeJsonContent(value))
-    .digest("hex");
+export function hasJsonTopology(value: unknown): boolean {
+  try {
+    canonicalizeJson(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function jsonFingerprint(value: unknown): string {
+  return createHash("sha256").update(canonicalizeJson(value)).digest("hex");
+}
+
+export function deepFreezeCopy<Value>(value: Value): Value {
+  return deepFreeze(structuredClone(value));
+}
+
+function deepFreeze<Value>(value: Value): Value {
+  if (value !== null && typeof value === "object") {
+    for (const child of Object.values(value)) deepFreeze(child);
+    Object.freeze(value);
+  }
+  return value;
 }

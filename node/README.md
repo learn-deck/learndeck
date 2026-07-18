@@ -17,9 +17,19 @@ decisions, restart-safe `MissionCompletionProcess` state, versioned persistence
 mementos, application-owned ports, and closed integration translators. The
 shared contracts package exports only the three command and twelve event DTO
 unions. Mementos make a future durable adapter possible; they are not a database
-or delivery guarantee. Workshop and Verification and Review domain internals
-remain for the next Phase 4 slices; no database, broker, Fastify, provider SDK,
-or other infrastructure is present.
+or delivery guarantee. Phase 4B implements Workshop's provider-neutral
+`Attempt`/`RunnerLease`, owner-authenticated lease lifecycle, immutable artifact
+submission, cancellation revocation, strict public/private translators,
+four-event factory, exact persistence memento, ports, and transactional use-case
+ordering. Workshop validates artifact path topology but deliberately leaves
+allowed-scope policy to Verification. Its aggregate-persisted provenance feeds
+outgoing events, and a confidential lease-response replay port makes exact
+post-commit redelivery return the original opaque token without placing it in
+the aggregate or outbox. Those behaviors are executable and offline-tested, but
+there is still no Workshop HTTP process, encrypted durable replay adapter, or
+other durable adapter. Verification and Review—including execution of
+`check-allowed-scope`—remains the separate planned Phase 4C slice. No database,
+broker, Fastify, provider SDK, or other infrastructure is present.
 
 ```sh
 nvm use
@@ -48,11 +58,11 @@ standard `npm ci` runs preserve its hash.
 The architecture mutation suite enforces these dependency directions and keeps
 the shared contracts package free of aggregates and persistence models:
 
-| Importing layer             | May import                                                                                                                         | Must not import                                                                                    |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Domain                      | Relative domain modules, contracts DTOs, `node:crypto`; `node:util/types` only in `json-topology.ts` for trap-free proxy detection | Application, adapters, infrastructure, Fastify, PostgreSQL, RabbitMQ, OpenTelemetry, provider SDKs |
-| Application                 | Relative application/domain modules, contracts, `node:crypto`                                                                      | Adapters, infrastructure, Fastify, PostgreSQL, RabbitMQ, OpenTelemetry, provider SDKs              |
-| Adapters and infrastructure | Application and domain ports as required                                                                                           | Another bounded-context application                                                                |
+| Importing layer             | May import                                                                                                                       | Must not import                                                                                    |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Domain                      | Relative domain modules, contracts DTOs, `node:crypto`; the exact local `proxy-detection.ts` bridge may import `node:util/types` | Application, adapters, infrastructure, Fastify, PostgreSQL, RabbitMQ, OpenTelemetry, provider SDKs |
+| Application                 | Relative application/domain modules, contracts, `node:crypto`                                                                    | Adapters, infrastructure, Fastify, PostgreSQL, RabbitMQ, OpenTelemetry, provider SDKs              |
+| Adapters and infrastructure | Application and domain ports as required                                                                                         | Another bounded-context application                                                                |
 
 For domain and application source, a relative specifier is resolved as a
 TypeScript file or directory index from the importing file and must remain in
@@ -89,16 +99,21 @@ properties, and dense ordinary arrays with own indices. It rejects inherited,
 accessor-backed, symbolic, non-enumerable, sparse, custom-prototype, cyclic, and
 non-JSON values, including non-finite numbers and negative zero. Object and
 array proxies are rejected through Node's trap-free `node:util/types.isProxy`
-introspection before prototype, key, descriptor, or value traversal; this exact
-import is the sole domain-layer exception beyond `node:crypto`. Canonicalization
-uses inspected data-descriptor values rather than ordinary property reads.
-Frozen ordinary JSON remains valid. The canonical fingerprint is therefore
-total only over this accepted topology; invalid inputs are rejected instead of
-being silently normalized into a colliding representation.
+introspection before prototype, key, descriptor, or value traversal. Each
+bounded context contains one local two-statement `proxy-detection.ts` bridge;
+the architecture checker validates its entire import, exported predicate
+signature, and return call as an exact AST and rejects `node:util/types`
+everywhere else. Topology modules depend only on that local predicate.
+Canonicalization uses inspected data-descriptor values rather than ordinary
+property reads. Frozen ordinary JSON remains valid. The canonical fingerprint
+is therefore total only over this accepted topology; invalid inputs are
+rejected instead of being silently normalized into a colliding representation.
 
 Integration, acceptance, and system commands still prove the repository and
 contract spine rather than a running service; those suites grow when adapters
-and infrastructure are implemented.
+and infrastructure are implemented. The Workshop behavioral acceptance seam is
+an in-process aggregate/application proof: it does not claim a live service or
+that deferred Verification gates execute.
 
 The structure separates applications, narrowly scoped infrastructure
 packages, trusted mission fixtures, test levels, and local platform assets. Root

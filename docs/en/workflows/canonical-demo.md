@@ -21,7 +21,9 @@ demo is not an arbitrary-code sandbox.
 ## Canonical happy path
 
 1. Create and open the mission with immutable gates.
-2. The fake runner leases attempt one and records a heartbeat.
+2. The fake runner leases attempt one for 60 seconds and records a heartbeat.
+   The heartbeat and renewal are one transition, moving expiry to 60 seconds
+   after the authoritative heartbeat time.
 3. Before the lease expires, the runner submits a valid patch and content
    digest, ending attempt one with `ARTIFACT_SUBMITTED`.
 4. An independent verifier runs all mandatory checks on that exact artifact and
@@ -39,11 +41,14 @@ These are planned independent probes, not additional steps in the happy-path
 attempt. Phase 2 will define each probe's exact fixture state and attempt budget:
 
 - **Forbidden path:** submit an artifact that also modifies a forbidden path;
-  the allowed-scope gate produces a failed verdict and Completion Review issues
-  `REQUEST_REVISION`.
-- **Lease expiry:** let a leased attempt expire without submission; stale
-  ownership is rejected and a new attempt is authorized only when budget
-  remains.
+  Workshop accepts and publishes the syntactically valid artifact and ends the
+  attempt as `ARTIFACT_SUBMITTED`. The later trusted `check-allowed-scope` gate
+  produces a failed verdict and Completion Review issues `REQUEST_REVISION`.
+  Phase 4B's executable behavioral seam proves the Workshop half only; Phase 4C
+  verification execution remains deferred.
+- **Lease expiry:** let a leased attempt reach `now >= expiresAt` without
+  submission; stale ownership is rejected and a new attempt is authorized only
+  when budget remains.
 - **Duplicate submission:** after one successful submission, repeat the same
   attempt ID and digest; return the recorded result with no second effect.
 - **Poison event:** inject the designated invalid integration fixture; it reaches

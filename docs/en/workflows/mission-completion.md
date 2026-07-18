@@ -7,6 +7,14 @@ memento for restart-safe continuation. Phase 4A does not yet provide the
 database, broker, transaction, or durable-delivery adapter. The process manager
 is not a domain entity, broker callback, gateway concern, or shared package.
 
+Phase 4 delivery is deliberately split by bounded context. Phase 4A delivered
+Mission Control. Phase 4B delivers only Workshop's `Attempt`/`RunnerLease`,
+private commands, translators, memento, ports, and application ordering. Phase
+4C will implement Verification and Review's `VerificationRun` and
+`CompletionReview`.
+The split does not change the released public v1 inventory: twelve HTTP
+operations, three inter-context commands, and twelve published events.
+
 This workflow uses orchestration, not pure choreography. The process manager
 consumes published facts and issues only three provider-neutral inter-context
 commands: `workshop.create-attempt.v1`,
@@ -24,8 +32,15 @@ commands, which are not exposed wholesale.
    contract: objective, starting revision, workspace reference, allowed scope,
    requested capabilities, gates, and gate-set digest. Workshop and a leasing
    runner require no hidden read back into Mission Control.
-3. Workshop creates the attempt; a capable runner leases it.
-4. The lease owner heartbeats and submits an immutable artifact before expiry.
+3. Workshop creates a `READY` attempt; a capable runner leases it for the
+   bounded duration requested at acquisition.
+4. The current lease owner may heartbeat and submit an immutable artifact while
+   authoritative time is strictly before expiry. Heartbeat recording and lease
+   renewal are one atomic Workshop transition; renewal sets `expiresAt` to the
+   heartbeat time plus the original lease duration. At `now >= expiresAt`, the
+   lease is expired and no owner action may win the boundary. Workshop accepts
+   every submitted artifact whose changed paths have valid normalized
+   repository-relative topology; it does not enforce allowed-scope policy.
 5. On `workshop.artifact-submitted.v1`, the process manager issues
    `verification.start-verification.v1` for the exact mission revision, starting
    revision, gate-set digest, and artifact digest.
@@ -35,6 +50,8 @@ commands, which are not exposed wholesale.
    `verification.aborted.v1`; this is not a failed gate and opens no completion
    review. `retryable` reports whether the same bound work may be attempted
    again; it never means the aborted run itself can be converted into a verdict.
+   The trusted `check-allowed-scope` gate is where a syntactically valid
+   out-of-scope artifact fails. Phase 4B does not execute that Phase 4C gate.
 7. `CompletionReview` binds the verdict and evidence, records one immutable
    recommendation, and publishes `review.recommendation-issued.v1`.
 8. Mission Control presents the bound result and recommendation to a human.
@@ -73,6 +90,10 @@ Cancellation can interrupt active work but never erases the audit history.
 When a mission is cancelled while an attempt may still be active, the process
 manager issues `workshop.revoke-attempt.v1`; Workshop owns the resulting attempt
 transition and publishes the outcome as a fact.
+Workshop translates that public message to its private `RevokeAttempt` command.
+It may revoke either an unleased `READY` attempt or a `LEASED` attempt. This is
+not the owner-only `AbandonAttempt` or `FailAttempt` path: those commands require
+a current unexpired lease and therefore are invalid from `READY`.
 An exact duplicate or redelivery produces the same recorded business effect as
 its first successful handling. Reuse of one message ID with different canonical
 normalized content—and therefore a different normalized fingerprint—is a
@@ -80,6 +101,22 @@ conflict, not an idempotent duplicate. A verification run has one
 first-wins terminal outcome: a materially different verdict or abort is rejected
 even when it arrives under a new message ID. Each causal hop records the exact
 predecessor ID needed by the next fact.
+
+Workshop private requests derive direct causation from their own request IDs
+and must reuse the attempt seed's correlation ID. The aggregate transition
+audit owns outgoing event IDs and provenance; application code cannot replace
+them with divergent raw request metadata. Public create and revoke commands
+retain their validated public-envelope causation. An artifact-submitted event is
+caused by its request, and the paired attempt-ended event is caused by the
+artifact event ID.
+
+Lease response-loss recovery is intentionally private. The same request ID and
+canonical fingerprint loads and returns the original typed response, including
+the same raw lease token, from a confidential response-replay record committed
+with aggregate/outbox/inbox state. Reusing the ID with different content is a
+conflict. The raw token is never stored in the attempt memento or published, and
+the future durable Phase 5 adapter must encrypt and access-control response
+records and keep them out of logs.
 
 Outgoing message construction is one validated boundary: identifiers,
 timestamps, actors, bounded feedback, bindings, gates, and payload topology are
