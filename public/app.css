@@ -117,6 +117,7 @@ button[type="submit"]:hover, #start-course:hover, #connect-selected-guides:hover
 .integration-connect[disabled] { cursor: default; opacity: .45; transform: none; }
 #connect-selected-guides[disabled] { cursor: default; opacity: .45; transform: none; }
 .form-note { margin: 0; color: var(--color-content-secondary); font-size: .8rem; line-height: 1.55; }
+.form-note.is-error { color: var(--color-feedback-error); }
 
 /* The initial view is a complete, quiet screen. The course library is a separate mode. */
 .app-home { min-height: calc(100dvh - 88px); }
@@ -144,6 +145,14 @@ body:has(#welcome-screen:not(.hidden)) .welcome-screen { min-height: 100dvh; }
 .category-filters button:hover { color: var(--color-content-primary); border-color: var(--color-border-strong); }
 .category-filters button[aria-pressed="true"] { color: var(--color-interactive-contrast); background: var(--color-interactive); border-color: var(--color-interactive); }
 .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: var(--space-md); }
+.course-grid > .empty { grid-column: 1 / -1; margin: var(--space-md) 0; font-size: .9rem; }
+#library-status { margin-top: var(--space-md); }
+#library-status:empty { display: none; }
+.library-contribute { display: grid; gap: var(--space-sm); justify-items: start; margin-top: var(--space-xl); padding: var(--space-lg); background: var(--color-surface-raised); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); }
+.library-contribute p { max-width: 78ch; margin: 0; color: var(--color-content-secondary); font-size: .85rem; line-height: 1.55; }
+.library-contribute strong { color: var(--color-content-primary); }
+.library-contribute code { padding: 2px 5px; background: var(--color-surface-subtle); border-radius: 4px; font-family: var(--font-mono); font-size: .8em; }
+.library-contribute a { font-size: .82rem; font-weight: 700; }
 .course-card { display: flex; flex-direction: column; align-items: stretch; min-height: 292px; padding: var(--space-lg); color: var(--color-content-primary); background: var(--color-surface-raised); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); text-align: left; transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast); }
 .course-card:hover { background: color-mix(in srgb, var(--color-surface-raised) 88%, var(--color-interactive)); border-color: color-mix(in srgb, var(--color-interactive) 55%, var(--color-border-strong)); transform: translateY(-2px); }
 .course-card-top, .course-card-meta, .course-card-tags { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
@@ -158,18 +167,10 @@ body:has(#welcome-screen:not(.hidden)) .welcome-screen { min-height: 100dvh; }
 .course-card-action { display: flex; justify-content: space-between; align-items: center; margin-top: var(--space-lg); padding-top: var(--space-md); color: var(--color-interactive); border-top: 1px solid var(--color-border-subtle); font-size: .8rem; font-weight: 750; }
 .course-card-action b { font-size: 1rem; }
 
-/* First start makes its effects and AI-host changes legible before a course begins. */
-.agent-setup { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, .72fr); gap: clamp(var(--space-xl), 10vw, 160px); align-items: center; min-height: calc(100vh - 88px); padding: clamp(72px, 10vw, 148px) 0; }
-.agent-setup-copy { max-width: 680px; }
-.agent-setup-copy h1 { max-width: 11ch; margin: var(--space-md) 0 var(--space-lg); font-size: clamp(2.9rem, 5.65vw, 5.25rem); line-height: 1.01; letter-spacing: -.062em; }
-.agent-setup-copy > p:not(.eyebrow) { max-width: 56ch; margin: 0; color: var(--color-content-secondary); font-size: 1.08rem; line-height: 1.68; }
-.activation-steps { display: grid; gap: 0; margin: var(--space-xl) 0 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-subtle); }
-.activation-steps li { display: grid; grid-template-columns: 32px 1fr; gap: var(--space-sm); padding: var(--space-md) 0; border-bottom: 1px solid var(--color-border-subtle); }
-.activation-steps li > span { color: var(--color-interactive); font-family: var(--font-mono); font-size: .7rem; font-weight: 700; line-height: 1.8; }
-.activation-steps strong { color: var(--color-content-primary); font-size: .88rem; }
-.activation-steps p { margin: 2px 0 0; color: var(--color-content-secondary); font-size: .82rem; line-height: 1.45; }
-.agent-setup-card { padding: clamp(var(--space-lg), 4vw, var(--space-xl)); background: var(--color-surface-raised); border: 1px solid var(--color-border-strong); border-top: 3px solid var(--color-interactive); box-shadow: var(--shadow-raised); }
-.agent-setup-card h2 { margin: var(--space-sm) 0; font-size: clamp(1.9rem, 3.2vw, 2.55rem); line-height: 1.08; letter-spacing: -.04em; }
+/* First start is a single concise decision: connect a guide, or skip. */
+.agent-setup { display: grid; place-items: center; min-height: calc(100vh - 88px); padding: clamp(48px, 8vw, 96px) 0; }
+.agent-setup-card { width: min(560px, 100%); padding: clamp(var(--space-lg), 4vw, var(--space-xl)); background: var(--color-surface-raised); border: 1px solid var(--color-border-strong); border-top: 3px solid var(--color-interactive); box-shadow: var(--shadow-raised); }
+.agent-setup-card h1 { margin: var(--space-sm) 0; font-size: clamp(1.9rem, 3.2vw, 2.55rem); line-height: 1.08; letter-spacing: -.04em; }
 .agent-setup-card > p:not(.eyebrow):not(.form-note) { margin: 0; color: var(--color-content-secondary); font-size: .88rem; line-height: 1.55; }
 .agent-setup-list { display: grid; margin: var(--space-lg) 0 0; border-top: 1px solid var(--color-border-subtle); }
 .guide-setup-option { display: grid; grid-template-columns: 1fr auto; gap: var(--space-sm); align-items: center; padding: var(--space-md) 0; border-bottom: 1px solid var(--color-border-subtle); }
@@ -422,7 +423,6 @@ body.is-answering .lesson-progress { top: 0; }
   .library-heading { align-items: flex-start; flex-direction: column; }
   .library-actions { width: 100%; justify-content: space-between; }
   .briefing-intro h1, .workspace-setup h1 { font-size: clamp(2.65rem, 13vw, 3.8rem); }
-  .agent-setup-copy h1 { font-size: clamp(2.65rem, 13vw, 3.8rem); }
   .course-facts { grid-template-columns: 1fr; }
   .course-facts > div + div { padding-left: 0; border-top: 1px solid var(--color-border-subtle); border-left: 0; }
   .brief-roadmap { grid-template-columns: 1fr; }

@@ -24,13 +24,23 @@ const $ = (selector) => document.querySelector(selector);
 const escape = (value) => String(value).replace(/[&<>"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[character]);
 
 async function api(path, options) {
-  const response = await fetch(path, {
-    ...options,
-    headers: { "content-type": "application/json", ...(options?.headers ?? {}) },
-  });
-  const body = await response.json();
-  if (!response.ok) throw new Error(body.error ?? "LearnDeck could not complete that request.");
+  let response;
+  try {
+    response = await fetch(path, {
+      ...options,
+      headers: { "content-type": "application/json", ...(options?.headers ?? {}) },
+    });
+  } catch {
+    throw new Error("The local LearnDeck server is not responding. Start it with `bun run app`, then try again.");
+  }
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error([body.error ?? "LearnDeck could not complete that request.", body.userAction].filter(Boolean).join(" "));
   return body;
+}
+
+function setNote(element, message, isError = false) {
+  element.textContent = message;
+  element.classList.toggle("is-error", isError);
 }
 
 async function boot() {
@@ -89,7 +99,7 @@ function bindEvents() {
     if (button?.dataset.guideId) setActiveGuide(button.dataset.guideId);
   });
   $("#connect-selected-guides").addEventListener("click", connectSelectedGuides);
-  $("#continue-to-library").addEventListener("click", () => { setActiveGuide("none"); showLibrary(); });
+  $("#continue-to-library").addEventListener("click", () => { ensureActiveGuide(); updateGuideButton(); showLibrary(); });
   $("#continue-without-guide").addEventListener("click", continueWithoutGuide);
   $("#path-form").addEventListener("submit", createPath);
   $("#change-workspace").addEventListener("click", showWorkspaceSetup);
@@ -223,13 +233,15 @@ async function connectIntegration(id) {
     persistActiveGuide();
     renderIntegrations();
     renderAgentSetup();
+    updateGuideButton();
     $("#integration-status").textContent = `${integration.label} connected. Config file changed: ${result.configPath}. ${result.nextStep}`;
     $("#agent-setup-status").textContent = `${integration.label} connected. Config file changed: ${result.configPath}. ${result.nextStep}`;
     focusSurface("#integration-status");
   } catch (error) {
     $("#integration-status").textContent = error.message;
+    $("#agent-setup-status").textContent = error.message;
     button.disabled = false;
-    button.textContent = "Connect";
+    button.textContent = integration.status === "stale" ? "Reconnect" : "Connect";
   }
 }
 
@@ -246,6 +258,7 @@ async function disconnectIntegration(id) {
     }
     renderIntegrations();
     renderAgentSetup();
+    updateGuideButton();
     const message = result.message || `Disconnected ${integration.label}. File changed: ${result.configPath}.`;
     $("#integration-status").textContent = `${message} No active guide is selected.`;
     $("#agent-setup-status").textContent = message;
@@ -365,6 +378,7 @@ function renderAgentSetup() {
 
   const options = $("#active-guide-options");
   const configured = state.integrations.filter((integration) => integration.status === "connected");
+  options.classList.toggle("hidden", !configured.length);
   options.replaceChildren();
   const copy = document.createElement("p");
   copy.className = "active-guide-copy";
@@ -394,9 +408,9 @@ function renderAgentSetup() {
   const selected = selectable.filter((integration) => state.guideSelection.has(integration.id));
   connect.innerHTML = selected.length ? `Connect ${selected.length === 1 ? selected[0].label : `${selected.length} selected guides`} <span aria-hidden="true">→</span>` : "Connect selected guides";
   $("#agent-setup-status").textContent = state.guideSetupMessage || (activeGuideIntegration()
-    ? `${activeGuideIntegration().label} is selected. Add another guide or choose No active guide; connected guides share local progress.`
-    : selectable.length ? "Choose any detected guide, or choose No active guide. Connecting changes only LearnDeck's local MCP entry."
-      : "No active guide is selected. You can continue now and connect one later.");
+    ? `${activeGuideIntegration().label} is selected. Connected guides share local progress.`
+    : selectable.length ? "Pick any detected guide, or skip and connect one later. Connecting changes only LearnDeck's local MCP entry."
+      : "No guides detected on this Mac yet. You can skip for now and connect one later.");
 }
 
 async function connectSelectedGuides() {
@@ -416,7 +430,11 @@ async function connectSelectedGuides() {
       failures.push(`${integration.label}: ${error.message}`);
     }
   }
-  state.integrations = await api("/api/integrations");
+  try {
+    state.integrations = await api("/api/integrations");
+  } catch (error) {
+    failures.push(`Guide status refresh failed: ${error.message}`);
+  }
   state.guideSelection.clear();
   if (connected.length) {
     state.activeGuideId = connected[0].id;
@@ -430,15 +448,27 @@ async function connectSelectedGuides() {
   renderAgentSetup();
   renderIntegrations();
   updateGuideButton();
+  if (connected.length && !failures.length) {
+    state.guideSetupMessage = "";
+    showLibrary();
+    setNote($("#library-status"), `${connected.map((result) => result.label).join(" and ")} connected. ${connected.map((result) => result.nextStep).join(" ")}`);
+    return;
+  }
   focusSurface("#agent-setup-status");
 }
 
-function continueToCourse() {
-  if (state.paths.length) {
-    selectPath(state.paths[0].id);
-    return;
+async function continueToCourse() {
+  const button = $("#start-course");
+  button.disabled = true;
+  try {
+    if (state.paths.length) await selectPath(state.paths[0].id);
+    else showWorkspaceSetup();
+  } catch (error) {
+    $("#brief-resume-note").textContent = `Could not open the course: ${error.message}`;
+    focusSurface("#brief-resume-note");
+  } finally {
+    button.disabled = false;
   }
-  showWorkspaceSetup();
 }
 
 function showHome() {
@@ -465,6 +495,7 @@ function showLibrary() {
   $("#home").classList.remove("hidden");
   $("#welcome-screen").classList.add("hidden");
   $("#course-library").classList.remove("hidden");
+  setNote($("#library-status"), "");
   renderHome();
   focusSurface("#library-title");
 }
@@ -506,9 +537,13 @@ async function startLearnDeck() {
     state.guideSelection = new Set(state.integrations.filter((integration) => integration.status === "detected").map((integration) => integration.id));
     ensureActiveGuide();
     updateGuideButton();
-    showAgentSetup();
+    button.disabled = false;
+    button.innerHTML = "Browse courses <span aria-hidden=\"true\">→</span>";
+    $("#start-status").textContent = "LearnDeck is ready. Your progress stays on this Mac.";
+    if (state.integrations.some((integration) => integration.status === "connected")) showLibrary();
+    else showAgentSetup();
   } catch (error) {
-    $("#start-status").textContent = error.message;
+    $("#start-status").textContent = `${error.message} Then press the button to try again.`;
     button.disabled = false;
     button.innerHTML = "Try starting again <span aria-hidden=\"true\">→</span>";
   }
@@ -547,11 +582,15 @@ async function selectCourse(courseId) {
 }
 
 async function openCourse(courseId) {
+  const status = $("#library-status");
   try {
+    setNote(status, "Opening course…");
     await selectCourse(courseId);
+    setNote(status, "");
     showCourseBriefing();
   } catch (error) {
-    alert(error.message);
+    setNote(status, `Could not open this course: ${error.message} Go back and reopen the library to refresh it.`, true);
+    focusSurface("#library-status");
   }
 }
 
@@ -570,6 +609,15 @@ function renderHome() {
   const visibleCourses = state.category === "All" ? state.courses : state.courses.filter((course) => course.category === state.category);
   $("#library-count").textContent = `${visibleCourses.length} ${visibleCourses.length === 1 ? "course" : "courses"}`;
   const grid = $("#course-grid");
+  if (!visibleCourses.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty";
+    empty.textContent = state.courses.length
+      ? "No courses in this category yet. Pick another category above."
+      : "No courses are available yet. Check the catalogue configuration, restart LearnDeck, or contribute one below.";
+    grid.replaceChildren(empty);
+    return;
+  }
   grid.replaceChildren(...visibleCourses.map((course) => courseCard(course)));
 }
 
@@ -586,10 +634,10 @@ function renderCatalogueProvenance() {
   }
   const synced = catalogue.syncedAt ? formatCatalogueTime(catalogue.syncedAt) : "";
   label.textContent = catalogue.source === "bundled"
-    ? "Bundled local courses"
+    ? "Bundled course packs · offline fallback"
     : catalogue.source === "live"
-      ? synced ? `Live catalogue · synced ${synced}` : "Live catalogue"
-      : "Cached catalogue";
+      ? synced ? `GitHub catalogue · synced ${synced}` : "GitHub catalogue"
+      : "GitHub catalogue · cached copy";
   warning.textContent = catalogue.warning || "";
   warning.classList.toggle("hidden", !catalogue.warning);
   panel.classList.remove("hidden");
@@ -659,6 +707,10 @@ function renderWorkspaceSetup() {
 async function createPath(event) {
   event.preventDefault();
   const form = new FormData(event.currentTarget);
+  const submit = event.currentTarget.querySelector("button[type=submit]");
+  const status = $("#path-form-status");
+  submit.disabled = true;
+  setNote(status, "Preparing your workspace…");
   try {
     const workspacePath = String(form.get("workspacePath") || "").trim();
     const path = await api(`/api/courses/${encodeURIComponent(state.course.id)}/paths`, {
@@ -670,9 +722,12 @@ async function createPath(event) {
       }),
     });
     state.paths = await api(`/api/courses/${encodeURIComponent(state.course.id)}/paths`);
+    setNote(status, "");
     await selectPath(path.id);
   } catch (error) {
-    alert(error.message);
+    setNote(status, `${error.message} Use an absolute path to a folder whose parent already exists, then try again.`, true);
+  } finally {
+    submit.disabled = false;
   }
 }
 
@@ -752,12 +807,19 @@ function renderLesson() {
   $("#sources-list").innerHTML = section.sources.map((source) => source.startsWith("http")
     ? `<a href="${escape(source)}" target="_blank" rel="noreferrer">${escape(source)}</a>`
     : `<code>${escape(source.split("/").at(-1))}</code>`).join("");
-  $("#question-kind").textContent = `${question.kind} question`;
-  $("#question-reference").textContent = question.reference;
-  $("#question-prompt").textContent = question.prompt;
-  $("#answer").value = "";
-  state.answerDirty = false;
-  $("#answer-form").dataset.questionId = question.id;
+  const answerForm = $("#answer-form");
+  answerForm.classList.toggle("hidden", !question);
+  if (question) {
+    $("#question-kind").textContent = `${question.kind} question`;
+    $("#question-reference").textContent = question.reference;
+    $("#question-prompt").textContent = question.prompt;
+    if (answerForm.dataset.questionId !== question.id) {
+      $("#answer").value = "";
+      state.answerDirty = false;
+      setNote($("#answer-status"), "");
+    }
+    answerForm.dataset.questionId = question.id;
+  }
   renderAttempts(section.id);
   renderEvidence(section.id);
   observeLessonProgress(index);
@@ -857,7 +919,7 @@ function renderEvidence(sectionId) {
     const time = document.createElement("time");
     if (record.recordedAt) {
       time.dateTime = record.recordedAt;
-      time.textContent = record.recordedAt;
+      time.textContent = formatCatalogueTime(record.recordedAt);
     }
     heading.append(source, time);
     const note = document.createElement("p");
@@ -876,9 +938,13 @@ function renderEvidence(sectionId) {
 async function recordEvidence(event) {
   event.preventDefault();
   const form = event.currentTarget;
-  const note = String(new FormData(form).get("note") || "").trim();
-  const ref = String(new FormData(form).get("ref") || "").trim();
+  const data = new FormData(form);
+  const note = String(data.get("note") || "").trim();
+  const ref = String(data.get("ref") || "").trim();
   const status = $("#evidence-status");
+  const submit = form.querySelector("button[type=submit]");
+  submit.disabled = true;
+  setNote(status, "Recording evidence…");
   try {
     await api(`/api/paths/${encodeURIComponent(state.pathId)}/evidence`, {
       method: "POST",
@@ -887,11 +953,13 @@ async function recordEvidence(event) {
     state.overview = await api(`/api/paths/${encodeURIComponent(state.pathId)}/overview`);
     form.reset();
     render();
-    status.textContent = "Learner evidence recorded.";
+    setNote(status, "Learner evidence recorded.");
     focusSurface("#evidence-status");
   } catch (error) {
-    status.textContent = `Evidence could not be recorded: ${error.message}`;
+    setNote(status, `Evidence could not be recorded: ${error.message} Your note is still in the form — try again.`, true);
     focusSurface("#evidence-status");
+  } finally {
+    submit.disabled = false;
   }
 }
 
@@ -1159,7 +1227,11 @@ function persistEmbeddedControl(event) {
 
 async function submitAnswer(event) {
   event.preventDefault();
-  const questionId = event.currentTarget.dataset.questionId;
+  const form = event.currentTarget;
+  const questionId = form.dataset.questionId;
+  const submit = form.querySelector("button[type=submit]");
+  submit.disabled = true;
+  setNote($("#answer-status"), "Submitting your answer…");
   try {
     const attempt = await api("/api/attempts", {
       method: "POST",
@@ -1171,23 +1243,36 @@ async function submitAnswer(event) {
       }),
     });
     state.overview = await api(`/api/paths/${encodeURIComponent(state.pathId)}/overview`);
+    $("#answer").value = "";
     state.answerDirty = false;
+    setNote($("#answer-status"), "");
     state.statusMessage = attempt.result === "submitted"
       ? "Submitted — waiting for optional guide feedback"
       : `Answer ${attempt.result}.`;
     render();
     focusSurface("#progress-summary");
   } catch (error) {
-    alert(error.message);
+    setNote($("#answer-status"), `Your answer was not submitted: ${error.message} It is still in the box — try again.`, true);
+  } finally {
+    submit.disabled = false;
   }
 }
 
 boot();
 
 setInterval(async () => {
-  if (!state.pathId || state.answerDirty) return;
+  if (!state.pathId || state.answerDirty || document.hidden || $("#course").classList.contains("hidden")) return;
+  // Skip while the learner is interacting with lesson controls so a re-render never steals focus mid-typing.
+  const active = document.activeElement;
+  if (active && active.closest("#course") && active.matches("input, textarea, select, button")) return;
+  const pathId = state.pathId;
+  const before = state.overview;
   try {
-    state.overview = await api(`/api/paths/${encodeURIComponent(state.pathId)}/overview`);
+    const overview = await api(`/api/paths/${encodeURIComponent(pathId)}/overview`);
+    // Discard stale responses: the path changed or another action refreshed the overview mid-flight.
+    if (state.pathId !== pathId || state.overview !== before || state.answerDirty) return;
+    if (JSON.stringify(overview) === JSON.stringify(before)) return;
+    state.overview = overview;
     render();
   } catch {
     // A local server restart should not interrupt an answer the learner is writing.
