@@ -1,0 +1,15 @@
+stateDiagram-v2
+    [*] --> ATTEMPT_REQUESTED: MISSION_OPENED / workshop.create-attempt.v1 command
+    ATTEMPT_REQUESTED --> ATTEMPT_LEASED
+    ATTEMPT_LEASED --> ARTIFACT_SUBMITTED
+    ATTEMPT_LEASED --> ATTEMPT_REQUESTED: lease expired and budget remains / MissionCompletionProcess issues workshop.create-attempt.v1
+    ARTIFACT_SUBMITTED --> VERIFICATION_RUNNING: verification.start-verification.v1 command
+    VERIFICATION_RUNNING --> COMPLETION_REVIEW: verdict recorded
+    COMPLETION_REVIEW --> HUMAN_DECISION: REVIEW_RECOMMENDATION_ISSUED
+    HUMAN_DECISION --> ATTEMPT_REQUESTED: rejected and retry authorized / MissionCompletionProcess issues workshop.create-attempt.v1
+    HUMAN_DECISION --> NEEDS_HUMAN_DECISION: no bounded retry authorized
+    HUMAN_DECISION --> MISSION_COMPLETED: human approved passing result
+    ATTEMPT_REQUESTED --> MISSION_CANCELLED: workshop.revoke-attempt.v1 command
+    ATTEMPT_LEASED --> MISSION_CANCELLED: workshop.revoke-attempt.v1 command
+    MISSION_COMPLETED --> [*]
+    MISSION_CANCELLED --> [*]

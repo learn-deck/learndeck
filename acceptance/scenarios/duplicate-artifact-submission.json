@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 2,
+  "id": "duplicate-artifact-submission",
+  "title": "Duplicate artifact submission is idempotent",
+  "purpose": "Prove the same attempt and digest return the recorded receipt without a second business effect.",
+  "contractVersion": 1,
+  "fixtureControls": {
+    "authoritativeTimes": {
+      "1": "2026-07-12T12:00:00Z",
+      "2": "2026-07-12T12:00:00Z"
+    },
+    "generatedSecrets": {
+      "duplicateLeaseToken": "lease-token-duplicate-000000000000"
+    }
+  },
+  "identities": {
+    "correlationId": "corr-duplicate-001",
+    "ids": {
+      "missionId": "mission-duplicate",
+      "attemptId": "attempt-duplicate-1",
+      "runnerId": "runner-fake"
+    },
+    "idempotencyKeys": [
+      {
+        "key": "http-submit-original",
+        "appliesTo": "submitArtifact first delivery"
+      },
+      {
+        "key": "http-submit-retry",
+        "appliesTo": "submitArtifact retry"
+      }
+    ]
+  },
+  "initialState": {
+    "authoritativeTime": "2026-07-12T12:00:00Z",
+    "mission": {
+      "missionId": "mission-duplicate",
+      "missionRevision": 1,
+      "status": "VERIFICATION_RUNNING",
+      "attemptBudget": 1,
+      "attemptsAuthorized": 1
+    },
+    "attempts": [
+      {
+        "attemptId": "attempt-duplicate-1",
+        "attemptNumber": 1,
+        "status": "ARTIFACT_SUBMITTED",
+        "runnerId": "runner-fake",
+        "leaseToken": "lease-token-duplicate-000000000000",
+        "artifactDigest": {
+          "algorithm": "sha256",
+          "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "recordedAt": "2026-07-12T11:59:50Z"
+      }
+    ],
+    "verificationRuns": [
+      {
+        "verificationRunId": "verification-duplicate",
+        "status": "RUNNING"
+      }
+    ],
+    "completionReviews": [],
+    "processedMessageIds": [],
+    "deadLetters": [],
+    "projections": {
+      "mission": {
+        "missionId": "mission-duplicate",
+        "status": "VERIFICATION_RUNNING"
+      },
+      "attempts": [
+        {
+          "attemptId": "attempt-duplicate-1",
+          "status": "ARTIFACT_SUBMITTED"
+        }
+      ],
+      "activity": [
+        {
+          "sequence": 1,
+          "kind": "ARTIFACT_SUBMITTED"
+        }
+      ]
+    },
+    "missionCompletionProcess": {
+      "missionId": "mission-duplicate",
+      "state": "VERIFYING"
+    }
+  },
+  "inputs": [
+    {
+      "sequence": 1,
+      "at": "2026-07-12T12:00:00Z",
+      "kind": "http",
+      "operationId": "submitArtifact",
+      "request": {
+        "pathParams": {
+          "attemptId": "attempt-duplicate-1"
+        },
+        "headers": {
+          "X-Request-Id": "00000000-0000-4000-8000-000000000003",
+          "X-Correlation-Id": "corr-duplicate-001",
+          "Idempotency-Key": "http-submit-retry",
+          "Authorization": "Bearer fixture-runner-token-000000000000000"
+        },
+        "body": {
+          "runnerId": "runner-fake",
+          "leaseToken": "lease-token-duplicate-000000000000",
+          "artifact": {
+            "reference": "urn:patchquest:artifact:duplicate",
+            "digest": {
+              "algorithm": "sha256",
+              "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "changedPaths": ["src/shipping/quote.ts"]
+          },
+          "gateSetDigest": {
+            "algorithm": "sha256",
+            "value": "bd060aa33a81ad01287b5bb18700a65f7c25707084f142ca044d6f1391a1833b"
+          }
+        }
+      },
+      "expect": {
+        "status": 200,
+        "response": {
+          "attemptId": "attempt-duplicate-1",
+          "artifactDigest": {
+            "algorithm": "sha256",
+            "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "outcome": "ARTIFACT_SUBMITTED",
+          "recordedAt": "2026-07-12T11:59:50Z"
+        }
+      }
+    },
+    {
+      "sequence": 2,
+      "at": "2026-07-12T12:00:00Z",
+      "kind": "await",
+      "await": {
+        "until": "quiescent",
+        "condition": {},
+        "timeoutMs": 5000,
+        "pollEveryMs": 25
+      }
+    }
+  ],
+  "expected": {
+    "stepOutcomes": [
+      {
+        "sequence": 1,
+        "result": "idempotent",
+        "code": "RECORDED_SUBMISSION_RETURNED",
+        "businessEffects": []
+      },
+      {
+        "sequence": 2,
+        "result": "observed",
+        "code": "SYSTEM_QUIESCENT",
+        "businessEffects": []
+      }
+    ],
+    "finalState": {
+      "authoritativeTime": "2026-07-12T12:00:00Z",
+      "mission": {
+        "missionId": "mission-duplicate",
+        "missionRevision": 1,
+        "status": "VERIFICATION_RUNNING",
+        "attemptBudget": 1,
+        "attemptsAuthorized": 1
+      },
+      "attempts": [
+        {
+          "attemptId": "attempt-duplicate-1",
+          "attemptNumber": 1,
+          "status": "ARTIFACT_SUBMITTED",
+          "runnerId": "runner-fake",
+          "artifactDigest": {
+            "algorithm": "sha256",
+            "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "recordedAt": "2026-07-12T11:59:50Z"
+        }
+      ],
+      "verificationRuns": [
+        {
+          "verificationRunId": "verification-duplicate",
+          "status": "RUNNING"
+        }
+      ],
+      "completionReviews": [],
+      "processedMessageIds": [],
+      "deadLetters": [],
+      "projections": {
+        "mission": {
+          "missionId": "mission-duplicate",
+          "status": "VERIFICATION_RUNNING"
+        },
+        "attempts": [
+          {
+            "attemptId": "attempt-duplicate-1",
+            "status": "ARTIFACT_SUBMITTED"
+          }
+        ],
+        "activity": [
+          {
+            "sequence": 1,
+            "kind": "ARTIFACT_SUBMITTED"
+          }
+        ]
+      },
+      "missionCompletionProcess": {
+        "missionId": "mission-duplicate",
+        "state": "VERIFYING"
+      }
+    },
+    "publishedMessages": [],
+    "notPublishedMessages": [
+      {
+        "messageType": "workshop.artifact-submitted.v1",
+        "afterSequence": 1,
+        "throughSequence": 2
+      },
+      {
+        "messageType": "workshop.attempt-ended.v1",
+        "afterSequence": 1,
+        "throughSequence": 2
+      },
+      {
+        "messageType": "verification.start-verification.v1",
+        "afterSequence": 1,
+        "throughSequence": 2
+      }
+    ],
+    "invariants": [
+      "the original recordedAt and receipt remain unchanged",
+      "one attempt has one terminal artifact outcome",
+      "HTTP idempotency and domain submission identity are both honored"
+    ]
+  },
+  "scenarioSchema": "../scenario.schema.json"
+}

@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "sessions": [
+    {
+      "sessionId": "session-template",
+      "status": "open",
+      "startedAt": "2000-01-01T00:00:00.000Z",
+      "endedAt": null
+    }
+  ],
+  "calibration": {
+    "status": "unassessed",
+    "evidence": [
+      "No source-closed retrieval has been evaluated for this learner yet."
+    ],
+    "retentionGoal": "Not set yet; ask after the first bounded action.",
+    "assessedAt": null
+  },
+  "current": {
+    "sessionId": "session-template",
+    "moduleId": "00",
+    "activityId": "00-loop-separation",
+    "status": "calibration",
+    "loopPhase": "acquire",
+    "supportLevel": "worked-example",
+    "pendingAction": {
+      "owner": "guide",
+      "action": "Show the compact PatchQuest loop, then ask the learner to close the source and answer prompt 00-loop-separation."
+    },
+    "recovery": null
+  },
+  "completedModules": [],
+  "completedActivities": [],
+  "checks": [],
+  "conceptLevels": [],
+  "retrievalAttempts": [],
+  "revisions": [],
+  "reviewQueue": [],
+  "reviewHistory": [],
+  "recoveryHistory": [],
+  "checkpoints": [
+    {
+      "checkpointId": "checkpoint-template",
+      "sessionId": "session-template",
+      "recordedAt": "2000-01-01T00:00:00.000Z",
+      "reason": "Initialized the packaged learning state template.",
+      "previousDigest": null,
+      "evidenceDigest": "sha256:3736a2634e3e559ae4021c5876c3ab12e37ce74e1de10ad166f5480021ae4da3",
+      "stateDigest": "sha256:08f524e873d45f1edf04856424036a5d7505c45886ee41027194f34a2f273b83",
+      "snapshot": {
+        "current": {
+          "sessionId": "session-template",
+          "moduleId": "00",
+          "activityId": "00-loop-separation",
+          "status": "calibration",
+          "loopPhase": "acquire",
+          "supportLevel": "worked-example",
+          "pendingAction": {
+            "owner": "guide",
+            "action": "Show the compact PatchQuest loop, then ask the learner to close the source and answer prompt 00-loop-separation."
+          },
+          "recovery": null
+        },
+        "calibration": {
+          "status": "unassessed",
+          "evidence": [
+            "No source-closed retrieval has been evaluated for this learner yet."
+          ],
+          "retentionGoal": "Not set yet; ask after the first bounded action.",
+          "assessedAt": null
+        },
+        "conceptLevels": [],
+        "reviewQueue": [],
+        "completedModuleIds": [],
+        "completedActivityRunIds": [],
+        "checkRunIds": [],
+        "retrievalAttemptIds": [],
+        "revisionIds": [],
+        "recoveryEventIds": []
+      }
+    }
+  ],
+  "lastSessionId": "session-template",
+  "lastSessionAt": "2000-01-01T00:00:00.000Z"
+}

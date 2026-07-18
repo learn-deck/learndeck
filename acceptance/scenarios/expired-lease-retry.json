@@ -1,0 +1,332 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 2,
+  "id": "expired-lease-retry",
+  "title": "Expired lease rejects submission and authorizes a bounded retry",
+  "purpose": "Prove stale ownership cannot submit and retry consumes the next budget slot.",
+  "contractVersion": 1,
+  "fixtureControls": {
+    "authoritativeTimes": {
+      "1": "2026-07-12T13:00:31Z",
+      "2": "2026-07-12T13:00:32Z",
+      "3": "2026-07-12T13:00:32Z"
+    },
+    "generatedIds": {
+      "nextAttemptId": "attempt-expired-2"
+    },
+    "generatedSecrets": {
+      "expiredLeaseToken": "lease-token-expired-0000000000000"
+    }
+  },
+  "identities": {
+    "correlationId": "corr-expired-001",
+    "ids": {
+      "missionId": "mission-expired",
+      "attemptId": "attempt-expired-1",
+      "nextAttemptId": "attempt-expired-2",
+      "runnerId": "runner-fake"
+    },
+    "idempotencyKeys": [
+      {
+        "key": "clock-expired",
+        "appliesTo": "authoritative time advance"
+      },
+      {
+        "key": "http-submit-expired",
+        "appliesTo": "submitArtifact"
+      }
+    ]
+  },
+  "initialState": {
+    "authoritativeTime": "2026-07-12T13:00:00Z",
+    "mission": {
+      "missionId": "mission-expired",
+      "missionRevision": 1,
+      "status": "ATTEMPT_RUNNING",
+      "attemptBudget": 2,
+      "attemptsAuthorized": 1
+    },
+    "attempts": [
+      {
+        "attemptId": "attempt-expired-1",
+        "attemptNumber": 1,
+        "status": "LEASED",
+        "runnerId": "runner-fake",
+        "leaseToken": "lease-token-expired-0000000000000",
+        "expiresAt": "2026-07-12T13:00:30Z"
+      }
+    ],
+    "verificationRuns": [],
+    "completionReviews": [],
+    "processedMessageIds": [],
+    "deadLetters": [],
+    "projections": {
+      "mission": {
+        "missionId": "mission-expired",
+        "status": "ATTEMPT_RUNNING",
+        "attemptsAuthorized": 1
+      },
+      "attempts": [
+        {
+          "attemptId": "attempt-expired-1",
+          "status": "LEASED"
+        }
+      ],
+      "activity": []
+    },
+    "missionCompletionProcess": {
+      "missionId": "mission-expired",
+      "state": "ATTEMPT_ACTIVE"
+    }
+  },
+  "inputs": [
+    {
+      "sequence": 1,
+      "at": "2026-07-12T13:00:31Z",
+      "kind": "advanceTime",
+      "idempotencyKey": "clock-expired",
+      "body": {
+        "to": "2026-07-12T13:00:31Z"
+      }
+    },
+    {
+      "sequence": 2,
+      "at": "2026-07-12T13:00:32Z",
+      "kind": "http",
+      "operationId": "submitArtifact",
+      "request": {
+        "pathParams": {
+          "attemptId": "attempt-expired-1"
+        },
+        "headers": {
+          "X-Request-Id": "00000000-0000-4000-8000-000000000004",
+          "X-Correlation-Id": "corr-expired-001",
+          "Idempotency-Key": "http-submit-expired",
+          "Authorization": "Bearer fixture-runner-token-000000000000000"
+        },
+        "body": {
+          "runnerId": "runner-fake",
+          "leaseToken": "lease-token-expired-0000000000000",
+          "artifact": {
+            "reference": "urn:patchquest:artifact:late",
+            "digest": {
+              "algorithm": "sha256",
+              "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "changedPaths": ["src/shipping/quote.ts"]
+          },
+          "gateSetDigest": {
+            "algorithm": "sha256",
+            "value": "bd060aa33a81ad01287b5bb18700a65f7c25707084f142ca044d6f1391a1833b"
+          }
+        }
+      },
+      "expect": {
+        "status": 409,
+        "response": {
+          "code": "LEASE_EXPIRED"
+        }
+      }
+    },
+    {
+      "sequence": 3,
+      "at": "2026-07-12T13:00:32Z",
+      "kind": "await",
+      "await": {
+        "until": "quiescent",
+        "condition": {},
+        "timeoutMs": 5000,
+        "pollEveryMs": 25
+      }
+    }
+  ],
+  "expected": {
+    "stepOutcomes": [
+      {
+        "sequence": 1,
+        "result": "accepted",
+        "code": "LEASE_EXPIRED",
+        "businessEffects": [
+          "attempt 1 ended as LEASE_EXPIRED",
+          "attempt 2 authorized and created"
+        ]
+      },
+      {
+        "sequence": 2,
+        "result": "rejected",
+        "code": "LEASE_EXPIRED",
+        "businessEffects": []
+      },
+      {
+        "sequence": 3,
+        "result": "observed",
+        "code": "SYSTEM_QUIESCENT",
+        "businessEffects": []
+      }
+    ],
+    "finalState": {
+      "authoritativeTime": "2026-07-12T13:00:32Z",
+      "mission": {
+        "missionId": "mission-expired",
+        "missionRevision": 1,
+        "status": "OPEN",
+        "attemptBudget": 2,
+        "attemptsAuthorized": 2,
+        "latestAttemptId": "attempt-expired-2"
+      },
+      "attempts": [
+        {
+          "attemptId": "attempt-expired-1",
+          "attemptNumber": 1,
+          "status": "LEASE_EXPIRED"
+        },
+        {
+          "attemptId": "attempt-expired-2",
+          "attemptNumber": 2,
+          "status": "READY"
+        }
+      ],
+      "verificationRuns": [],
+      "completionReviews": [],
+      "processedMessageIds": [],
+      "deadLetters": [],
+      "projections": {
+        "mission": {
+          "missionId": "mission-expired",
+          "status": "OPEN",
+          "attemptsAuthorized": 2
+        },
+        "attempts": [
+          {
+            "attemptId": "attempt-expired-1",
+            "status": "LEASE_EXPIRED"
+          },
+          {
+            "attemptId": "attempt-expired-2",
+            "status": "READY"
+          }
+        ],
+        "activity": [
+          {
+            "sequence": 1,
+            "kind": "ATTEMPT_ENDED"
+          },
+          {
+            "sequence": 2,
+            "kind": "RETRY_AUTHORIZED"
+          },
+          {
+            "sequence": 3,
+            "kind": "ATTEMPT_READY"
+          }
+        ]
+      },
+      "missionCompletionProcess": {
+        "missionId": "mission-expired",
+        "state": "ATTEMPT_REQUESTED"
+      }
+    },
+    "publishedMessages": [
+      {
+        "kind": "event",
+        "messageType": "workshop.attempt-ended.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.workshop_attempt_ended_v1_0Id}",
+        "correlationId": "corr-expired-001",
+        "causationId": "clock-expired",
+        "payloadSubset": {
+          "data": {
+            "attemptId": "attempt-expired-1",
+            "missionId": "mission-expired",
+            "missionRevision": 1,
+            "outcome": "LEASE_EXPIRED"
+          }
+        },
+        "captures": {
+          "workshop_attempt_ended_v1_0Id": "#/eventId"
+        }
+      },
+      {
+        "kind": "event",
+        "messageType": "mission.retry-authorized.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.mission_retry_authorized_v1_1Id}",
+        "correlationId": "corr-expired-001",
+        "causationId": "${capture.workshop_attempt_ended_v1_0Id}",
+        "payloadSubset": {
+          "data": {
+            "missionId": "mission-expired",
+            "missionRevision": 1,
+            "nextAttemptNumber": 2,
+            "attemptBudget": 2,
+            "reason": "ATTEMPT_EXPIRED"
+          }
+        },
+        "captures": {
+          "mission_retry_authorized_v1_1Id": "#/eventId"
+        }
+      },
+      {
+        "kind": "command",
+        "messageType": "workshop.create-attempt.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.workshop_create_attempt_v1_2Id}",
+        "correlationId": "corr-expired-001",
+        "causationId": "${capture.mission_retry_authorized_v1_1Id}",
+        "payloadSubset": {
+          "data": {
+            "attemptId": "attempt-expired-2",
+            "missionId": "mission-expired",
+            "missionRevision": 1,
+            "attemptNumber": 2,
+            "attemptBudget": 2
+          }
+        },
+        "captures": {
+          "workshop_create_attempt_v1_2Id": "#/commandId"
+        }
+      },
+      {
+        "kind": "event",
+        "messageType": "workshop.attempt-ready.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.workshop_attempt_ready_v1_3Id}",
+        "correlationId": "corr-expired-001",
+        "causationId": "${capture.workshop_create_attempt_v1_2Id}",
+        "payloadSubset": {
+          "data": {
+            "attemptId": "attempt-expired-2",
+            "missionId": "mission-expired",
+            "missionRevision": 1,
+            "attemptNumber": 2
+          }
+        },
+        "captures": {
+          "workshop_attempt_ready_v1_3Id": "#/eventId"
+        }
+      }
+    ],
+    "notPublishedMessages": [
+      {
+        "messageType": "workshop.artifact-submitted.v1",
+        "afterSequence": 1,
+        "throughSequence": 3
+      },
+      {
+        "messageType": "verification.start-verification.v1",
+        "afterSequence": 1,
+        "throughSequence": 3
+      }
+    ],
+    "invariants": [
+      "expiry is evaluated by authoritative time",
+      "late submission creates no artifact effect",
+      "attempt number never exceeds budget"
+    ]
+  },
+  "scenarioSchema": "../scenario.schema.json"
+}

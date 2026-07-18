@@ -1,0 +1,359 @@
+asyncapi: 3.1.0
+info:
+  title: PatchQuest Integration Messages
+  version: 1.0.0-draft
+  description: >-
+    Language-neutral v1 contracts for the three directed orchestration commands
+    and twelve published facts. Delivery is at least once; recipients deduplicate
+    by commandId or eventId. A breaking payload change requires a new version.
+defaultContentType: application/json
+channels:
+  workshopCreateAttempt:
+    address: workshop.create-attempt.v1
+    messages:
+      WorkshopCreateAttemptV1:
+        $ref: "#/components/messages/WorkshopCreateAttemptV1"
+  verificationStartVerification:
+    address: verification.start-verification.v1
+    messages:
+      VerificationStartVerificationV1:
+        $ref: "#/components/messages/VerificationStartVerificationV1"
+  workshopRevokeAttempt:
+    address: workshop.revoke-attempt.v1
+    messages:
+      WorkshopRevokeAttemptV1:
+        $ref: "#/components/messages/WorkshopRevokeAttemptV1"
+  missionOpened:
+    address: mission.opened.v1
+    messages:
+      MissionOpenedV1:
+        $ref: "#/components/messages/MissionOpenedV1"
+  missionRetryAuthorized:
+    address: mission.retry-authorized.v1
+    messages:
+      MissionRetryAuthorizedV1:
+        $ref: "#/components/messages/MissionRetryAuthorizedV1"
+  missionCancelled:
+    address: mission.cancelled.v1
+    messages:
+      MissionCancelledV1:
+        $ref: "#/components/messages/MissionCancelledV1"
+  missionCompleted:
+    address: mission.completed.v1
+    messages:
+      MissionCompletedV1:
+        $ref: "#/components/messages/MissionCompletedV1"
+  workshopAttemptReady:
+    address: workshop.attempt-ready.v1
+    messages:
+      WorkshopAttemptReadyV1:
+        $ref: "#/components/messages/WorkshopAttemptReadyV1"
+  workshopAttemptLeased:
+    address: workshop.attempt-leased.v1
+    messages:
+      WorkshopAttemptLeasedV1:
+        $ref: "#/components/messages/WorkshopAttemptLeasedV1"
+  workshopArtifactSubmitted:
+    address: workshop.artifact-submitted.v1
+    messages:
+      WorkshopArtifactSubmittedV1:
+        $ref: "#/components/messages/WorkshopArtifactSubmittedV1"
+  workshopAttemptEnded:
+    address: workshop.attempt-ended.v1
+    messages:
+      WorkshopAttemptEndedV1:
+        $ref: "#/components/messages/WorkshopAttemptEndedV1"
+  verificationPassed:
+    address: verification.passed.v1
+    messages:
+      VerificationPassedV1:
+        $ref: "#/components/messages/VerificationPassedV1"
+  verificationFailed:
+    address: verification.failed.v1
+    messages:
+      VerificationFailedV1:
+        $ref: "#/components/messages/VerificationFailedV1"
+  verificationAborted:
+    address: verification.aborted.v1
+    messages:
+      VerificationAbortedV1:
+        $ref: "#/components/messages/VerificationAbortedV1"
+  reviewRecommendationIssued:
+    address: review.recommendation-issued.v1
+    messages:
+      ReviewRecommendationIssuedV1:
+        $ref: "#/components/messages/ReviewRecommendationIssuedV1"
+operations:
+  issueWorkshopCreateAttempt:
+    action: send
+    channel: { $ref: "#/channels/workshopCreateAttempt" }
+    messages:
+      [
+        {
+          $ref: "#/channels/workshopCreateAttempt/messages/WorkshopCreateAttemptV1",
+        },
+      ]
+  issueVerificationStartVerification:
+    action: send
+    channel: { $ref: "#/channels/verificationStartVerification" }
+    messages:
+      [
+        {
+          $ref: "#/channels/verificationStartVerification/messages/VerificationStartVerificationV1",
+        },
+      ]
+  issueWorkshopRevokeAttempt:
+    action: send
+    channel: { $ref: "#/channels/workshopRevokeAttempt" }
+    messages:
+      [
+        {
+          $ref: "#/channels/workshopRevokeAttempt/messages/WorkshopRevokeAttemptV1",
+        },
+      ]
+  publishMissionOpened:
+    action: send
+    channel: { $ref: "#/channels/missionOpened" }
+    messages: [{ $ref: "#/channels/missionOpened/messages/MissionOpenedV1" }]
+  publishMissionRetryAuthorized:
+    action: send
+    channel: { $ref: "#/channels/missionRetryAuthorized" }
+    messages:
+      [
+        {
+          $ref: "#/channels/missionRetryAuthorized/messages/MissionRetryAuthorizedV1",
+        },
+      ]
+  publishMissionCancelled:
+    action: send
+    channel: { $ref: "#/channels/missionCancelled" }
+    messages:
+      [{ $ref: "#/channels/missionCancelled/messages/MissionCancelledV1" }]
+  publishMissionCompleted:
+    action: send
+    channel: { $ref: "#/channels/missionCompleted" }
+    messages:
+      [{ $ref: "#/channels/missionCompleted/messages/MissionCompletedV1" }]
+  publishWorkshopAttemptReady:
+    action: send
+    channel: { $ref: "#/channels/workshopAttemptReady" }
+    messages:
+      [
+        {
+          $ref: "#/channels/workshopAttemptReady/messages/WorkshopAttemptReadyV1",
+        },
+      ]
+  publishWorkshopAttemptLeased:
+    action: send
+    channel: { $ref: "#/channels/workshopAttemptLeased" }
+    messages:
+      [
+        {
+          $ref: "#/channels/workshopAttemptLeased/messages/WorkshopAttemptLeasedV1",
+        },
+      ]
+  publishWorkshopArtifactSubmitted:
+    action: send
+    channel: { $ref: "#/channels/workshopArtifactSubmitted" }
+    messages:
+      [
+        {
+          $ref: "#/channels/workshopArtifactSubmitted/messages/WorkshopArtifactSubmittedV1",
+        },
+      ]
+  publishWorkshopAttemptEnded:
+    action: send
+    channel: { $ref: "#/channels/workshopAttemptEnded" }
+    messages:
+      [
+        {
+          $ref: "#/channels/workshopAttemptEnded/messages/WorkshopAttemptEndedV1",
+        },
+      ]
+  publishVerificationPassed:
+    action: send
+    channel: { $ref: "#/channels/verificationPassed" }
+    messages:
+      [{ $ref: "#/channels/verificationPassed/messages/VerificationPassedV1" }]
+  publishVerificationFailed:
+    action: send
+    channel: { $ref: "#/channels/verificationFailed" }
+    messages:
+      [{ $ref: "#/channels/verificationFailed/messages/VerificationFailedV1" }]
+  publishVerificationAborted:
+    action: send
+    channel: { $ref: "#/channels/verificationAborted" }
+    messages:
+      [
+        {
+          $ref: "#/channels/verificationAborted/messages/VerificationAbortedV1",
+        },
+      ]
+  publishReviewRecommendationIssued:
+    action: send
+    channel: { $ref: "#/channels/reviewRecommendationIssued" }
+    messages:
+      [
+        {
+          $ref: "#/channels/reviewRecommendationIssued/messages/ReviewRecommendationIssuedV1",
+        },
+      ]
+components:
+  messages:
+    WorkshopCreateAttemptV1:
+      name: workshop.create-attempt.v1
+      title: Create attempt
+      summary: Mission Control directs Workshop to create one authorized attempt.
+      x-message-kind: command
+      x-issuer: mission-control
+      x-recipient: workshop
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/WorkshopCreateAttemptV1",
+        }
+    VerificationStartVerificationV1:
+      name: verification.start-verification.v1
+      title: Start verification
+      summary: Mission Control directs independent verification of exact bound inputs.
+      x-message-kind: command
+      x-issuer: mission-control
+      x-recipient: verification-and-review
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/VerificationStartVerificationV1",
+        }
+    WorkshopRevokeAttemptV1:
+      name: workshop.revoke-attempt.v1
+      title: Revoke attempt
+      summary: Mission Control requests revocation after mission cancellation.
+      x-message-kind: command
+      x-issuer: mission-control
+      x-recipient: workshop
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/WorkshopRevokeAttemptV1",
+        }
+    MissionOpenedV1:
+      name: mission.opened.v1
+      title: Mission opened
+      x-message-kind: event
+      x-producer: mission-control
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/MissionOpenedV1",
+        }
+    MissionRetryAuthorizedV1:
+      name: mission.retry-authorized.v1
+      title: Mission retry authorized
+      x-message-kind: event
+      x-producer: mission-control
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/MissionRetryAuthorizedV1",
+        }
+    MissionCancelledV1:
+      name: mission.cancelled.v1
+      title: Mission cancelled
+      x-message-kind: event
+      x-producer: mission-control
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/MissionCancelledV1",
+        }
+    MissionCompletedV1:
+      name: mission.completed.v1
+      title: Mission completed
+      x-message-kind: event
+      x-producer: mission-control
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/MissionCompletedV1",
+        }
+    WorkshopAttemptReadyV1:
+      name: workshop.attempt-ready.v1
+      title: Attempt ready
+      x-message-kind: event
+      x-producer: workshop
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/WorkshopAttemptReadyV1",
+        }
+    WorkshopAttemptLeasedV1:
+      name: workshop.attempt-leased.v1
+      title: Attempt leased
+      x-message-kind: event
+      x-producer: workshop
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/WorkshopAttemptLeasedV1",
+        }
+    WorkshopArtifactSubmittedV1:
+      name: workshop.artifact-submitted.v1
+      title: Artifact submitted
+      x-message-kind: event
+      x-producer: workshop
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/WorkshopArtifactSubmittedV1",
+        }
+    WorkshopAttemptEndedV1:
+      name: workshop.attempt-ended.v1
+      title: Attempt ended
+      x-message-kind: event
+      x-producer: workshop
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/WorkshopAttemptEndedV1",
+        }
+    VerificationPassedV1:
+      name: verification.passed.v1
+      title: Verification passed
+      x-message-kind: event
+      x-producer: verification-and-review
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/VerificationPassedV1",
+        }
+    VerificationFailedV1:
+      name: verification.failed.v1
+      title: Verification failed
+      x-message-kind: event
+      x-producer: verification-and-review
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/VerificationFailedV1",
+        }
+    VerificationAbortedV1:
+      name: verification.aborted.v1
+      title: Verification aborted
+      summary: Verification could not produce a gate verdict because execution infrastructure or cancellation interrupted the bound run.
+      x-message-kind: event
+      x-producer: verification-and-review
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/VerificationAbortedV1",
+        }
+    ReviewRecommendationIssuedV1:
+      name: review.recommendation-issued.v1
+      title: Review recommendation issued
+      x-message-kind: event
+      x-producer: verification-and-review
+      correlationId: { location: "$message.payload#/correlationId" }
+      payload:
+        {
+          $ref: "../schemas/v1/integration-messages.schema.json#/$defs/ReviewRecommendationIssuedV1",
+        }

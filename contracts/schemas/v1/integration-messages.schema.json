@@ -1,0 +1,652 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.patchquest.example/contracts/v1/integration-messages.schema.json",
+  "title": "PatchQuest v1 integration message payloads",
+  "$defs": {
+    "WorkshopCreateAttemptV1": {
+      "allOf": [
+        { "$ref": "command-envelope.schema.json" },
+        {
+          "properties": {
+            "commandType": { "const": "workshop.create-attempt.v1" },
+            "recipient": { "const": "workshop" },
+            "data": {
+              "type": "object",
+              "required": [
+                "missionId",
+                "missionRevision",
+                "objective",
+                "startingRevision",
+                "workspaceReference",
+                "allowedScope",
+                "requestedCapabilities",
+                "acceptanceGates",
+                "gateSetDigest",
+                "attemptId",
+                "attemptNumber",
+                "attemptBudget"
+              ],
+              "properties": {
+                "missionId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "missionRevision": { "type": "integer", "minimum": 1 },
+                "objective": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                },
+                "startingRevision": {
+                  "$ref": "shared.schema.json#/$defs/Revision"
+                },
+                "workspaceReference": {
+                  "type": "string",
+                  "format": "uri",
+                  "maxLength": 2048
+                },
+                "allowedScope": {
+                  "$ref": "shared.schema.json#/$defs/AllowedScope"
+                },
+                "requestedCapabilities": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": { "$ref": "shared.schema.json#/$defs/Identifier" }
+                },
+                "acceptanceGates": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "$ref": "shared.schema.json#/$defs/AcceptanceGate"
+                  }
+                },
+                "gateSetDigest": { "$ref": "shared.schema.json#/$defs/Digest" },
+                "attemptId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "attemptNumber": { "type": "integer", "minimum": 1 },
+                "attemptBudget": { "type": "integer", "minimum": 1 }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "VerificationStartVerificationV1": {
+      "allOf": [
+        { "$ref": "command-envelope.schema.json" },
+        {
+          "properties": {
+            "commandType": { "const": "verification.start-verification.v1" },
+            "recipient": { "const": "verification-and-review" },
+            "data": {
+              "type": "object",
+              "required": [
+                "verificationRunId",
+                "attemptId",
+                "producingRunnerId",
+                "binding",
+                "artifact",
+                "acceptanceGates"
+              ],
+              "properties": {
+                "verificationRunId": {
+                  "$ref": "shared.schema.json#/$defs/Identifier"
+                },
+                "attemptId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "producingRunnerId": {
+                  "$ref": "shared.schema.json#/$defs/Identifier"
+                },
+                "binding": {
+                  "$ref": "shared.schema.json#/$defs/VerificationBinding"
+                },
+                "artifact": { "$ref": "shared.schema.json#/$defs/Artifact" },
+                "acceptanceGates": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "$ref": "shared.schema.json#/$defs/AcceptanceGate"
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "WorkshopRevokeAttemptV1": {
+      "allOf": [
+        { "$ref": "command-envelope.schema.json" },
+        {
+          "properties": {
+            "commandType": { "const": "workshop.revoke-attempt.v1" },
+            "recipient": { "const": "workshop" },
+            "data": {
+              "type": "object",
+              "required": [
+                "missionId",
+                "missionRevision",
+                "attemptId",
+                "reason"
+              ],
+              "properties": {
+                "missionId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "missionRevision": { "type": "integer", "minimum": 1 },
+                "attemptId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "reason": { "enum": ["MISSION_CANCELLED"] }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "MissionOpenedV1": {
+      "allOf": [
+        { "$ref": "event-envelope.schema.json" },
+        {
+          "properties": {
+            "eventType": { "const": "mission.opened.v1" },
+            "producer": { "const": "mission-control" },
+            "data": {
+              "type": "object",
+              "required": [
+                "missionId",
+                "missionRevision",
+                "objective",
+                "startingRevision",
+                "allowedScope",
+                "requestedCapabilities",
+                "acceptanceGates",
+                "gateSetDigest",
+                "attemptBudget"
+              ],
+              "properties": {
+                "missionId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "missionRevision": { "type": "integer", "minimum": 1 },
+                "objective": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                },
+                "startingRevision": {
+                  "$ref": "shared.schema.json#/$defs/Revision"
+                },
+                "allowedScope": {
+                  "$ref": "shared.schema.json#/$defs/AllowedScope"
+                },
+                "requestedCapabilities": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": { "$ref": "shared.schema.json#/$defs/Identifier" }
+                },
+                "acceptanceGates": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "$ref": "shared.schema.json#/$defs/AcceptanceGate"
+                  }
+                },
+                "gateSetDigest": { "$ref": "shared.schema.json#/$defs/Digest" },
+                "attemptBudget": { "type": "integer", "minimum": 1 }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "MissionRetryAuthorizedV1": {
+      "allOf": [
+        { "$ref": "event-envelope.schema.json" },
+        {
+          "properties": {
+            "eventType": { "const": "mission.retry-authorized.v1" },
+            "producer": { "const": "mission-control" },
+            "data": {
+              "type": "object",
+              "required": [
+                "missionId",
+                "missionRevision",
+                "nextAttemptNumber",
+                "attemptBudget",
+                "reason"
+              ],
+              "properties": {
+                "missionId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "missionRevision": { "type": "integer", "minimum": 1 },
+                "nextAttemptNumber": { "type": "integer", "minimum": 2 },
+                "attemptBudget": { "type": "integer", "minimum": 2 },
+                "reason": {
+                  "enum": [
+                    "ATTEMPT_EXPIRED",
+                    "ATTEMPT_FAILED",
+                    "REVISION_REQUESTED",
+                    "HUMAN_AUTHORIZED"
+                  ]
+                },
+                "feedback": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "MissionCancelledV1": {
+      "allOf": [
+        { "$ref": "event-envelope.schema.json" },
+        {
+          "properties": {
+            "eventType": { "const": "mission.cancelled.v1" },
+            "producer": { "const": "mission-control" },
+            "data": {
+              "type": "object",
+              "required": [
+                "missionId",
+                "missionRevision",
+                "cancelledBy",
+                "reason"
+              ],
+              "properties": {
+                "missionId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "missionRevision": { "type": "integer", "minimum": 1 },
+                "cancelledBy": {
+                  "$ref": "shared.schema.json#/$defs/Identifier"
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1000
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "MissionCompletedV1": {
+      "allOf": [
+        { "$ref": "event-envelope.schema.json" },
+        {
+          "properties": {
+            "eventType": { "const": "mission.completed.v1" },
+            "producer": { "const": "mission-control" },
+            "data": {
+              "type": "object",
+              "required": [
+                "missionId",
+                "missionRevision",
+                "completionReviewId",
+                "recommendation",
+                "verificationRunId",
+                "artifactDigest",
+                "gateSetDigest",
+                "evidenceBundleDigest",
+                "approvedBy"
+              ],
+              "properties": {
+                "missionId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "missionRevision": { "type": "integer", "minimum": 1 },
+                "completionReviewId": {
+                  "$ref": "shared.schema.json#/$defs/Identifier"
+                },
+                "recommendation": { "const": "APPROVE" },
+                "verificationRunId": {
+                  "$ref": "shared.schema.json#/$defs/Identifier"
+                },
+                "artifactDigest": {
+                  "$ref": "shared.schema.json#/$defs/Digest"
+                },
+                "gateSetDigest": { "$ref": "shared.schema.json#/$defs/Digest" },
+                "evidenceBundleDigest": {
+                  "$ref": "shared.schema.json#/$defs/Digest"
+                },
+                "approvedBy": { "$ref": "shared.schema.json#/$defs/Identifier" }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "WorkshopAttemptReadyV1": {
+      "allOf": [
+        { "$ref": "event-envelope.schema.json" },
+        {
+          "properties": {
+            "eventType": { "const": "workshop.attempt-ready.v1" },
+            "producer": { "const": "workshop" },
+            "data": {
+              "type": "object",
+              "required": [
+                "attemptId",
+                "missionId",
+                "missionRevision",
+                "startingRevision",
+                "attemptNumber",
+                "requestedCapabilities"
+              ],
+              "properties": {
+                "attemptId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "missionId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "missionRevision": { "type": "integer", "minimum": 1 },
+                "startingRevision": {
+                  "$ref": "shared.schema.json#/$defs/Revision"
+                },
+                "attemptNumber": { "type": "integer", "minimum": 1 },
+                "requestedCapabilities": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": { "$ref": "shared.schema.json#/$defs/Identifier" }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "WorkshopAttemptLeasedV1": {
+      "allOf": [
+        { "$ref": "event-envelope.schema.json" },
+        {
+          "properties": {
+            "eventType": { "const": "workshop.attempt-leased.v1" },
+            "producer": { "const": "workshop" },
+            "data": {
+              "type": "object",
+              "required": [
+                "attemptId",
+                "runnerId",
+                "leaseId",
+                "runnerCapabilities",
+                "expiresAt"
+              ],
+              "properties": {
+                "attemptId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "runnerId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "leaseId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "runnerCapabilities": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": { "$ref": "shared.schema.json#/$defs/Identifier" }
+                },
+                "expiresAt": { "type": "string", "format": "date-time" }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "WorkshopArtifactSubmittedV1": {
+      "allOf": [
+        { "$ref": "event-envelope.schema.json" },
+        {
+          "properties": {
+            "eventType": { "const": "workshop.artifact-submitted.v1" },
+            "producer": { "const": "workshop" },
+            "data": {
+              "type": "object",
+              "required": [
+                "attemptId",
+                "missionId",
+                "missionRevision",
+                "startingRevision",
+                "runnerId",
+                "artifact",
+                "gateSetDigest"
+              ],
+              "properties": {
+                "attemptId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "missionId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "missionRevision": { "type": "integer", "minimum": 1 },
+                "startingRevision": {
+                  "$ref": "shared.schema.json#/$defs/Revision"
+                },
+                "runnerId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "artifact": { "$ref": "shared.schema.json#/$defs/Artifact" },
+                "gateSetDigest": { "$ref": "shared.schema.json#/$defs/Digest" }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "WorkshopAttemptEndedV1": {
+      "allOf": [
+        { "$ref": "event-envelope.schema.json" },
+        {
+          "properties": {
+            "eventType": { "const": "workshop.attempt-ended.v1" },
+            "producer": { "const": "workshop" },
+            "data": {
+              "type": "object",
+              "required": [
+                "attemptId",
+                "missionId",
+                "missionRevision",
+                "outcome"
+              ],
+              "properties": {
+                "attemptId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "missionId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "missionRevision": { "type": "integer", "minimum": 1 },
+                "outcome": {
+                  "enum": [
+                    "ARTIFACT_SUBMITTED",
+                    "ABANDONED",
+                    "FAILED",
+                    "LEASE_EXPIRED",
+                    "REVOKED"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1000
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "VerificationPassedV1": {
+      "allOf": [
+        { "$ref": "event-envelope.schema.json" },
+        {
+          "properties": {
+            "eventType": { "const": "verification.passed.v1" },
+            "producer": { "const": "verification-and-review" },
+            "data": {
+              "type": "object",
+              "required": [
+                "verificationRunId",
+                "attemptId",
+                "binding",
+                "verifierId",
+                "verdict",
+                "checkCount",
+                "evidenceBundleDigest"
+              ],
+              "properties": {
+                "verificationRunId": {
+                  "$ref": "shared.schema.json#/$defs/Identifier"
+                },
+                "attemptId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "binding": {
+                  "$ref": "shared.schema.json#/$defs/VerificationBinding"
+                },
+                "verifierId": {
+                  "$ref": "shared.schema.json#/$defs/Identifier"
+                },
+                "verdict": { "const": "PASSED" },
+                "checkCount": { "type": "integer", "minimum": 1 },
+                "evidenceBundleDigest": {
+                  "$ref": "shared.schema.json#/$defs/Digest"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "VerificationFailedV1": {
+      "allOf": [
+        { "$ref": "event-envelope.schema.json" },
+        {
+          "properties": {
+            "eventType": { "const": "verification.failed.v1" },
+            "producer": { "const": "verification-and-review" },
+            "data": {
+              "type": "object",
+              "required": [
+                "verificationRunId",
+                "attemptId",
+                "binding",
+                "verifierId",
+                "verdict",
+                "checkCount",
+                "failedGateIds",
+                "evidenceBundleDigest"
+              ],
+              "properties": {
+                "verificationRunId": {
+                  "$ref": "shared.schema.json#/$defs/Identifier"
+                },
+                "attemptId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "binding": {
+                  "$ref": "shared.schema.json#/$defs/VerificationBinding"
+                },
+                "verifierId": {
+                  "$ref": "shared.schema.json#/$defs/Identifier"
+                },
+                "verdict": { "const": "FAILED" },
+                "checkCount": { "type": "integer", "minimum": 1 },
+                "failedGateIds": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": { "$ref": "shared.schema.json#/$defs/Identifier" }
+                },
+                "evidenceBundleDigest": {
+                  "$ref": "shared.schema.json#/$defs/Digest"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "VerificationAbortedV1": {
+      "allOf": [
+        { "$ref": "event-envelope.schema.json" },
+        {
+          "properties": {
+            "eventType": { "const": "verification.aborted.v1" },
+            "producer": { "const": "verification-and-review" },
+            "data": {
+              "type": "object",
+              "required": [
+                "verificationRunId",
+                "attemptId",
+                "binding",
+                "verifierId",
+                "outcome",
+                "reason",
+                "retryable"
+              ],
+              "properties": {
+                "verificationRunId": {
+                  "$ref": "shared.schema.json#/$defs/Identifier"
+                },
+                "attemptId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+                "binding": {
+                  "$ref": "shared.schema.json#/$defs/VerificationBinding"
+                },
+                "verifierId": {
+                  "$ref": "shared.schema.json#/$defs/Identifier"
+                },
+                "outcome": { "const": "ABORTED" },
+                "reason": {
+                  "enum": [
+                    "VERIFIER_UNAVAILABLE",
+                    "WORKSPACE_UNAVAILABLE",
+                    "EXECUTION_INFRASTRUCTURE_FAILURE",
+                    "MISSION_CANCELLED"
+                  ]
+                },
+                "retryable": { "type": "boolean" },
+                "evidenceBundleDigest": {
+                  "$ref": "shared.schema.json#/$defs/Digest"
+                },
+                "detail": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "ReviewRecommendationIssuedV1": {
+      "allOf": [
+        { "$ref": "event-envelope.schema.json" },
+        {
+          "properties": {
+            "eventType": { "const": "review.recommendation-issued.v1" },
+            "producer": { "const": "verification-and-review" },
+            "data": {
+              "type": "object",
+              "required": [
+                "completionReviewId",
+                "verificationRunId",
+                "binding",
+                "verdict",
+                "evidenceBundleDigest",
+                "recommendation"
+              ],
+              "properties": {
+                "completionReviewId": {
+                  "$ref": "shared.schema.json#/$defs/Identifier"
+                },
+                "verificationRunId": {
+                  "$ref": "shared.schema.json#/$defs/Identifier"
+                },
+                "binding": {
+                  "$ref": "shared.schema.json#/$defs/VerificationBinding"
+                },
+                "verdict": { "enum": ["PASSED", "FAILED"] },
+                "evidenceBundleDigest": {
+                  "$ref": "shared.schema.json#/$defs/Digest"
+                },
+                "recommendation": { "enum": ["APPROVE", "REQUEST_REVISION"] },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    }
+  }
+}

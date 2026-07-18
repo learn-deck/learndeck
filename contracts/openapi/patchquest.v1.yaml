@@ -1,0 +1,1052 @@
+openapi: 3.1.0
+info:
+  title: PatchQuest HTTP API
+  version: 1.0.0-draft
+  summary: Language-neutral command and read contract for the PatchQuest demo
+  description: >-
+    Mission Control human operations, Workshop runner operations, controlled
+    operator replay, and public CQRS reads. Mission creation and reads are
+    intentionally unauthenticated in the canonical educational contract;
+    privileged mutations require provider-neutral bearer authentication. Read
+    responses are CQRS projections, not shared domain entities. All request
+    schemas are closed; a breaking v1 change requires a new contract version.
+servers:
+  - url: https://patchquest.example
+    description: Illustrative endpoint; each implementation supplies its own URL.
+tags:
+  - name: Missions
+    description: Create missions, inspect their public projections, and make authorized human decisions.
+  - name: Attempts
+    description: Inspect public attempt projections and perform authenticated runner work.
+  - name: Operations
+    description: Perform authenticated administrative recovery operations with immutable audit data.
+paths:
+  /v1/missions:
+    post:
+      operationId: createMission
+      tags: [Missions]
+      summary: Create and open an immutable mission revision
+      description: >-
+        Intentionally public in the canonical educational contract so a client
+        can open the deterministic demo mission without an identity provider.
+        A deployed implementation may place an external admission layer in
+        front of this operation without changing the domain command.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+        - $ref: "#/components/parameters/CorrelationId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMissionRequest"
+      responses:
+        "201":
+          description: Mission opened and projected.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MissionProjection"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /v1/missions/{missionId}:
+    get:
+      operationId: getMission
+      tags: [Missions]
+      summary: Read the current mission projection
+      description: Intentionally public; returns only the public CQRS projection.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/MissionId"
+      responses:
+        "200":
+          description: Current eventually consistent mission projection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MissionProjection"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/missions/{missionId}/activity:
+    get:
+      operationId: getMissionActivity
+      tags: [Missions]
+      summary: Read the ordered public activity projection for one mission
+      description: Intentionally public; returns only redacted public activity data.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/MissionId"
+      responses:
+        "200":
+          description: Public activity projection ordered by sequence.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MissionActivityProjection"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/missions/{missionId}/completion-review:
+    get:
+      operationId: getMissionCompletionReview
+      tags: [Missions]
+      summary: Read the exact completion review awaiting a human decision
+      description: >-
+        Intentionally public in the canonical demo. It exposes immutable review
+        bindings, but never credentials, prompts, patch contents, or private
+        verifier output.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/MissionId"
+      responses:
+        "200":
+          description: >-
+            Current completion-review projection with every immutable binding
+            required to construct an approval or rejection command.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompletionReviewProjection"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/missions/{missionId}/completion-approval:
+    post:
+      operationId: approveMissionCompletion
+      tags: [Missions]
+      summary: Record a human approval for an exact passing result
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/MissionId"
+        - $ref: "#/components/parameters/RequestId"
+        - $ref: "#/components/parameters/CorrelationId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompletionDecisionRequest"
+      responses:
+        "202":
+          $ref: "#/components/responses/CommandAccepted"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /v1/missions/{missionId}/completion-rejection:
+    post:
+      operationId: rejectMissionCompletion
+      tags: [Missions]
+      summary: Record a human rejection without discarding technical evidence
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/MissionId"
+        - $ref: "#/components/parameters/RequestId"
+        - $ref: "#/components/parameters/CorrelationId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompletionRejectionRequest"
+      responses:
+        "202":
+          $ref: "#/components/responses/CommandAccepted"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /v1/missions/{missionId}/cancellation:
+    post:
+      operationId: cancelMission
+      tags: [Missions]
+      summary: Cancel a mission while preserving its audit history
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/MissionId"
+        - $ref: "#/components/parameters/RequestId"
+        - $ref: "#/components/parameters/CorrelationId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelMissionRequest"
+      responses:
+        "202":
+          $ref: "#/components/responses/CommandAccepted"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /v1/attempts/{attemptId}:
+    get:
+      operationId: getAttempt
+      tags: [Attempts]
+      summary: Read the current attempt projection
+      description: Intentionally public; returns only the public CQRS projection.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/AttemptId"
+      responses:
+        "200":
+          description: Current eventually consistent attempt projection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttemptProjection"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/attempts/{attemptId}/leases:
+    post:
+      operationId: leaseAttempt
+      tags: [Attempts]
+      summary: Acquire the only active lease for a ready attempt
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AttemptId"
+        - $ref: "#/components/parameters/RequestId"
+        - $ref: "#/components/parameters/CorrelationId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaseAttemptRequest"
+      responses:
+        "201":
+          description: Lease acquired using the service's authoritative time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunnerLease"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /v1/attempts/{attemptId}/heartbeat:
+    post:
+      operationId: heartbeatAttempt
+      tags: [Attempts]
+      summary: Record activity and renew the current owner's lease
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AttemptId"
+        - $ref: "#/components/parameters/RequestId"
+        - $ref: "#/components/parameters/CorrelationId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaseOwnerRequest"
+      responses:
+        "200":
+          description: Heartbeat recorded and lease expiry returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunnerLease"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /v1/attempts/{attemptId}/artifacts:
+    post:
+      operationId: submitArtifact
+      tags: [Attempts]
+      summary: Submit one immutable artifact as the current lease owner
+      description: >-
+        Repeating the same attempt ID and artifact digest returns the recorded
+        receipt with no second business effect. A different digest conflicts.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AttemptId"
+        - $ref: "#/components/parameters/RequestId"
+        - $ref: "#/components/parameters/CorrelationId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitArtifactRequest"
+      responses:
+        "201":
+          description: Artifact accepted for the first time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArtifactSubmissionReceipt"
+        "200":
+          description: Previously recorded receipt for an identical submission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArtifactSubmissionReceipt"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /v1/operator/dead-letters/{messageId}/replays:
+    post:
+      operationId: replayDeadLetter
+      tags: [Operations]
+      summary: Replay one inspected dead letter under explicit operator control
+      description: >-
+        The service accepts a replay only when the dead letter is still at the
+        expected revision, the original digest matches, the replacement has a
+        distinct message identity, and the replacement validates against one
+        v1 integration-message contract. Its type and identity are derived only
+        from the nested command or event envelope. Reusing the same
+        Idempotency-Key returns the original receipt and creates no second
+        replay or audit effect.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/MessageId"
+        - $ref: "#/components/parameters/RequestId"
+        - $ref: "#/components/parameters/CorrelationId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplayDeadLetterRequest"
+      responses:
+        "202":
+          description: Replay accepted and an immutable audit record created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplayReceipt"
+        "200":
+          description: Previously recorded receipt for this idempotency key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplayReceipt"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          description: Replacement message does not satisfy exactly one v1 contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: >-
+        Provider-neutral bearer authentication. Each implementation validates
+        the credential and applies local authorization policy for the human,
+        runner, or operations role required by the operation. The contract does
+        not prescribe an identity provider, token format, claims, or scopes.
+  parameters:
+    MissionId:
+      name: missionId
+      in: path
+      required: true
+      schema:
+        $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+    AttemptId:
+      name: attemptId
+      in: path
+      required: true
+      schema:
+        $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+    MessageId:
+      name: messageId
+      in: path
+      required: true
+      description: Identifier of the original dead-lettered message.
+      schema:
+        $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+    CorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      description: Caller-supplied workflow identifier; the server creates one when omitted.
+      schema:
+        $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+    RequestId:
+      name: X-Request-Id
+      in: header
+      required: true
+      description: >-
+        UUID identifying this inbound HTTP request. It becomes the causation
+        identity for effects initiated by the request. It is distinct from the
+        retry-stable Idempotency-Key and the workflow-wide X-Correlation-Id.
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: >-
+        Stable identity for this logical HTTP command. A retry with the same key
+        and identical request returns the recorded response; reuse with different
+        input is a conflict.
+      schema:
+        $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+  responses:
+    CommandAccepted:
+      description: Command accepted for durable processing.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CommandReceipt"
+    InvalidRequest:
+      description: The closed request schema or a business precondition is invalid.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Conflict:
+      description: The requested transition conflicts with current durable state.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    NotFound:
+      description: The requested public resource does not exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    Digest:
+      $ref: "../schemas/v1/shared.schema.json#/$defs/Digest"
+    AllowedScope:
+      $ref: "../schemas/v1/shared.schema.json#/$defs/AllowedScope"
+    AcceptanceGate:
+      $ref: "../schemas/v1/shared.schema.json#/$defs/AcceptanceGate"
+    Artifact:
+      $ref: "../schemas/v1/shared.schema.json#/$defs/Artifact"
+    CreateMissionRequest:
+      type: object
+      required:
+        [
+          objective,
+          startingRevision,
+          workspaceReference,
+          allowedScope,
+          requestedCapabilities,
+          acceptanceGates,
+          gateSetDigest,
+          attemptBudget,
+        ]
+      properties:
+        objective:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        startingRevision:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Revision"
+        workspaceReference:
+          type: string
+          format: uri
+          maxLength: 2048
+        allowedScope:
+          $ref: "#/components/schemas/AllowedScope"
+        requestedCapabilities:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        acceptanceGates:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/AcceptanceGate"
+        gateSetDigest:
+          $ref: "#/components/schemas/Digest"
+        attemptBudget:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+    CompletionDecisionRequest:
+      type: object
+      required:
+        [
+          missionRevision,
+          completionReviewId,
+          recommendation,
+          verificationRunId,
+          artifactDigest,
+          gateSetDigest,
+          evidenceBundleDigest,
+          decidedBy,
+        ]
+      properties:
+        missionRevision:
+          type: integer
+          minimum: 1
+        completionReviewId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        recommendation:
+          const: APPROVE
+        verificationRunId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        artifactDigest:
+          $ref: "#/components/schemas/Digest"
+        gateSetDigest:
+          $ref: "#/components/schemas/Digest"
+        evidenceBundleDigest:
+          $ref: "#/components/schemas/Digest"
+        decidedBy:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+      additionalProperties: false
+    CompletionRejectionRequest:
+      type: object
+      required:
+        [
+          missionRevision,
+          completionReviewId,
+          recommendation,
+          verificationRunId,
+          artifactDigest,
+          gateSetDigest,
+          evidenceBundleDigest,
+          decidedBy,
+          reason,
+          authorizeAnotherAttempt,
+        ]
+      properties:
+        missionRevision:
+          type: integer
+          minimum: 1
+        completionReviewId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        recommendation:
+          enum: [APPROVE, REQUEST_REVISION]
+        verificationRunId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        artifactDigest:
+          $ref: "#/components/schemas/Digest"
+        gateSetDigest:
+          $ref: "#/components/schemas/Digest"
+        evidenceBundleDigest:
+          $ref: "#/components/schemas/Digest"
+        decidedBy:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        authorizeAnotherAttempt:
+          type: boolean
+      additionalProperties: false
+    CancelMissionRequest:
+      type: object
+      required: [missionRevision, cancelledBy, reason]
+      properties:
+        missionRevision:
+          type: integer
+          minimum: 1
+        cancelledBy:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      additionalProperties: false
+    LeaseAttemptRequest:
+      type: object
+      required: [runnerId, runnerCapabilities, requestedLeaseSeconds]
+      properties:
+        runnerId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        runnerCapabilities:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        requestedLeaseSeconds:
+          type: integer
+          minimum: 1
+          maximum: 3600
+      additionalProperties: false
+    LeaseOwnerRequest:
+      type: object
+      required: [runnerId, leaseToken]
+      properties:
+        runnerId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        leaseToken:
+          type: string
+          minLength: 32
+          maxLength: 512
+      additionalProperties: false
+    SubmitArtifactRequest:
+      type: object
+      required: [runnerId, leaseToken, artifact, gateSetDigest]
+      properties:
+        runnerId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        leaseToken:
+          type: string
+          minLength: 32
+          maxLength: 512
+        artifact:
+          $ref: "#/components/schemas/Artifact"
+        gateSetDigest:
+          $ref: "#/components/schemas/Digest"
+      additionalProperties: false
+    RunnerLease:
+      type: object
+      required:
+        [
+          attemptId,
+          missionId,
+          missionRevision,
+          objective,
+          startingRevision,
+          workspaceReference,
+          allowedScope,
+          requestedCapabilities,
+          acceptanceGates,
+          gateSetDigest,
+          leaseId,
+          leaseToken,
+          runnerId,
+          runnerCapabilities,
+          expiresAt,
+        ]
+      properties:
+        attemptId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        missionId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        missionRevision:
+          type: integer
+          minimum: 1
+        objective:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        startingRevision:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Revision"
+        workspaceReference:
+          type: string
+          format: uri
+          maxLength: 2048
+        allowedScope:
+          $ref: "#/components/schemas/AllowedScope"
+        requestedCapabilities:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        acceptanceGates:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/AcceptanceGate"
+        gateSetDigest:
+          $ref: "#/components/schemas/Digest"
+        leaseId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        leaseToken:
+          type: string
+          minLength: 32
+          maxLength: 512
+        runnerId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        runnerCapabilities:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        expiresAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    ArtifactSubmissionReceipt:
+      type: object
+      required: [attemptId, artifactDigest, outcome, recordedAt]
+      properties:
+        attemptId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        artifactDigest:
+          $ref: "#/components/schemas/Digest"
+        outcome:
+          const: ARTIFACT_SUBMITTED
+        recordedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    CommandReceipt:
+      type: object
+      required: [commandId, correlationId, acceptedAt]
+      properties:
+        commandId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        correlationId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        acceptedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    MissionProjection:
+      type: object
+      description: Eventually consistent public read model; not the Mission aggregate.
+      required:
+        [
+          missionId,
+          missionRevision,
+          objective,
+          startingRevision,
+          allowedScope,
+          requestedCapabilities,
+          acceptanceGates,
+          gateSetDigest,
+          attemptBudget,
+          attemptsAuthorized,
+          status,
+          updatedAt,
+        ]
+      properties:
+        missionId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        missionRevision:
+          type: integer
+          minimum: 1
+        objective:
+          type: string
+        startingRevision:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Revision"
+        allowedScope:
+          $ref: "#/components/schemas/AllowedScope"
+        requestedCapabilities:
+          type: array
+          items:
+            $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        acceptanceGates:
+          type: array
+          items:
+            $ref: "#/components/schemas/AcceptanceGate"
+        gateSetDigest:
+          $ref: "#/components/schemas/Digest"
+        attemptBudget:
+          type: integer
+          minimum: 1
+        attemptsAuthorized:
+          type: integer
+          minimum: 0
+        status:
+          enum:
+            [
+              OPEN,
+              ATTEMPT_RUNNING,
+              VERIFICATION_RUNNING,
+              COMPLETION_REVIEW,
+              NEEDS_HUMAN_DECISION,
+              COMPLETED,
+              CANCELLED,
+            ]
+        latestAttemptId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        latestVerificationRunId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        latestArtifactDigest:
+          $ref: "#/components/schemas/Digest"
+        latestVerdict:
+          enum: [PASSED, FAILED]
+        latestRecommendation:
+          enum: [APPROVE, REQUEST_REVISION]
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    CompletionReviewProjection:
+      type: object
+      description: >-
+        Eventually consistent public read model containing the exact immutable
+        bindings a human must echo when approving or rejecting completion.
+      required:
+        [
+          missionId,
+          missionRevision,
+          completionReviewId,
+          recommendation,
+          verificationRunId,
+          verdict,
+          artifactDigest,
+          gateSetDigest,
+          evidenceBundleDigest,
+          projectedAt,
+        ]
+      properties:
+        missionId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        missionRevision:
+          type: integer
+          minimum: 1
+        completionReviewId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        recommendation:
+          enum: [APPROVE, REQUEST_REVISION]
+        verificationRunId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        verdict:
+          enum: [PASSED, FAILED]
+        artifactDigest:
+          $ref: "#/components/schemas/Digest"
+        gateSetDigest:
+          $ref: "#/components/schemas/Digest"
+        evidenceBundleDigest:
+          $ref: "#/components/schemas/Digest"
+        projectedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    AttemptProjection:
+      type: object
+      description: Eventually consistent public read model; not the Attempt aggregate.
+      required:
+        [
+          attemptId,
+          missionId,
+          missionRevision,
+          objective,
+          startingRevision,
+          workspaceReference,
+          allowedScope,
+          requestedCapabilities,
+          acceptanceGates,
+          gateSetDigest,
+          attemptNumber,
+          status,
+          updatedAt,
+        ]
+      properties:
+        attemptId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        missionId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        missionRevision:
+          type: integer
+          minimum: 1
+        objective:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        startingRevision:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Revision"
+        workspaceReference:
+          type: string
+          format: uri
+          maxLength: 2048
+        allowedScope:
+          $ref: "#/components/schemas/AllowedScope"
+        requestedCapabilities:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        acceptanceGates:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/AcceptanceGate"
+        gateSetDigest:
+          $ref: "#/components/schemas/Digest"
+        attemptNumber:
+          type: integer
+          minimum: 1
+        status:
+          enum:
+            [
+              READY,
+              LEASED,
+              ARTIFACT_SUBMITTED,
+              ABANDONED,
+              FAILED,
+              LEASE_EXPIRED,
+              REVOKED,
+            ]
+        runnerId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        leaseExpiresAt:
+          type: string
+          format: date-time
+        artifactDigest:
+          $ref: "#/components/schemas/Digest"
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    MissionActivityProjection:
+      type: object
+      required: [missionId, activities]
+      properties:
+        missionId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        activities:
+          type: array
+          items:
+            type: object
+            required: [sequence, kind, occurredAt, correlationId]
+            properties:
+              sequence:
+                type: integer
+                minimum: 1
+              kind:
+                enum:
+                  [
+                    MISSION_OPENED,
+                    ATTEMPT_READY,
+                    ATTEMPT_LEASED,
+                    ARTIFACT_SUBMITTED,
+                    ATTEMPT_ENDED,
+                    VERIFICATION_PASSED,
+                    VERIFICATION_FAILED,
+                    VERIFICATION_ABORTED,
+                    RECOMMENDATION_ISSUED,
+                    RETRY_AUTHORIZED,
+                    MISSION_CANCELLED,
+                    MISSION_COMPLETED,
+                  ]
+              occurredAt:
+                type: string
+                format: date-time
+              correlationId:
+                $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+              subjectId:
+                $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+            additionalProperties: false
+      additionalProperties: false
+    ReplayDeadLetterRequest:
+      type: object
+      required:
+        [
+          operatorId,
+          reason,
+          expectedDeadLetterRevision,
+          originalMessageDigest,
+          replacementMessage,
+        ]
+      properties:
+        operatorId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        expectedDeadLetterRevision:
+          type: integer
+          minimum: 1
+        originalMessageDigest:
+          $ref: "#/components/schemas/Digest"
+        replacementMessage:
+          description: >-
+            Complete replacement envelope. It MUST validate against exactly one
+            listed schema. Type and identity come only from commandType and
+            commandId, or eventType and eventId, inside this envelope.
+          oneOf:
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/WorkshopCreateAttemptV1"
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/VerificationStartVerificationV1"
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/WorkshopRevokeAttemptV1"
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/MissionOpenedV1"
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/MissionRetryAuthorizedV1"
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/MissionCancelledV1"
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/MissionCompletedV1"
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/WorkshopAttemptReadyV1"
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/WorkshopAttemptLeasedV1"
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/WorkshopArtifactSubmittedV1"
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/WorkshopAttemptEndedV1"
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/VerificationPassedV1"
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/VerificationFailedV1"
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/VerificationAbortedV1"
+            - $ref: "../schemas/v1/integration-messages.schema.json#/$defs/ReviewRecommendationIssuedV1"
+      additionalProperties: false
+    ReplayReceipt:
+      type: object
+      required:
+        [
+          replayId,
+          originalMessageId,
+          replacementMessageId,
+          replacementMessageType,
+          operatorId,
+          outcome,
+          auditRecordedAt,
+        ]
+      properties:
+        replayId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        originalMessageId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        replacementMessageId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        replacementMessageType:
+          type: string
+        operatorId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        outcome:
+          const: REPLAY_ACCEPTED
+        auditRecordedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    Problem:
+      type: object
+      required: [type, title, status, code, correlationId]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+          minLength: 1
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        code:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+        detail:
+          type: string
+          maxLength: 2000
+        correlationId:
+          $ref: "../schemas/v1/shared.schema.json#/$defs/Identifier"
+      additionalProperties: false

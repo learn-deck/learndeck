@@ -1,0 +1,6 @@
+flowchart LR
+    Human[Human operator] -->|defines mission; decides approve or reject| MC[Mission Control]
+    MC -->|commands: create attempt; revoke attempt| W[Workshop]
+    W -->|events: attempt state; submitted artifact| MC
+    MC -->|command: start verification with exact identities| VR[Verification and Review]
+    VR -->|events: verdict; review recommendation| MC

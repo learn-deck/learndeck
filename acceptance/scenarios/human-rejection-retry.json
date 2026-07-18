@@ -1,0 +1,373 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 2,
+  "id": "human-rejection-retry",
+  "title": "Human rejection preserves a passing result and authorizes retry",
+  "purpose": "Prove technical approval is advisory and bounded human-requested revision creates the next attempt.",
+  "contractVersion": 1,
+  "fixtureControls": {
+    "authoritativeTimes": {
+      "1": "2026-07-12T17:00:00Z",
+      "2": "2026-07-12T17:00:00Z",
+      "3": "2026-07-12T17:00:00Z"
+    },
+    "generatedIds": {
+      "nextAttemptId": "attempt-human-reject-2"
+    }
+  },
+  "identities": {
+    "correlationId": "corr-human-reject-001",
+    "ids": {
+      "missionId": "mission-human-reject",
+      "attemptId": "attempt-human-reject-1",
+      "nextAttemptId": "attempt-human-reject-2",
+      "verificationRunId": "verification-human-reject"
+    },
+    "idempotencyKeys": [
+      {
+        "key": "http-human-reject",
+        "appliesTo": "rejectMissionCompletion"
+      }
+    ]
+  },
+  "initialState": {
+    "authoritativeTime": "2026-07-12T17:00:00Z",
+    "mission": {
+      "missionId": "mission-human-reject",
+      "missionRevision": 1,
+      "status": "COMPLETION_REVIEW",
+      "attemptBudget": 2,
+      "attemptsAuthorized": 1,
+      "latestVerdict": "PASSED",
+      "latestRecommendation": "APPROVE"
+    },
+    "attempts": [
+      {
+        "attemptId": "attempt-human-reject-1",
+        "attemptNumber": 1,
+        "status": "ARTIFACT_SUBMITTED",
+        "artifactDigest": {
+          "algorithm": "sha256",
+          "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      }
+    ],
+    "verificationRuns": [
+      {
+        "verificationRunId": "verification-human-reject",
+        "status": "PASSED",
+        "evidenceBundleDigest": {
+          "algorithm": "sha256",
+          "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        }
+      }
+    ],
+    "completionReviews": [
+      {
+        "recommendation": "APPROVE",
+        "humanDecision": null,
+        "completionReviewId": "review-human-reject",
+        "verificationRunId": "verification-human-reject",
+        "artifactDigest": {
+          "algorithm": "sha256",
+          "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "gateSetDigest": {
+          "algorithm": "sha256",
+          "value": "bd060aa33a81ad01287b5bb18700a65f7c25707084f142ca044d6f1391a1833b"
+        },
+        "evidenceBundleDigest": {
+          "algorithm": "sha256",
+          "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        }
+      }
+    ],
+    "processedMessageIds": [],
+    "deadLetters": [],
+    "projections": {
+      "mission": {
+        "missionId": "mission-human-reject",
+        "status": "COMPLETION_REVIEW",
+        "latestVerdict": "PASSED",
+        "latestRecommendation": "APPROVE"
+      },
+      "attempts": [],
+      "activity": []
+    },
+    "missionCompletionProcess": {
+      "missionId": "mission-human-reject",
+      "state": "AWAITING_HUMAN_REVIEW"
+    }
+  },
+  "inputs": [
+    {
+      "sequence": 1,
+      "at": "2026-07-12T17:00:00Z",
+      "kind": "http",
+      "operationId": "getMissionCompletionReview",
+      "request": {
+        "pathParams": {
+          "missionId": "mission-human-reject"
+        }
+      },
+      "expect": {
+        "status": 200,
+        "response": {
+          "missionId": "mission-human-reject",
+          "missionRevision": 1,
+          "completionReviewId": "review-human-reject",
+          "recommendation": "APPROVE",
+          "verificationRunId": "verification-human-reject",
+          "verdict": "PASSED",
+          "artifactDigest": {
+            "algorithm": "sha256",
+            "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "gateSetDigest": {
+            "algorithm": "sha256",
+            "value": "bd060aa33a81ad01287b5bb18700a65f7c25707084f142ca044d6f1391a1833b"
+          },
+          "evidenceBundleDigest": {
+            "algorithm": "sha256",
+            "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "projectedAt": "2026-07-12T17:00:00Z"
+        },
+        "captures": {
+          "completionReviewId": "#/body/completionReviewId",
+          "reviewVerificationRunId": "#/body/verificationRunId",
+          "reviewArtifactDigest": "#/body/artifactDigest",
+          "reviewGateSetDigest": "#/body/gateSetDigest",
+          "reviewEvidenceBundleDigest": "#/body/evidenceBundleDigest"
+        }
+      }
+    },
+    {
+      "sequence": 2,
+      "at": "2026-07-12T17:00:00Z",
+      "kind": "http",
+      "operationId": "rejectMissionCompletion",
+      "request": {
+        "pathParams": {
+          "missionId": "mission-human-reject"
+        },
+        "headers": {
+          "X-Request-Id": "00000000-0000-4000-8000-000000000011",
+          "X-Correlation-Id": "corr-human-reject-001",
+          "Idempotency-Key": "http-human-reject",
+          "Authorization": "Bearer fixture-human-token-0000000000000000"
+        },
+        "body": {
+          "missionRevision": 1,
+          "verificationRunId": "${capture.reviewVerificationRunId}",
+          "artifactDigest": "${capture.reviewArtifactDigest}",
+          "gateSetDigest": "${capture.reviewGateSetDigest}",
+          "evidenceBundleDigest": "${capture.reviewEvidenceBundleDigest}",
+          "decidedBy": "human-reviewer",
+          "reason": "The error message is technically correct but unclear to users.",
+          "authorizeAnotherAttempt": true,
+          "completionReviewId": "${capture.completionReviewId}",
+          "recommendation": "APPROVE"
+        }
+      },
+      "expect": {
+        "status": 202,
+        "response": {
+          "commandId": "cmd-http-human-reject",
+          "correlationId": "corr-human-reject-001",
+          "acceptedAt": "2026-07-12T17:00:00Z"
+        }
+      }
+    },
+    {
+      "sequence": 3,
+      "at": "2026-07-12T17:00:00Z",
+      "kind": "await",
+      "await": {
+        "until": "quiescent",
+        "condition": {},
+        "timeoutMs": 5000,
+        "pollEveryMs": 25
+      }
+    }
+  ],
+  "expected": {
+    "stepOutcomes": [
+      {
+        "sequence": 1,
+        "result": "observed",
+        "code": "COMPLETION_REVIEW_READ",
+        "businessEffects": []
+      },
+      {
+        "sequence": 2,
+        "result": "accepted",
+        "code": "REVISION_AUTHORIZED",
+        "businessEffects": [
+          "human rejection preserved",
+          "attempt 2 authorized and created with feedback"
+        ]
+      },
+      {
+        "sequence": 3,
+        "result": "observed",
+        "code": "SYSTEM_QUIESCENT",
+        "businessEffects": []
+      }
+    ],
+    "finalState": {
+      "authoritativeTime": "2026-07-12T17:00:00Z",
+      "mission": {
+        "missionId": "mission-human-reject",
+        "missionRevision": 1,
+        "status": "OPEN",
+        "attemptBudget": 2,
+        "attemptsAuthorized": 2,
+        "latestVerdict": "PASSED",
+        "latestRecommendation": "APPROVE"
+      },
+      "attempts": [
+        {
+          "attemptId": "attempt-human-reject-1",
+          "attemptNumber": 1,
+          "status": "ARTIFACT_SUBMITTED"
+        },
+        {
+          "attemptId": "attempt-human-reject-2",
+          "attemptNumber": 2,
+          "status": "READY"
+        }
+      ],
+      "verificationRuns": [
+        {
+          "verificationRunId": "verification-human-reject",
+          "status": "PASSED"
+        }
+      ],
+      "completionReviews": [
+        {
+          "recommendation": "APPROVE",
+          "humanDecision": "REJECTED",
+          "reason": "The error message is technically correct but unclear to users.",
+          "completionReviewId": "review-human-reject",
+          "verificationRunId": "verification-human-reject",
+          "artifactDigest": {
+            "algorithm": "sha256",
+            "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "gateSetDigest": {
+            "algorithm": "sha256",
+            "value": "bd060aa33a81ad01287b5bb18700a65f7c25707084f142ca044d6f1391a1833b"
+          },
+          "evidenceBundleDigest": {
+            "algorithm": "sha256",
+            "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          }
+        }
+      ],
+      "processedMessageIds": [],
+      "deadLetters": [],
+      "projections": {
+        "mission": {
+          "missionId": "mission-human-reject",
+          "status": "OPEN",
+          "attemptsAuthorized": 2
+        },
+        "attempts": [
+          {
+            "attemptId": "attempt-human-reject-2",
+            "status": "READY"
+          }
+        ],
+        "activity": [
+          {
+            "sequence": 1,
+            "kind": "RETRY_AUTHORIZED"
+          },
+          {
+            "sequence": 2,
+            "kind": "ATTEMPT_READY"
+          }
+        ]
+      },
+      "missionCompletionProcess": {
+        "missionId": "mission-human-reject",
+        "state": "ATTEMPT_REQUESTED"
+      }
+    },
+    "publishedMessages": [
+      {
+        "kind": "event",
+        "messageType": "mission.retry-authorized.v1",
+        "count": 1,
+        "causedBySequence": 2,
+        "messageId": "${capture.mission_retry_authorized_v1_0Id}",
+        "correlationId": "corr-human-reject-001",
+        "causationId": "${input.2.requestId}",
+        "payloadSubset": {
+          "data": {
+            "missionId": "mission-human-reject",
+            "missionRevision": 1,
+            "nextAttemptNumber": 2,
+            "attemptBudget": 2,
+            "reason": "HUMAN_AUTHORIZED"
+          }
+        },
+        "captures": {
+          "mission_retry_authorized_v1_0Id": "#/eventId"
+        }
+      },
+      {
+        "kind": "command",
+        "messageType": "workshop.create-attempt.v1",
+        "count": 1,
+        "causedBySequence": 2,
+        "messageId": "${capture.workshop_create_attempt_v1_1Id}",
+        "correlationId": "corr-human-reject-001",
+        "causationId": "${capture.mission_retry_authorized_v1_0Id}",
+        "payloadSubset": {
+          "data": {
+            "attemptId": "attempt-human-reject-2",
+            "missionId": "mission-human-reject",
+            "attemptNumber": 2
+          }
+        },
+        "captures": {
+          "workshop_create_attempt_v1_1Id": "#/commandId"
+        }
+      },
+      {
+        "kind": "event",
+        "messageType": "workshop.attempt-ready.v1",
+        "count": 1,
+        "causedBySequence": 2,
+        "messageId": "${capture.workshop_attempt_ready_v1_2Id}",
+        "correlationId": "corr-human-reject-001",
+        "causationId": "${capture.workshop_create_attempt_v1_1Id}",
+        "payloadSubset": {
+          "data": {
+            "attemptId": "attempt-human-reject-2",
+            "missionId": "mission-human-reject",
+            "attemptNumber": 2
+          }
+        },
+        "captures": {
+          "workshop_attempt_ready_v1_2Id": "#/eventId"
+        }
+      }
+    ],
+    "notPublishedMessages": [
+      {
+        "messageType": "mission.completed.v1",
+        "afterSequence": 1,
+        "throughSequence": 3
+      }
+    ],
+    "invariants": [
+      "passing verification remains immutable audit evidence",
+      "human rejection is distinct from the review recommendation",
+      "retry remains within attempt budget and carries feedback"
+    ]
+  },
+  "scenarioSchema": "../scenario.schema.json"
+}

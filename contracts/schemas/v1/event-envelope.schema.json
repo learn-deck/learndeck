@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.patchquest.example/contracts/v1/event-envelope.schema.json",
+  "title": "PatchQuest v1 event envelope",
+  "description": "Stable metadata for a past-tense v1 integration fact. Delivery is at least once; eventId is the consumer idempotency key.",
+  "type": "object",
+  "required": [
+    "eventId",
+    "eventType",
+    "schemaVersion",
+    "occurredAt",
+    "producer",
+    "subjectId",
+    "correlationId",
+    "causationId",
+    "data"
+  ],
+  "properties": {
+    "eventId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+    "eventType": {
+      "type": "string",
+      "pattern": "^[a-z]+(?:[.-][a-z]+)*\\.v[1-9][0-9]*$"
+    },
+    "schemaVersion": { "const": 1 },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "enum": ["mission-control", "workshop", "verification-and-review"]
+    },
+    "subjectId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+    "correlationId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+    "causationId": { "$ref": "shared.schema.json#/$defs/Identifier" },
+    "data": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

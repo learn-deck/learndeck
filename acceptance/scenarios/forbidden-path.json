@@ -1,0 +1,387 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 2,
+  "id": "forbidden-path",
+  "title": "Forbidden path fails independent verification",
+  "purpose": "Prove an artifact outside allowed scope cannot be waived by its producer.",
+  "contractVersion": 1,
+  "fixtureControls": {
+    "authoritativeTimes": {
+      "1": "2026-07-12T11:00:00Z",
+      "2": "2026-07-12T11:00:10Z"
+    },
+    "generatedIds": {
+      "verificationRunId": "verification-forbidden",
+      "completionReviewId": "review-forbidden"
+    },
+    "generatedDigests": {
+      "forbiddenEvidenceBundle": {
+        "algorithm": "sha256",
+        "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    },
+    "generatedSecrets": {
+      "forbiddenLeaseToken": "lease-token-forbidden-000000000000"
+    },
+    "verifierAssignments": {
+      "verification-forbidden": "verifier-independent"
+    },
+    "gateExecutions": [
+      { "gateId": "allowed-scope", "outcome": "FAIL" },
+      { "gateId": "lint", "outcome": "PASS" },
+      { "gateId": "typecheck", "outcome": "PASS" },
+      { "gateId": "tests", "outcome": "PASS" }
+    ]
+  },
+  "identities": {
+    "correlationId": "corr-forbidden-001",
+    "ids": {
+      "missionId": "mission-forbidden",
+      "attemptId": "attempt-forbidden-1",
+      "runnerId": "runner-fake",
+      "verificationRunId": "verification-forbidden",
+      "verifierId": "verifier-independent",
+      "completionReviewId": "review-forbidden"
+    },
+    "idempotencyKeys": [
+      {
+        "key": "http-submit-forbidden",
+        "appliesTo": "submitArtifact"
+      }
+    ]
+  },
+  "initialState": {
+    "authoritativeTime": "2026-07-12T11:00:00Z",
+    "mission": {
+      "missionId": "mission-forbidden",
+      "missionRevision": 1,
+      "status": "ATTEMPT_RUNNING",
+      "attemptBudget": 2,
+      "attemptsAuthorized": 1,
+      "gateSetDigest": {
+        "algorithm": "sha256",
+        "value": "bd060aa33a81ad01287b5bb18700a65f7c25707084f142ca044d6f1391a1833b"
+      }
+    },
+    "attempts": [
+      {
+        "attemptId": "attempt-forbidden-1",
+        "attemptNumber": 1,
+        "status": "LEASED",
+        "runnerId": "runner-fake",
+        "leaseToken": "lease-token-forbidden-000000000000",
+        "expiresAt": "2026-07-12T11:01:00Z"
+      }
+    ],
+    "verificationRuns": [],
+    "completionReviews": [],
+    "processedMessageIds": [],
+    "deadLetters": [],
+    "projections": {
+      "mission": {
+        "missionId": "mission-forbidden",
+        "status": "ATTEMPT_RUNNING"
+      },
+      "attempts": [
+        {
+          "attemptId": "attempt-forbidden-1",
+          "status": "LEASED"
+        }
+      ],
+      "activity": []
+    },
+    "missionCompletionProcess": {
+      "missionId": "mission-forbidden",
+      "state": "ATTEMPT_ACTIVE"
+    }
+  },
+  "inputs": [
+    {
+      "sequence": 1,
+      "at": "2026-07-12T11:00:10Z",
+      "kind": "http",
+      "operationId": "submitArtifact",
+      "request": {
+        "pathParams": {
+          "attemptId": "attempt-forbidden-1"
+        },
+        "headers": {
+          "X-Request-Id": "00000000-0000-4000-8000-000000000005",
+          "X-Correlation-Id": "corr-forbidden-001",
+          "Idempotency-Key": "http-submit-forbidden",
+          "Authorization": "Bearer fixture-runner-token-000000000000000"
+        },
+        "body": {
+          "runnerId": "runner-fake",
+          "leaseToken": "lease-token-forbidden-000000000000",
+          "artifact": {
+            "reference": "urn:patchquest:artifact:forbidden",
+            "digest": {
+              "algorithm": "sha256",
+              "value": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+            },
+            "changedPaths": ["src/shipping/quote.ts", "src/billing/discount.ts"]
+          },
+          "gateSetDigest": {
+            "algorithm": "sha256",
+            "value": "bd060aa33a81ad01287b5bb18700a65f7c25707084f142ca044d6f1391a1833b"
+          }
+        }
+      },
+      "expect": {
+        "status": 201,
+        "response": {
+          "attemptId": "attempt-forbidden-1",
+          "artifactDigest": {
+            "algorithm": "sha256",
+            "value": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          },
+          "outcome": "ARTIFACT_SUBMITTED",
+          "recordedAt": "2026-07-12T11:00:00Z"
+        }
+      }
+    },
+    {
+      "sequence": 2,
+      "at": "2026-07-12T11:00:10Z",
+      "kind": "await",
+      "await": {
+        "until": "quiescent",
+        "condition": {},
+        "timeoutMs": 5000,
+        "pollEveryMs": 25
+      }
+    }
+  ],
+  "expected": {
+    "stepOutcomes": [
+      {
+        "sequence": 1,
+        "result": "accepted",
+        "code": "VERIFICATION_FAILED",
+        "businessEffects": [
+          "artifact recorded once",
+          "allowed-scope gate failed",
+          "REQUEST_REVISION recommendation recorded"
+        ]
+      },
+      {
+        "sequence": 2,
+        "result": "observed",
+        "code": "SYSTEM_QUIESCENT",
+        "businessEffects": []
+      }
+    ],
+    "finalState": {
+      "authoritativeTime": "2026-07-12T11:00:10Z",
+      "mission": {
+        "missionId": "mission-forbidden",
+        "missionRevision": 1,
+        "status": "NEEDS_HUMAN_DECISION",
+        "attemptBudget": 2,
+        "attemptsAuthorized": 1,
+        "latestVerdict": "FAILED",
+        "latestRecommendation": "REQUEST_REVISION"
+      },
+      "attempts": [
+        {
+          "attemptId": "attempt-forbidden-1",
+          "attemptNumber": 1,
+          "status": "ARTIFACT_SUBMITTED",
+          "artifactDigest": {
+            "algorithm": "sha256",
+            "value": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          }
+        }
+      ],
+      "verificationRuns": [
+        {
+          "verificationRunId": "verification-forbidden",
+          "status": "FAILED",
+          "attemptId": "attempt-forbidden-1",
+          "artifactDigest": {
+            "algorithm": "sha256",
+            "value": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          },
+          "gateSetDigest": {
+            "algorithm": "sha256",
+            "value": "bd060aa33a81ad01287b5bb18700a65f7c25707084f142ca044d6f1391a1833b"
+          },
+          "evidenceBundleDigest": {
+            "algorithm": "sha256",
+            "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "failedGateIds": ["allowed-scope"],
+          "verifierId": "verifier-independent"
+        }
+      ],
+      "completionReviews": [
+        {
+          "completionReviewId": "review-forbidden",
+          "verificationRunId": "verification-forbidden",
+          "artifactDigest": {
+            "algorithm": "sha256",
+            "value": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          },
+          "gateSetDigest": {
+            "algorithm": "sha256",
+            "value": "bd060aa33a81ad01287b5bb18700a65f7c25707084f142ca044d6f1391a1833b"
+          },
+          "evidenceBundleDigest": {
+            "algorithm": "sha256",
+            "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "recommendation": "REQUEST_REVISION",
+          "humanDecision": null
+        }
+      ],
+      "processedMessageIds": [],
+      "deadLetters": [],
+      "projections": {
+        "mission": {
+          "missionId": "mission-forbidden",
+          "status": "NEEDS_HUMAN_DECISION",
+          "latestVerdict": "FAILED",
+          "latestRecommendation": "REQUEST_REVISION"
+        },
+        "attempts": [
+          {
+            "attemptId": "attempt-forbidden-1",
+            "status": "ARTIFACT_SUBMITTED"
+          }
+        ],
+        "activity": [
+          {
+            "sequence": 1,
+            "kind": "ARTIFACT_SUBMITTED"
+          },
+          {
+            "sequence": 2,
+            "kind": "ATTEMPT_ENDED"
+          },
+          {
+            "sequence": 3,
+            "kind": "VERIFICATION_FAILED"
+          },
+          {
+            "sequence": 4,
+            "kind": "RECOMMENDATION_ISSUED"
+          }
+        ]
+      },
+      "missionCompletionProcess": {
+        "missionId": "mission-forbidden",
+        "state": "NEEDS_HUMAN_DECISION"
+      }
+    },
+    "publishedMessages": [
+      {
+        "kind": "event",
+        "messageType": "workshop.artifact-submitted.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.workshop_artifact_submitted_v1_0Id}",
+        "correlationId": "corr-forbidden-001",
+        "causationId": "${input.1.requestId}",
+        "payloadSubset": {
+          "data": {
+            "attemptId": "attempt-forbidden-1",
+            "missionId": "mission-forbidden"
+          }
+        },
+        "captures": {
+          "workshop_artifact_submitted_v1_0Id": "#/eventId"
+        }
+      },
+      {
+        "kind": "event",
+        "messageType": "workshop.attempt-ended.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.workshop_attempt_ended_v1_1Id}",
+        "correlationId": "corr-forbidden-001",
+        "causationId": "${capture.workshop_artifact_submitted_v1_0Id}",
+        "payloadSubset": {
+          "data": {
+            "attemptId": "attempt-forbidden-1",
+            "missionId": "mission-forbidden"
+          }
+        },
+        "captures": {
+          "workshop_attempt_ended_v1_1Id": "#/eventId"
+        }
+      },
+      {
+        "kind": "command",
+        "messageType": "verification.start-verification.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.verification_start_verification_v1_2Id}",
+        "correlationId": "corr-forbidden-001",
+        "causationId": "${capture.workshop_artifact_submitted_v1_0Id}",
+        "payloadSubset": {
+          "data": {
+            "verificationRunId": "verification-forbidden",
+            "attemptId": "attempt-forbidden-1"
+          }
+        },
+        "captures": {
+          "verification_start_verification_v1_2Id": "#/commandId"
+        }
+      },
+      {
+        "kind": "event",
+        "messageType": "verification.failed.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.verification_failed_v1_3Id}",
+        "correlationId": "corr-forbidden-001",
+        "causationId": "${capture.verification_start_verification_v1_2Id}",
+        "payloadSubset": {
+          "data": {
+            "verificationRunId": "verification-forbidden",
+            "attemptId": "attempt-forbidden-1"
+          }
+        },
+        "captures": {
+          "verification_failed_v1_3Id": "#/eventId"
+        }
+      },
+      {
+        "kind": "event",
+        "messageType": "review.recommendation-issued.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.review_recommendation_issued_v1_4Id}",
+        "correlationId": "corr-forbidden-001",
+        "causationId": "${capture.verification_failed_v1_3Id}",
+        "payloadSubset": {
+          "data": {
+            "verificationRunId": "verification-forbidden"
+          }
+        },
+        "captures": {
+          "review_recommendation_issued_v1_4Id": "#/eventId"
+        }
+      }
+    ],
+    "notPublishedMessages": [
+      {
+        "messageType": "verification.passed.v1",
+        "afterSequence": 1,
+        "throughSequence": 2
+      },
+      {
+        "messageType": "mission.completed.v1",
+        "afterSequence": 1,
+        "throughSequence": 2
+      }
+    ],
+    "invariants": [
+      "all gates use the submitted artifact and immutable gate-set digest",
+      "the producing runner cannot waive or perform verification",
+      "a failed mandatory gate cannot yield APPROVE"
+    ]
+  },
+  "scenarioSchema": "../scenario.schema.json"
+}

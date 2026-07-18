@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 2,
+  "id": "cancellation-revoke",
+  "title": "Cancellation revokes active work and preserves history",
+  "purpose": "Prove cancellation is terminal for the mission and active work ends as REVOKED.",
+  "contractVersion": 1,
+  "fixtureControls": {
+    "authoritativeTimes": {
+      "1": "2026-07-12T18:00:00Z",
+      "2": "2026-07-12T18:00:00Z"
+    }
+  },
+  "identities": {
+    "correlationId": "corr-cancel-001",
+    "ids": {
+      "missionId": "mission-cancel",
+      "attemptId": "attempt-cancel-1",
+      "runnerId": "runner-fake"
+    },
+    "idempotencyKeys": [
+      {
+        "key": "http-cancel",
+        "appliesTo": "cancelMission"
+      }
+    ]
+  },
+  "initialState": {
+    "authoritativeTime": "2026-07-12T18:00:00Z",
+    "mission": {
+      "missionId": "mission-cancel",
+      "missionRevision": 1,
+      "status": "ATTEMPT_RUNNING",
+      "attemptBudget": 2,
+      "attemptsAuthorized": 1
+    },
+    "attempts": [
+      {
+        "attemptId": "attempt-cancel-1",
+        "attemptNumber": 1,
+        "status": "LEASED",
+        "runnerId": "runner-fake",
+        "expiresAt": "2026-07-12T18:01:00Z"
+      }
+    ],
+    "verificationRuns": [],
+    "completionReviews": [],
+    "processedMessageIds": [],
+    "deadLetters": [],
+    "projections": {
+      "mission": {
+        "missionId": "mission-cancel",
+        "status": "ATTEMPT_RUNNING"
+      },
+      "attempts": [
+        {
+          "attemptId": "attempt-cancel-1",
+          "status": "LEASED"
+        }
+      ],
+      "activity": [
+        {
+          "sequence": 1,
+          "kind": "MISSION_OPENED"
+        },
+        {
+          "sequence": 2,
+          "kind": "ATTEMPT_LEASED"
+        }
+      ]
+    },
+    "missionCompletionProcess": {
+      "missionId": "mission-cancel",
+      "state": "ATTEMPT_ACTIVE"
+    }
+  },
+  "inputs": [
+    {
+      "sequence": 1,
+      "at": "2026-07-12T18:00:00Z",
+      "kind": "http",
+      "operationId": "cancelMission",
+      "request": {
+        "pathParams": {
+          "missionId": "mission-cancel"
+        },
+        "headers": {
+          "X-Request-Id": "00000000-0000-4000-8000-000000000001",
+          "X-Correlation-Id": "corr-cancel-001",
+          "Idempotency-Key": "http-cancel",
+          "Authorization": "Bearer fixture-human-token-0000000000000000"
+        },
+        "body": {
+          "missionRevision": 1,
+          "cancelledBy": "human-operator",
+          "reason": "Mission is no longer needed."
+        }
+      },
+      "expect": {
+        "status": 202,
+        "response": {
+          "commandId": "cmd-http-cancel",
+          "correlationId": "corr-cancel-001",
+          "acceptedAt": "2026-07-12T18:00:00Z"
+        }
+      }
+    },
+    {
+      "sequence": 2,
+      "at": "2026-07-12T18:00:00Z",
+      "kind": "await",
+      "await": {
+        "until": "quiescent",
+        "condition": {},
+        "timeoutMs": 5000,
+        "pollEveryMs": 25
+      }
+    }
+  ],
+  "expected": {
+    "stepOutcomes": [
+      {
+        "sequence": 1,
+        "result": "accepted",
+        "code": "MISSION_CANCELLED",
+        "businessEffects": [
+          "mission became CANCELLED",
+          "active attempt became REVOKED"
+        ]
+      },
+      {
+        "sequence": 2,
+        "result": "observed",
+        "code": "SYSTEM_QUIESCENT",
+        "businessEffects": []
+      }
+    ],
+    "finalState": {
+      "authoritativeTime": "2026-07-12T18:00:00Z",
+      "mission": {
+        "missionId": "mission-cancel",
+        "missionRevision": 1,
+        "status": "CANCELLED",
+        "attemptBudget": 2,
+        "attemptsAuthorized": 1
+      },
+      "attempts": [
+        {
+          "attemptId": "attempt-cancel-1",
+          "attemptNumber": 1,
+          "status": "REVOKED",
+          "reason": "MISSION_CANCELLED"
+        }
+      ],
+      "verificationRuns": [],
+      "completionReviews": [],
+      "processedMessageIds": [],
+      "deadLetters": [],
+      "projections": {
+        "mission": {
+          "missionId": "mission-cancel",
+          "status": "CANCELLED"
+        },
+        "attempts": [
+          {
+            "attemptId": "attempt-cancel-1",
+            "status": "REVOKED"
+          }
+        ],
+        "activity": [
+          {
+            "sequence": 1,
+            "kind": "MISSION_OPENED"
+          },
+          {
+            "sequence": 2,
+            "kind": "ATTEMPT_LEASED"
+          },
+          {
+            "sequence": 3,
+            "kind": "MISSION_CANCELLED"
+          },
+          {
+            "sequence": 4,
+            "kind": "ATTEMPT_ENDED"
+          }
+        ]
+      },
+      "missionCompletionProcess": {
+        "missionId": "mission-cancel",
+        "state": "CANCELLED"
+      }
+    },
+    "publishedMessages": [
+      {
+        "kind": "event",
+        "messageType": "mission.cancelled.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.mission_cancelled_v1_0Id}",
+        "correlationId": "corr-cancel-001",
+        "causationId": "${input.1.requestId}",
+        "payloadSubset": {
+          "data": {
+            "missionId": "mission-cancel"
+          }
+        },
+        "captures": {
+          "mission_cancelled_v1_0Id": "#/eventId"
+        }
+      },
+      {
+        "kind": "command",
+        "messageType": "workshop.revoke-attempt.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.workshop_revoke_attempt_v1_1Id}",
+        "correlationId": "corr-cancel-001",
+        "causationId": "${capture.mission_cancelled_v1_0Id}",
+        "payloadSubset": {
+          "data": {
+            "attemptId": "attempt-cancel-1",
+            "missionId": "mission-cancel"
+          }
+        },
+        "captures": {
+          "workshop_revoke_attempt_v1_1Id": "#/commandId"
+        }
+      },
+      {
+        "kind": "event",
+        "messageType": "workshop.attempt-ended.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.workshop_attempt_ended_v1_2Id}",
+        "correlationId": "corr-cancel-001",
+        "causationId": "${capture.workshop_revoke_attempt_v1_1Id}",
+        "payloadSubset": {
+          "data": {
+            "attemptId": "attempt-cancel-1",
+            "missionId": "mission-cancel"
+          }
+        },
+        "captures": {
+          "workshop_attempt_ended_v1_2Id": "#/eventId"
+        }
+      }
+    ],
+    "notPublishedMessages": [
+      {
+        "messageType": "mission.retry-authorized.v1",
+        "afterSequence": 1,
+        "throughSequence": 2
+      },
+      {
+        "messageType": "mission.completed.v1",
+        "afterSequence": 1,
+        "throughSequence": 2
+      },
+      {
+        "messageType": "workshop.artifact-submitted.v1",
+        "afterSequence": 1,
+        "throughSequence": 2
+      }
+    ],
+    "invariants": [
+      "cancelled missions accept no new attempt or artifact",
+      "revocation preserves the attempt and prior activity",
+      "cancellation is correlated across both contexts"
+    ]
+  },
+  "scenarioSchema": "../scenario.schema.json"
+}

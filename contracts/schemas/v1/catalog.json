@@ -1,0 +1,73 @@
+{
+  "catalogVersion": 1,
+  "title": "PatchQuest v1 contract catalog",
+  "description": "Normative inventory of public HTTP operations and inter-context v1 messages. Commands are directed requests; events are published facts.",
+  "schemaFiles": [
+    "shared.schema.json",
+    "command-envelope.schema.json",
+    "event-envelope.schema.json",
+    "integration-messages.schema.json"
+  ],
+  "http": {
+    "openapi": "../../openapi/patchquest.v1.yaml",
+    "operations": [
+      "createMission",
+      "getMission",
+      "getMissionActivity",
+      "getMissionCompletionReview",
+      "approveMissionCompletion",
+      "rejectMissionCompletion",
+      "cancelMission",
+      "getAttempt",
+      "leaseAttempt",
+      "heartbeatAttempt",
+      "submitArtifact",
+      "replayDeadLetter"
+    ]
+  },
+  "integrationMessages": {
+    "asyncapi": "../../asyncapi/patchquest.v1.yaml",
+    "payloadSchemas": "integration-messages.schema.json",
+    "commandsByIssuer": {
+      "missionControl": [
+        "workshop.create-attempt.v1",
+        "verification.start-verification.v1",
+        "workshop.revoke-attempt.v1"
+      ]
+    },
+    "commandsByRecipient": {
+      "workshop": ["workshop.create-attempt.v1", "workshop.revoke-attempt.v1"],
+      "verificationAndReview": ["verification.start-verification.v1"]
+    },
+    "eventsByProducer": {
+      "missionControl": [
+        "mission.opened.v1",
+        "mission.retry-authorized.v1",
+        "mission.cancelled.v1",
+        "mission.completed.v1"
+      ],
+      "workshop": [
+        "workshop.attempt-ready.v1",
+        "workshop.attempt-leased.v1",
+        "workshop.artifact-submitted.v1",
+        "workshop.attempt-ended.v1"
+      ],
+      "verificationAndReview": [
+        "verification.passed.v1",
+        "verification.failed.v1",
+        "verification.aborted.v1",
+        "review.recommendation-issued.v1"
+      ]
+    }
+  },
+  "gateCommandRegistry": {
+    "version": 1,
+    "canonicalization": "../../../docs/en/contracts/gate-command-registry.md#gate-set-canonicalization",
+    "commands": [
+      "check-allowed-scope",
+      "check-lint",
+      "check-typecheck",
+      "check-tests"
+    ]
+  }
+}

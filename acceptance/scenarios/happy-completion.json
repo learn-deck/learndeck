@@ -1,0 +1,870 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 2,
+  "id": "happy-completion",
+  "title": "Canonical mission completes after independent verification and human approval",
+  "purpose": "Prove the exact passing artifact is independently verified, recommended, and separately approved.",
+  "contractVersion": 1,
+  "fixtureControls": {
+    "authoritativeTimes": {
+      "1": "2026-07-12T10:00:00Z",
+      "2": "2026-07-12T10:00:02Z",
+      "3": "2026-07-12T10:00:20Z",
+      "4": "2026-07-12T10:00:30Z",
+      "5": "2026-07-12T10:00:45Z",
+      "6": "2026-07-12T10:00:45Z",
+      "7": "2026-07-12T10:01:00Z",
+      "8": "2026-07-12T10:01:00Z"
+    },
+    "generatedIds": {
+      "missionId": "mission-happy",
+      "attemptId": "attempt-happy-1",
+      "leaseId": "lease-happy-1",
+      "verificationRunId": "verification-happy-1",
+      "completionReviewId": "review-happy-1"
+    },
+    "generatedDigests": {
+      "happyEvidenceBundle": {
+        "algorithm": "sha256",
+        "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    },
+    "generatedSecrets": {
+      "happyLeaseToken": "fixture-lease-token-happy-0000000001"
+    },
+    "verifierAssignments": {
+      "verification-happy-1": "verifier-independent"
+    },
+    "gateExecutions": [
+      { "gateId": "allowed-scope", "outcome": "PASS" },
+      { "gateId": "lint", "outcome": "PASS" },
+      { "gateId": "typecheck", "outcome": "PASS" },
+      { "gateId": "tests", "outcome": "PASS" }
+    ]
+  },
+  "identities": {
+    "correlationId": "corr-happy-001",
+    "ids": {
+      "missionId": "${capture.missionId}",
+      "attemptId": "${capture.attemptId}",
+      "runnerId": "runner-fake",
+      "leaseId": "${capture.leaseId}",
+      "verificationRunId": "${capture.verificationRunId}",
+      "verifierId": "verifier-independent",
+      "completionReviewId": "${capture.completionReviewId}"
+    },
+    "idempotencyKeys": [
+      {
+        "key": "http-create-happy",
+        "appliesTo": "createMission"
+      },
+      {
+        "key": "http-lease-happy",
+        "appliesTo": "leaseAttempt"
+      },
+      {
+        "key": "http-heartbeat-happy",
+        "appliesTo": "heartbeatAttempt"
+      },
+      {
+        "key": "http-submit-happy",
+        "appliesTo": "submitArtifact"
+      },
+      {
+        "key": "http-approve-happy",
+        "appliesTo": "approveMissionCompletion"
+      }
+    ]
+  },
+  "initialState": {
+    "authoritativeTime": "2026-07-12T10:00:00Z",
+    "mission": null,
+    "attempts": [],
+    "verificationRuns": [],
+    "completionReviews": [],
+    "processedMessageIds": [],
+    "deadLetters": [],
+    "projections": {
+      "mission": null,
+      "attempts": [],
+      "activity": []
+    },
+    "missionCompletionProcess": null
+  },
+  "inputs": [
+    {
+      "sequence": 1,
+      "at": "2026-07-12T10:00:00Z",
+      "kind": "http",
+      "operationId": "createMission",
+      "request": {
+        "pathParams": {},
+        "headers": {
+          "X-Request-Id": "00000000-0000-4000-8000-000000000006",
+          "X-Correlation-Id": "corr-happy-001",
+          "Idempotency-Key": "http-create-happy"
+        },
+        "body": {
+          "objective": "Implement calculateShippingQuote without modifying files outside src/shipping/**.",
+          "startingRevision": "fixture-shipping-v1",
+          "workspaceReference": "urn:patchquest:fixture:shipping-quote",
+          "allowedScope": {
+            "pathPatterns": ["src/shipping/**"]
+          },
+          "requestedCapabilities": ["edit-trusted-fixture"],
+          "acceptanceGates": [
+            {
+              "gateId": "allowed-scope",
+              "kind": "ALLOWED_SCOPE",
+              "commandId": "check-allowed-scope",
+              "mandatory": true,
+              "timeoutSeconds": 10,
+              "evidenceLimitBytes": 4096
+            },
+            {
+              "gateId": "lint",
+              "kind": "LINT",
+              "commandId": "check-lint",
+              "mandatory": true,
+              "timeoutSeconds": 30,
+              "evidenceLimitBytes": 8192
+            },
+            {
+              "gateId": "typecheck",
+              "kind": "TYPECHECK",
+              "commandId": "check-typecheck",
+              "mandatory": true,
+              "timeoutSeconds": 30,
+              "evidenceLimitBytes": 8192
+            },
+            {
+              "gateId": "tests",
+              "kind": "TEST",
+              "commandId": "check-tests",
+              "mandatory": true,
+              "timeoutSeconds": 60,
+              "evidenceLimitBytes": 16384
+            }
+          ],
+          "gateSetDigest": {
+            "algorithm": "sha256",
+            "value": "bd060aa33a81ad01287b5bb18700a65f7c25707084f142ca044d6f1391a1833b"
+          },
+          "attemptBudget": 2
+        }
+      },
+      "expect": {
+        "status": 201,
+        "response": {
+          "missionId": "mission-happy",
+          "missionRevision": 1,
+          "status": "OPEN",
+          "gateSetDigest": {
+            "algorithm": "sha256",
+            "value": "bd060aa33a81ad01287b5bb18700a65f7c25707084f142ca044d6f1391a1833b"
+          },
+          "attemptBudget": 2,
+          "attemptsAuthorized": 1,
+          "latestAttemptId": "attempt-happy-1",
+          "updatedAt": "2026-07-12T10:00:00Z"
+        },
+        "captures": {
+          "missionId": "#/body/missionId",
+          "attemptId": "#/body/latestAttemptId"
+        }
+      }
+    },
+    {
+      "sequence": 2,
+      "at": "2026-07-12T10:00:02Z",
+      "kind": "http",
+      "operationId": "leaseAttempt",
+      "request": {
+        "pathParams": {
+          "attemptId": "${capture.attemptId}"
+        },
+        "headers": {
+          "X-Request-Id": "00000000-0000-4000-8000-000000000007",
+          "X-Correlation-Id": "corr-happy-001",
+          "Idempotency-Key": "http-lease-happy",
+          "Authorization": "Bearer fixture-runner-token-000000000000000"
+        },
+        "body": {
+          "runnerId": "runner-fake",
+          "runnerCapabilities": ["edit-trusted-fixture"],
+          "requestedLeaseSeconds": 60
+        }
+      },
+      "expect": {
+        "status": 201,
+        "response": {
+          "attemptId": "attempt-happy-1",
+          "missionId": "mission-happy",
+          "leaseId": "lease-happy-1",
+          "leaseToken": "fixture-lease-token-happy-0000000001",
+          "runnerId": "runner-fake",
+          "expiresAt": "2026-07-12T10:01:02Z"
+        },
+        "captures": {
+          "leaseToken": "#/body/leaseToken",
+          "leaseId": "#/body/leaseId"
+        }
+      }
+    },
+    {
+      "sequence": 3,
+      "at": "2026-07-12T10:00:20Z",
+      "kind": "http",
+      "operationId": "heartbeatAttempt",
+      "request": {
+        "pathParams": {
+          "attemptId": "${capture.attemptId}"
+        },
+        "headers": {
+          "X-Request-Id": "00000000-0000-4000-8000-000000000008",
+          "X-Correlation-Id": "corr-happy-001",
+          "Idempotency-Key": "http-heartbeat-happy",
+          "Authorization": "Bearer fixture-runner-token-000000000000000"
+        },
+        "body": {
+          "runnerId": "runner-fake",
+          "leaseToken": "${capture.leaseToken}"
+        }
+      },
+      "expect": {
+        "status": 200,
+        "response": {
+          "attemptId": "attempt-happy-1",
+          "missionId": "mission-happy",
+          "leaseId": "lease-happy-1",
+          "leaseToken": "fixture-lease-token-happy-0000000001",
+          "runnerId": "runner-fake",
+          "expiresAt": "2026-07-12T10:01:20Z"
+        }
+      }
+    },
+    {
+      "sequence": 4,
+      "at": "2026-07-12T10:00:30Z",
+      "kind": "http",
+      "operationId": "submitArtifact",
+      "request": {
+        "pathParams": {
+          "attemptId": "${capture.attemptId}"
+        },
+        "headers": {
+          "X-Request-Id": "00000000-0000-4000-8000-000000000009",
+          "X-Correlation-Id": "corr-happy-001",
+          "Idempotency-Key": "http-submit-happy",
+          "Authorization": "Bearer fixture-runner-token-000000000000000"
+        },
+        "body": {
+          "runnerId": "runner-fake",
+          "leaseToken": "${capture.leaseToken}",
+          "artifact": {
+            "reference": "urn:patchquest:artifact:happy",
+            "digest": {
+              "algorithm": "sha256",
+              "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "changedPaths": ["src/shipping/calculate-shipping-quote.ts"]
+          },
+          "gateSetDigest": {
+            "algorithm": "sha256",
+            "value": "bd060aa33a81ad01287b5bb18700a65f7c25707084f142ca044d6f1391a1833b"
+          }
+        }
+      },
+      "expect": {
+        "status": 201,
+        "response": {
+          "attemptId": "attempt-happy-1",
+          "artifactDigest": {
+            "algorithm": "sha256",
+            "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "outcome": "ARTIFACT_SUBMITTED",
+          "recordedAt": "2026-07-12T10:00:30Z"
+        }
+      }
+    },
+    {
+      "sequence": 5,
+      "at": "2026-07-12T10:00:45Z",
+      "kind": "await",
+      "await": {
+        "until": "state",
+        "timeoutMs": 5000,
+        "pollEveryMs": 25,
+        "condition": {
+          "path": "#/mission/status",
+          "equals": "COMPLETION_REVIEW"
+        },
+        "captures": {
+          "verificationRunId": "#/mission/latestVerificationRunId"
+        }
+      }
+    },
+    {
+      "sequence": 6,
+      "at": "2026-07-12T10:00:45Z",
+      "kind": "http",
+      "operationId": "getMissionCompletionReview",
+      "request": {
+        "pathParams": {
+          "missionId": "${capture.missionId}"
+        }
+      },
+      "expect": {
+        "status": 200,
+        "response": {
+          "missionId": "mission-happy",
+          "missionRevision": 1,
+          "completionReviewId": "review-happy-1",
+          "recommendation": "APPROVE",
+          "verificationRunId": "verification-happy-1",
+          "verdict": "PASSED",
+          "artifactDigest": {
+            "algorithm": "sha256",
+            "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "gateSetDigest": {
+            "algorithm": "sha256",
+            "value": "bd060aa33a81ad01287b5bb18700a65f7c25707084f142ca044d6f1391a1833b"
+          },
+          "evidenceBundleDigest": {
+            "algorithm": "sha256",
+            "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "projectedAt": "2026-07-12T10:00:45Z"
+        },
+        "captures": {
+          "reviewMissionId": "#/body/missionId",
+          "reviewMissionRevision": "#/body/missionRevision",
+          "completionReviewId": "#/body/completionReviewId",
+          "reviewRecommendation": "#/body/recommendation",
+          "reviewVerificationRunId": "#/body/verificationRunId",
+          "reviewArtifactDigest": "#/body/artifactDigest",
+          "reviewGateSetDigest": "#/body/gateSetDigest",
+          "evidenceBundleDigest": "#/body/evidenceBundleDigest"
+        }
+      }
+    },
+    {
+      "sequence": 7,
+      "at": "2026-07-12T10:01:00Z",
+      "kind": "http",
+      "operationId": "approveMissionCompletion",
+      "request": {
+        "pathParams": {
+          "missionId": "${capture.missionId}"
+        },
+        "headers": {
+          "X-Request-Id": "00000000-0000-4000-8000-000000000010",
+          "X-Correlation-Id": "corr-happy-001",
+          "Idempotency-Key": "http-approve-happy",
+          "Authorization": "Bearer fixture-human-token-0000000000000000"
+        },
+        "body": {
+          "missionRevision": "${capture.reviewMissionRevision}",
+          "verificationRunId": "${capture.reviewVerificationRunId}",
+          "artifactDigest": "${capture.reviewArtifactDigest}",
+          "gateSetDigest": "${capture.reviewGateSetDigest}",
+          "evidenceBundleDigest": "${capture.evidenceBundleDigest}",
+          "decidedBy": "human-reviewer",
+          "completionReviewId": "${capture.completionReviewId}",
+          "recommendation": "${capture.reviewRecommendation}"
+        }
+      },
+      "expect": {
+        "status": 202,
+        "response": {
+          "commandId": "cmd-http-approve-happy",
+          "correlationId": "corr-happy-001",
+          "acceptedAt": "2026-07-12T10:01:00Z"
+        }
+      }
+    },
+    {
+      "sequence": 8,
+      "at": "2026-07-12T10:01:00Z",
+      "kind": "await",
+      "await": {
+        "until": "quiescent",
+        "condition": {},
+        "timeoutMs": 5000,
+        "pollEveryMs": 25
+      }
+    },
+    {
+      "sequence": 9,
+      "at": "2026-07-12T10:01:01Z",
+      "kind": "http",
+      "operationId": "getMission",
+      "request": {
+        "pathParams": {
+          "missionId": "${capture.missionId}"
+        }
+      },
+      "expect": {
+        "status": 200,
+        "response": {
+          "missionId": "mission-happy",
+          "missionRevision": 1,
+          "status": "COMPLETED",
+          "latestAttemptId": "attempt-happy-1",
+          "latestVerificationRunId": "verification-happy-1",
+          "latestVerdict": "PASSED",
+          "latestRecommendation": "APPROVE",
+          "updatedAt": "2026-07-12T10:01:00Z"
+        }
+      }
+    },
+    {
+      "sequence": 10,
+      "at": "2026-07-12T10:01:01Z",
+      "kind": "http",
+      "operationId": "getAttempt",
+      "request": {
+        "pathParams": {
+          "attemptId": "${capture.attemptId}"
+        }
+      },
+      "expect": {
+        "status": 200,
+        "response": {
+          "attemptId": "attempt-happy-1",
+          "missionId": "mission-happy",
+          "missionRevision": 1,
+          "attemptNumber": 1,
+          "status": "ARTIFACT_SUBMITTED",
+          "runnerId": "runner-fake",
+          "artifactDigest": {
+            "algorithm": "sha256",
+            "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "updatedAt": "2026-07-12T10:00:30Z"
+        }
+      }
+    },
+    {
+      "sequence": 11,
+      "at": "2026-07-12T10:01:01Z",
+      "kind": "http",
+      "operationId": "getMissionActivity",
+      "request": {
+        "pathParams": {
+          "missionId": "${capture.missionId}"
+        }
+      },
+      "expect": {
+        "status": 200,
+        "response": {
+          "missionId": "mission-happy",
+          "activities": [
+            {
+              "sequence": 1,
+              "kind": "MISSION_OPENED",
+              "occurredAt": "2026-07-12T10:00:00Z",
+              "correlationId": "corr-happy-001",
+              "subjectId": "mission-happy"
+            },
+            {
+              "sequence": 8,
+              "kind": "MISSION_COMPLETED",
+              "occurredAt": "2026-07-12T10:01:00Z",
+              "correlationId": "corr-happy-001",
+              "subjectId": "mission-happy"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "expected": {
+    "stepOutcomes": [
+      {
+        "sequence": 1,
+        "result": "accepted",
+        "code": "MISSION_OPENED",
+        "businessEffects": ["mission revision 1 opened", "attempt 1 authorized"]
+      },
+      {
+        "sequence": 2,
+        "result": "accepted",
+        "code": "LEASE_ACQUIRED",
+        "businessEffects": ["attempt 1 leased to runner-fake"]
+      },
+      {
+        "sequence": 3,
+        "result": "accepted",
+        "code": "LEASE_RENEWED",
+        "businessEffects": ["lease expiry advanced"]
+      },
+      {
+        "sequence": 4,
+        "result": "accepted",
+        "code": "ARTIFACT_SUBMITTED",
+        "businessEffects": [
+          "one immutable artifact recorded",
+          "verification and review completed with APPROVE recommendation"
+        ]
+      },
+      {
+        "sequence": 5,
+        "result": "observed",
+        "code": "COMPLETION_REVIEW_READY",
+        "businessEffects": []
+      },
+      {
+        "sequence": 6,
+        "result": "observed",
+        "code": "COMPLETION_REVIEW_READ",
+        "businessEffects": []
+      },
+      {
+        "sequence": 7,
+        "result": "accepted",
+        "code": "MISSION_COMPLETED",
+        "businessEffects": ["human approval bound to exact passing result"]
+      },
+      {
+        "sequence": 8,
+        "result": "observed",
+        "code": "SYSTEM_QUIESCENT",
+        "businessEffects": []
+      },
+      {
+        "sequence": 9,
+        "result": "observed",
+        "code": "MISSION_PROJECTION_READ",
+        "businessEffects": []
+      },
+      {
+        "sequence": 10,
+        "result": "observed",
+        "code": "ATTEMPT_PROJECTION_READ",
+        "businessEffects": []
+      },
+      {
+        "sequence": 11,
+        "result": "observed",
+        "code": "MISSION_ACTIVITY_READ",
+        "businessEffects": []
+      }
+    ],
+    "finalState": {
+      "authoritativeTime": "2026-07-12T10:01:00Z",
+      "mission": {
+        "missionId": "${capture.missionId}",
+        "missionRevision": 1,
+        "status": "COMPLETED",
+        "attemptBudget": 2,
+        "attemptsAuthorized": 1,
+        "latestAttemptId": "${capture.attemptId}",
+        "latestVerificationRunId": "${capture.verificationRunId}",
+        "latestArtifactDigest": {
+          "algorithm": "sha256",
+          "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "latestVerdict": "PASSED",
+        "latestRecommendation": "APPROVE"
+      },
+      "attempts": [
+        {
+          "attemptId": "${capture.attemptId}",
+          "attemptNumber": 1,
+          "status": "ARTIFACT_SUBMITTED",
+          "runnerId": "runner-fake",
+          "artifactDigest": {
+            "algorithm": "sha256",
+            "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        }
+      ],
+      "verificationRuns": [
+        {
+          "verificationRunId": "${capture.verificationRunId}",
+          "status": "PASSED",
+          "verifierId": "verifier-independent",
+          "producingRunnerId": "runner-fake",
+          "checkCount": 4,
+          "evidenceBundleDigest": "${capture.evidenceBundleDigest}"
+        }
+      ],
+      "completionReviews": [
+        {
+          "completionReviewId": "${capture.completionReviewId}",
+          "verificationRunId": "${capture.reviewVerificationRunId}",
+          "artifactDigest": "${capture.reviewArtifactDigest}",
+          "gateSetDigest": "${capture.reviewGateSetDigest}",
+          "evidenceBundleDigest": "${capture.evidenceBundleDigest}",
+          "recommendation": "APPROVE",
+          "humanDecision": "APPROVED"
+        }
+      ],
+      "processedMessageIds": [],
+      "deadLetters": [],
+      "projections": {
+        "mission": {
+          "missionId": "${capture.missionId}",
+          "status": "COMPLETED",
+          "attemptsAuthorized": 1
+        },
+        "attempts": [
+          {
+            "attemptId": "${capture.attemptId}",
+            "status": "ARTIFACT_SUBMITTED"
+          }
+        ],
+        "activity": [
+          {
+            "sequence": 1,
+            "kind": "MISSION_OPENED"
+          },
+          {
+            "sequence": 2,
+            "kind": "ATTEMPT_READY"
+          },
+          {
+            "sequence": 3,
+            "kind": "ATTEMPT_LEASED"
+          },
+          {
+            "sequence": 4,
+            "kind": "ARTIFACT_SUBMITTED"
+          },
+          {
+            "sequence": 5,
+            "kind": "ATTEMPT_ENDED"
+          },
+          {
+            "sequence": 6,
+            "kind": "VERIFICATION_PASSED"
+          },
+          {
+            "sequence": 7,
+            "kind": "RECOMMENDATION_ISSUED"
+          },
+          {
+            "sequence": 8,
+            "kind": "MISSION_COMPLETED"
+          }
+        ]
+      },
+      "missionCompletionProcess": {
+        "missionId": "${capture.missionId}",
+        "state": "COMPLETED"
+      }
+    },
+    "publishedMessages": [
+      {
+        "kind": "event",
+        "messageType": "mission.opened.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.mission_opened_v1_0Id}",
+        "correlationId": "corr-happy-001",
+        "causationId": "${input.1.requestId}",
+        "payloadSubset": {
+          "data": {
+            "missionId": "${capture.missionId}"
+          }
+        },
+        "captures": {
+          "mission_opened_v1_0Id": "#/eventId"
+        }
+      },
+      {
+        "kind": "command",
+        "messageType": "workshop.create-attempt.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.workshop_create_attempt_v1_1Id}",
+        "correlationId": "corr-happy-001",
+        "causationId": "${capture.mission_opened_v1_0Id}",
+        "payloadSubset": {
+          "data": {
+            "attemptId": "${capture.attemptId}",
+            "missionId": "${capture.missionId}"
+          }
+        },
+        "captures": {
+          "workshop_create_attempt_v1_1Id": "#/commandId"
+        }
+      },
+      {
+        "kind": "event",
+        "messageType": "workshop.attempt-ready.v1",
+        "count": 1,
+        "causedBySequence": 1,
+        "messageId": "${capture.workshop_attempt_ready_v1_2Id}",
+        "correlationId": "corr-happy-001",
+        "causationId": "${capture.workshop_create_attempt_v1_1Id}",
+        "payloadSubset": {
+          "data": {
+            "attemptId": "${capture.attemptId}",
+            "missionId": "${capture.missionId}"
+          }
+        },
+        "captures": {
+          "workshop_attempt_ready_v1_2Id": "#/eventId"
+        }
+      },
+      {
+        "kind": "event",
+        "messageType": "workshop.attempt-leased.v1",
+        "count": 1,
+        "causedBySequence": 2,
+        "messageId": "${capture.workshop_attempt_leased_v1_3Id}",
+        "correlationId": "corr-happy-001",
+        "causationId": "${input.2.requestId}",
+        "payloadSubset": {
+          "data": {
+            "attemptId": "${capture.attemptId}"
+          }
+        },
+        "captures": {
+          "workshop_attempt_leased_v1_3Id": "#/eventId"
+        }
+      },
+      {
+        "kind": "event",
+        "messageType": "workshop.artifact-submitted.v1",
+        "count": 1,
+        "causedBySequence": 4,
+        "messageId": "${capture.workshop_artifact_submitted_v1_4Id}",
+        "correlationId": "corr-happy-001",
+        "causationId": "${input.4.requestId}",
+        "payloadSubset": {
+          "data": {
+            "attemptId": "${capture.attemptId}",
+            "missionId": "${capture.missionId}"
+          }
+        },
+        "captures": {
+          "workshop_artifact_submitted_v1_4Id": "#/eventId"
+        }
+      },
+      {
+        "kind": "event",
+        "messageType": "workshop.attempt-ended.v1",
+        "count": 1,
+        "causedBySequence": 4,
+        "messageId": "${capture.workshop_attempt_ended_v1_5Id}",
+        "correlationId": "corr-happy-001",
+        "causationId": "${capture.workshop_artifact_submitted_v1_4Id}",
+        "payloadSubset": {
+          "data": {
+            "attemptId": "${capture.attemptId}",
+            "missionId": "${capture.missionId}"
+          }
+        },
+        "captures": {
+          "workshop_attempt_ended_v1_5Id": "#/eventId"
+        }
+      },
+      {
+        "kind": "command",
+        "messageType": "verification.start-verification.v1",
+        "count": 1,
+        "causedBySequence": 4,
+        "messageId": "${capture.verification_start_verification_v1_6Id}",
+        "correlationId": "corr-happy-001",
+        "causationId": "${capture.workshop_artifact_submitted_v1_4Id}",
+        "payloadSubset": {
+          "data": {
+            "verificationRunId": "${capture.verificationRunId}",
+            "attemptId": "${capture.attemptId}"
+          }
+        },
+        "captures": {
+          "verification_start_verification_v1_6Id": "#/commandId"
+        }
+      },
+      {
+        "kind": "event",
+        "messageType": "verification.passed.v1",
+        "count": 1,
+        "causedBySequence": 4,
+        "messageId": "${capture.verification_passed_v1_7Id}",
+        "correlationId": "corr-happy-001",
+        "causationId": "${capture.verification_start_verification_v1_6Id}",
+        "payloadSubset": {
+          "data": {
+            "verificationRunId": "${capture.verificationRunId}",
+            "attemptId": "${capture.attemptId}"
+          }
+        },
+        "captures": {
+          "verification_passed_v1_7Id": "#/eventId"
+        }
+      },
+      {
+        "kind": "event",
+        "messageType": "review.recommendation-issued.v1",
+        "count": 1,
+        "causedBySequence": 4,
+        "messageId": "${capture.review_recommendation_issued_v1_8Id}",
+        "correlationId": "corr-happy-001",
+        "causationId": "${capture.verification_passed_v1_7Id}",
+        "payloadSubset": {
+          "data": {
+            "verificationRunId": "${capture.verificationRunId}"
+          }
+        },
+        "captures": {
+          "review_recommendation_issued_v1_8Id": "#/eventId"
+        }
+      },
+      {
+        "kind": "event",
+        "messageType": "mission.completed.v1",
+        "count": 1,
+        "causedBySequence": 7,
+        "messageId": "${capture.mission_completed_v1_9Id}",
+        "correlationId": "corr-happy-001",
+        "causationId": "${input.7.requestId}",
+        "payloadSubset": {
+          "data": {
+            "missionId": "${capture.reviewMissionId}",
+            "missionRevision": "${capture.reviewMissionRevision}",
+            "completionReviewId": "${capture.completionReviewId}",
+            "recommendation": "${capture.reviewRecommendation}",
+            "verificationRunId": "${capture.reviewVerificationRunId}",
+            "artifactDigest": "${capture.reviewArtifactDigest}",
+            "gateSetDigest": "${capture.reviewGateSetDigest}",
+            "evidenceBundleDigest": "${capture.evidenceBundleDigest}",
+            "approvedBy": "human-reviewer"
+          }
+        },
+        "captures": {
+          "mission_completed_v1_9Id": "#/eventId"
+        }
+      }
+    ],
+    "notPublishedMessages": [
+      {
+        "messageType": "verification.failed.v1",
+        "afterSequence": 1,
+        "throughSequence": 8
+      },
+      {
+        "messageType": "mission.retry-authorized.v1",
+        "afterSequence": 1,
+        "throughSequence": 8
+      },
+      {
+        "messageType": "mission.cancelled.v1",
+        "afterSequence": 1,
+        "throughSequence": 8
+      }
+    ],
+    "invariants": [
+      "producing runner and verifier identities differ",
+      "approval binds the exact mission revision, artifact, gate set, verification run, and evidence bundle",
+      "technical recommendation does not complete the mission before human approval"
+    ]
+  },
+  "scenarioSchema": "../scenario.schema.json"
+}
