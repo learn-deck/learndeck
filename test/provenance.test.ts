@@ -40,6 +40,15 @@ describe("catalogue provenance", () => {
     }
   });
 
+  test("rejects a course repository branch with parent path segments", async () => {
+    process.env.LEARNDECK_COURSE_REPOSITORY = "github:owner/repo@feature/../../../../escape";
+    delete process.env.LEARNDECK_COURSE_CACHE_DIR;
+    globalThis.fetch = async () => {
+      throw new Error("The repository spec must be rejected before any network access.");
+    };
+    await expect(CourseCatalog.loadConfigured()).rejects.toThrow(/path segments/);
+  });
+
   test("reports a cached catalogue and warning after a failed sync", async () => {
     const directory = mkdtempSync(join(tmpdir(), "learndeck-provenance-cache-"));
     const files: Record<string, string> = {

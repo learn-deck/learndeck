@@ -305,7 +305,14 @@ function extractTomlMcpPath(configuration: string | undefined, name: string) {
 
 function tomlServerSection(configuration: string | undefined, name: string) {
   if (!configuration) return undefined;
-  return configuration.match(new RegExp(`^\\s*\\[mcp_servers\\.${escapeRegExp(name)}\\]\\s*$[\\s\\S]*?(?=^\\s*\\[|$)`, "m"))?.[0];
+  return configuration.match(tomlServerBlockPattern(name))?.[0];
+}
+
+// The block runs from the [mcp_servers.<name>] header to the next table header or the
+// absolute end of the file. `$` alone would stop at the first end-of-line under the m flag
+// and strand the block's command/args keys in the preceding table.
+function tomlServerBlockPattern(name: string) {
+  return new RegExp(`^\\s*\\[mcp_servers\\.${escapeRegExp(name)}\\]\\s*$[\\s\\S]*?(?=^\\s*\\[|(?![\\s\\S]))`, "m");
 }
 
 function upsertTomlServer(configuration: string, name: string, entry: { command: string; args: string[] }) {
@@ -315,7 +322,7 @@ function upsertTomlServer(configuration: string, name: string, entry: { command:
 }
 
 function removeTomlServer(configuration: string, name: string) {
-  return configuration.replace(new RegExp(`^\\s*\\[mcp_servers\\.${escapeRegExp(name)}\\]\\s*$[\\s\\S]*?(?=^\\s*\\[|$)`, "m"), "").replace(/\n{3,}/g, "\n\n");
+  return configuration.replace(tomlServerBlockPattern(name), "").replace(/\n{3,}/g, "\n\n");
 }
 
 async function atomicWrite(path: string, content: string) {

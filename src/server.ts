@@ -48,6 +48,7 @@ export async function createApp(store = new CourseStore(), catalog?: CourseCatal
         const course = courses.get(decodeURIComponent(coursePathsRoute[1]));
         const body = await request.json();
         const input = requireObject(body, ["coursePathId", "workspacePath"]) as { coursePathId: string; workspacePath: string; label?: string };
+        if (input.label !== undefined && typeof input.label !== "string") throw new Error("label must be a string when provided.");
         if (!course.paths.some((path) => path.id === input.coursePathId)) throw new Error(`Unknown course path: ${input.coursePathId}`);
         const workspacePath = input.workspacePath.trim();
         const workspaceCreated = await prepareWorkspace(workspacePath);
