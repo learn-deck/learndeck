@@ -1,21 +1,10 @@
-# The PatchQuest path
+# Course sources
 
-This directory is the step-by-step course. Follow it with a local coding agent;
-do not try to consume it as a long lecture.
+`ddd-course.json` is the structured course consumed by the PatchQuest UI and
+MCP. It maps each selectable language path to the same ordered DDD and
+hexagonal-architecture learning journey.
 
-Each step contains:
-
-- a focused outcome;
-- one small implementation action in your own workspace;
-- a diagnostic question before you study the source;
-- an exit question after you have evidence;
-- a related question to save for a later revisit.
-
-The agent records the selected language, workspace path, question attempts,
-feedback, artifacts, commands, and completed steps in
-`<workspace>/.patchquest/progress.db`. The database is local to that workspace
-so a Go project and a Node project never share progress by accident.
-
-Start at [00 · Start a path](modules/00-start-a-path.md). Do not move ahead
-because a page is visible: complete the evidence and exit question for the
-current step first.
+The adjacent Markdown modules contain the learner-facing explanations,
+questions, rubrics, and later-review prompts. See
+[Course authoring](../docs/course-authoring.md) before adding another manifest
+or changing the source contract.

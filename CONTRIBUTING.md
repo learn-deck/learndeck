@@ -1,14 +1,14 @@
 # Contributing to PatchQuest
 
-PatchQuest accepts focused Markdown improvements: clearer steps, better
-questions, corrected reference links, and stronger language-neutral examples.
+PatchQuest accepts focused improvements to the Bun runner, MCP integration,
+course standard, DDD example, source references, and learner experience.
 
-- Keep the repository Markdown-only. Do not add source code, package manifests,
-  locks, generated material, databases, screenshots, or binary assets.
-- Keep learner code and progress outside the repository.
-- Prefer primary sources in `references/source-index.md`; distinguish evidence
-  from advice and do not promise outcomes the source does not establish.
-- Make each module runnable as a conversation: one small action, clear evidence,
-  a diagnostic question, and an exit question.
-- Preserve the Node.js + TypeScript, Go, and Bun + TypeScript paths unless a
-  proposed change explicitly improves all of them or is labelled path-specific.
+- Keep the UI local-only and preserve the separation between course content,
+  learner workspace, and ignored progress data.
+- Add a section through the manifest, Markdown module, and named sources
+  together; do not add UI-only questions without evidence.
+- Keep MCP writes narrow and learner-visible. MCP tools must not run learner
+  code or access arbitrary paths.
+- Preserve all three implementation paths unless a change is explicitly
+  path-specific.
+- Run `bun run verify` before proposing a change.

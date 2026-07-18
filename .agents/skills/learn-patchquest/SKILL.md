@@ -1,75 +1,62 @@
 ---
 name: learn-patchquest
-description: Guide a learner through PatchQuest's Node.js + TypeScript, Go, or Bun + TypeScript backend path one small, evidence-backed action at a time. Use when the learner says "Let's start", asks to learn or continue PatchQuest, asks for the next step, or returns with a PatchQuest workspace.
+description: Guide a learner through the visible PatchQuest UI and its Node.js + TypeScript, Go, or Bun + TypeScript DDD backend path. Use when the learner asks to start, learn, review, or continue PatchQuest.
 ---
 
 # Learn PatchQuest
 
-PatchQuest is a self-learn backend course. The course repository is Markdown
-only; the learner owns a separate code workspace and its private local progress
-database. Teach, evaluate, and record—do not silently build the course for the
-learner.
+PatchQuest has one shared local learning record: its browser UI and stdio MCP
+server use the same SQLite database. The learner selects their path and submits
+answers in the UI; use MCP to guide and evaluate those visible submissions.
 
-## Start exactly this way
+## Start or resume
 
-1. Read `AGENTS.md`, `README.md`, `references/language-paths.md`, and
-   `references/progress-database.md`.
-2. If the learner said only “Let's start,” ask exactly this and wait:
-
-   > Which path do you want to follow today: **Node.js + TypeScript**, **Go**,
-   > or **Bun + TypeScript**?
-
-3. After their answer, ask for an existing code workspace or offer a concrete
-   sibling path such as `../patchquest-node`, `../patchquest-go`, or
-   `../patchquest-bun`. Confirm the path before reading or writing it.
-4. Run only the read-only checks for that language. Report present and missing
-   dependencies clearly. Do not install anything unless the learner asks.
-5. Check `sqlite3 --version`. With permission, initialise or open
-   `<workspace>/.patchquest/progress.db` by following the reference. Store the
-   chosen language and absolute workspace path. If SQLite is unavailable, stop
-   before teaching because the promised local progress record cannot be kept.
-6. Offer the language-appropriate `dev` command as a suggestion; do not start
-   it yourself. If there is no project yet, say that step 00 will create the
-   minimal visible surface first.
-7. Read only module 00. Ask its diagnostic question. Give one next action, not
-   a list of the whole course.
+1. Read `AGENTS.md`, `README.md`, and `docs/mcp.md`.
+2. If the UI is not running, ask the learner to run `bun run dev` and open the
+   displayed local URL. Do not start it silently.
+3. If the learner said only “Let's start,” ask them to select **Node.js +
+   TypeScript**, **Go**, or **Bun + TypeScript** and a workspace in the UI.
+4. Use `patchquest_list_paths`. If the learner has no path, let them create it
+   in the UI or call `patchquest_create_path` only after they explicitly name
+   the language and workspace.
+5. With that workspace confirmed, run only its read-only dependency checks in
+   `references/language-paths.md`. Report present and missing requirements;
+   never install dependencies. When the checks pass, suggest the matching
+   development-server command for the learner to run themselves.
+6. Use `patchquest_get_next_activity` for exactly one current section and
+   question. Do not present a module menu.
 
 ## One learning turn
 
-1. Read the selected module and only the source it names.
-2. Ask its diagnostic question before explaining the material. Wait for an
-   answer.
-3. Record the answer, the learner's confidence, your feedback, result, and
-   cited source in the workspace database.
-4. Give one bounded action. It may ask the learner to create a directory, a
-   file, a test, or a code structure **inside the confirmed workspace**. Record
-   every requested path as an artifact.
-5. Ask the exit question only after the requested command or code evidence is
-   available. Compare the answer with the module and named source, not with an
-   imagined implementation.
-6. If correct, record `correct` and complete the step when its evidence exists.
-   If partial or incorrect, record that result, name the precise gap, cite one
-   source, ask for a source-closed revision, and record the revision as a new
-   attempt. Do not mark completion until the revision is accurate.
-7. Leave one next action and one related review question for a later session.
+1. Read only the named source and the current section needed for this question.
+2. Ask the learner to inspect, explain, or make one bounded change inside their
+   selected workspace. They own code and command execution.
+3. Record learner-reported code paths or command results through
+   `patchquest_record_evidence`.
+4. Ask them to submit the displayed question in the browser with confidence.
+5. Read `patchquest_get_progress`, locate the new `submitted` attempt, and
+   evaluate it through `patchquest_evaluate_answer`.
+6. Tell the learner that the feedback and status are visible in the UI. For a
+   partial or incorrect answer, identify the exact gap, point to the source,
+   and ask for a separate revision submission; never overwrite an old attempt.
 
-## Evaluation rubric
+## Feedback standard
 
-Use plain, specific feedback:
+Every evaluation must state:
 
-- **Target:** the idea or evidence the question asked for.
-- **Observed:** what the learner actually supplied.
-- **Gap:** one concrete missing or incorrect distinction.
-- **Correction:** a source-linked explanation and a smaller retry.
-- **Next:** one action the learner can complete now.
+- **Target:** what the source requires.
+- **Observed:** what the learner supplied.
+- **Gap or confirmation:** one concrete distinction.
+- **Correction:** source-linked explanation when needed.
+- **Next:** one bounded action.
 
-Do not award correctness merely for confident language, a passing command, or a
-plausible architecture diagram. Do not call generic generated code production
-ready. The agent evaluates meaning; the learner still owns engineering judgment.
+A passing command or confident answer is not semantic proof. Do not mark an
+exit question correct without learner evidence and an accurate source-linked
+explanation. Do not run learner code, install dependencies, or inspect paths
+outside their confirmed workspace through PatchQuest MCP.
 
 ## Resume
 
-When a learner returns, ask for or read their confirmed workspace. Open only
-that path’s database. Continue an incomplete step first; otherwise ask the
-stored related-review question before opening a new step. Never mix progress
-between paths or languages.
+Use `patchquest_get_progress` for the selected UI path. Continue a `revision`
+or `active` section first; otherwise use `patchquest_get_next_activity`. The
+agent never creates a separate progress file or transfers answers between paths.

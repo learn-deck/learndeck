@@ -36,7 +36,6 @@ Suggested structure:
   src/adapters/http/
   src/adapters/persistence/
   test/
-  .patchquest/progress.db
 ```
 
 ## Go
@@ -69,7 +68,6 @@ Suggested structure:
   internal/ports/
   internal/adapters/http/
   internal/adapters/persistence/
-  .patchquest/progress.db
 ```
 
 ## Bun + TypeScript
@@ -101,13 +99,12 @@ Suggested structure:
   src/adapters/http/
   src/adapters/persistence/
   test/
-  .patchquest/progress.db
 ```
 
 ## Development server rule
 
 The server is the learner's project, not PatchQuest. After dependencies are
 checked, the agent suggests the relevant command and asks the learner to run
-it. It records the command and observed address/result only after the learner
-reports it. A health/status route is enough initially; a tiny frontend is
-optional and exists only to make backend behaviour visible.
+it. It records the command and observed address/result through PatchQuest MCP
+only after the learner reports it. A health/status route is enough initially; a
+tiny frontend is optional and exists only to make backend behaviour visible.

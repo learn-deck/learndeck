@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>PatchQuest — DDD backend course</title>
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <div>
+          <p class="eyebrow">Local course runner</p>
+          <h1>PatchQuest</h1>
+        </div>
+        <p id="connection" class="connection">Loading course…</p>
+      </header>
+
+      <section id="path-setup" class="setup" aria-labelledby="setup-title">
+        <div>
+          <p class="eyebrow">First session</p>
+          <h2 id="setup-title">Choose where you will build.</h2>
+          <p>PatchQuest keeps progress local, separated by the workspace and language path you choose.</p>
+        </div>
+        <form id="path-form" class="path-form">
+          <label>
+            Language path
+            <select id="language" name="languageId" required></select>
+          </label>
+          <label>
+            Workspace folder
+            <input id="workspace" name="workspacePath" required placeholder="../my-ddd-backend" autocomplete="off" />
+          </label>
+          <label>
+            A label for this path <span>(optional)</span>
+            <input name="label" placeholder="My booking API" autocomplete="off" />
+          </label>
+          <button type="submit">Start this path</button>
+        </form>
+      </section>
+
+      <section id="course" class="course hidden" aria-live="polite">
+        <aside class="sidebar">
+          <div class="path-switcher">
+            <label for="path-select">Learning path</label>
+            <select id="path-select"></select>
+            <p id="workspace-label"></p>
+            <p class="path-command">When checks pass: <code id="server-command"></code></p>
+          </div>
+          <ol id="section-list" class="section-list"></ol>
+        </aside>
+
+        <section class="lesson" aria-labelledby="section-title">
+          <div class="lesson-head">
+            <p id="section-number" class="eyebrow"></p>
+            <h2 id="section-title"></h2>
+            <p id="section-goal" class="goal"></p>
+          </div>
+          <div class="action-block">
+            <p class="eyebrow">Build</p>
+            <p id="section-action"></p>
+            <div id="sources" class="sources"></div>
+          </div>
+          <div id="progress-summary" class="progress-summary"></div>
+          <form id="answer-form" class="answer-form">
+            <div class="question-head">
+              <p id="question-kind" class="eyebrow"></p>
+              <p id="question-reference" class="reference"></p>
+            </div>
+            <label for="answer" id="question-prompt"></label>
+            <textarea id="answer" required rows="7" placeholder="Write your answer in your own words."></textarea>
+            <div class="answer-footer">
+              <label for="confidence">Confidence <output id="confidence-value">70</output>%</label>
+              <input id="confidence" type="range" min="0" max="100" value="70" />
+              <button type="submit">Submit for review</button>
+            </div>
+            <p class="form-note">Your agent evaluates the submission through PatchQuest MCP. The result appears here when it is recorded.</p>
+          </form>
+          <section id="attempts" class="attempts" aria-labelledby="attempts-title">
+            <p class="eyebrow">Your record</p>
+            <h3 id="attempts-title">Question history</h3>
+            <div id="attempt-list"></div>
+          </section>
+        </section>
+      </section>
+    </main>
+    <template id="attempt-template">
+      <article class="attempt">
+        <div class="attempt-meta">
+          <span class="attempt-kind"></span>
+          <span class="attempt-result"></span>
+        </div>
+        <p class="attempt-answer"></p>
+        <p class="attempt-feedback"></p>
+      </article>
+    </template>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

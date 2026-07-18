@@ -1,69 +1,75 @@
 # PatchQuest: Self-Learn Backend Development with DDD and Hexagonal Architecture in Node.js, Go, and Bun
 
-PatchQuest is a Markdown-only course for learning to build a small backend
-well: model the domain first, put infrastructure behind ports, test behaviour,
-persist deliberately, and make the system observable. Choose one path—**Node.js
-+ TypeScript**, **Go**, or **Bun + TypeScript**—and build the same ideas in your
-own workspace.
+PatchQuest turns a structured course into a small local learning workspace. A
+learner chooses **Node.js + TypeScript**, **Go**, or **Bun + TypeScript**, sees
+their path and questions in a browser, and submits answers there. A coding agent
+connects through MCP to guide the next action, record evidence, and evaluate
+only the answers the learner has submitted.
 
-There is deliberately no starter application, generated schema, lockfile, or
-hidden test harness in this repository. The course provides references,
-questions, and a local-agent protocol. Your code belongs in the workspace you
-choose; the course tracks that path in a private local SQLite database.
+The included example is **Self-Learn Backend Development: DDD and Hexagonal
+Architecture**. It walks a single backend from domain model to a small runbook
+without prescribing one framework or hiding the architecture behind a starter
+repository.
 
-## Start with a coding agent
+## Run locally
 
-Clone this repository, open it with a coding agent that reads `AGENTS.md`, and
-say:
+Requires Bun 1.3 or newer.
 
-> Let's start.
+```sh
+bun install
+bun run dev
+```
 
-The agent first asks you to choose **Node.js + TypeScript**, **Go**, or **Bun +
-TypeScript**. It then confirms your code workspace, checks only that path’s
-dependencies, creates or resumes `<workspace>/.patchquest/progress.db`, and
-suggests the right development-server command for your project. It does not
-install dependencies or start a server without your approval.
+Open [http://127.0.0.1:3030](http://127.0.0.1:3030). PatchQuest creates one
+local SQLite database at `.patchquest/progress.db` by default. Override its
+location with `PATCHQUEST_DB_PATH` when you need a separate database, for
+example for a workshop or test run.
 
-## The self-learn protocol
+The UI lets a learner:
 
-The course uses a short evidence-based loop:
+1. choose a language path and their code workspace;
+2. see every course section and path-specific progress;
+3. read the current action and its sources;
+4. submit a diagnostic, exit, or review answer with confidence; and
+5. see source-linked agent feedback after evaluation.
 
-1. Answer a small question from memory before reading the next source.
-2. Read one compact reference or inspect one bounded code area.
-3. Write, structure, run, or test one small piece in your chosen workspace.
-4. Explain why it works, self-check it, and answer an exit question.
-5. Receive source-linked feedback, revise if needed, and return later for a
-   related recall question.
+After the learner chooses a path, the agent runs only that path's read-only
+dependency checks, reports what is present or missing, and suggests the
+learner's development-server command. It never installs dependencies or starts
+the learner's server without their approval.
 
-This is effective because retrieval exposes gaps that rereading can hide,
-spaced revisits make knowledge more durable, worked examples can be faded as
-knowledge grows, and specific feedback makes a correction actionable. Those
-are design constraints, not a promise about anyone’s speed or retention; see
-[the learning protocol](references/learning-protocol.md) and its primary
-sources.
+## Connect a coding agent
 
-## Course map
+PatchQuest exposes a stdio MCP server:
 
-| Step | Learn by doing | Questions included |
-| --- | --- | --- |
-| [00 · Start a path](course/modules/00-start-a-path.md) | Choose language, workspace, database, and a visible dev loop. | Setup and path questions |
-| [01 · Model the domain](course/modules/01-model-the-domain.md) | Define language, use cases, and invariants before routes. | Ownership and invariant questions |
-| [02 · Draw the hexagon](course/modules/02-draw-the-hexagon.md) | Separate domain, application, ports, and adapters. | Dependency-direction questions |
-| [03 · Make an API useful](course/modules/03-make-an-api-useful.md) | Build one thin endpoint and a minimal visible status surface. | Boundary and error questions |
-| [04 · Persist through a port](course/modules/04-persist-through-a-port.md) | Add a repository port and replaceable adapter. | Transaction and persistence questions |
-| [05 · Prove behaviour](course/modules/05-prove-behaviour.md) | Add fast domain tests and a few boundary tests. | Test-value questions |
-| [06 · Handle failure deliberately](course/modules/06-handle-failure-deliberately.md) | Model expected failures, idempotency, and retries. | Failure-classification questions |
-| [07 · Observe and ship](course/modules/07-observe-and-ship.md) | Add useful logs, a health check, and a small release checklist. | Operational reasoning questions |
+```sh
+bun run mcp
+```
 
-## References
+Configure the command in your agent host as described in
+[MCP integration](docs/mcp.md). The MCP exposes deterministic tools to read the
+course, create/select a path, retrieve progress, record reported evidence, and
+evaluate a submitted answer. It never starts the learner's service or executes
+their code.
 
-- [Language paths and dependency checks](references/language-paths.md)
-- [Per-workspace progress database](references/progress-database.md)
-- [Learning protocol and research sources](references/learning-protocol.md)
-- [Architecture and backend source index](references/source-index.md)
+## Create a course
 
-## Repository promise
+The reusable course format, source responsibilities, and authoring flow are in
+[Course authoring](docs/course-authoring.md). The DDD backend example lives in
+[`course/ddd-course.json`](course/ddd-course.json); its explanations and
+evidence sources stay in the Markdown modules and references.
 
-This repository contains only references and Markdown. Learner code, generated
-files, local progress, and dependencies live outside it. The public course page
-is at [kevinmamaqi.com/patchquest](https://kevinmamaqi.com/patchquest/).
+## Verify
+
+```sh
+bun run verify
+```
+
+This runs the local store/API tests and builds the Bun server plus MCP entry
+points.
+
+## Privacy and scope
+
+PatchQuest binds only to `127.0.0.1`. Progress, answers, and workspace paths
+stay in the local SQLite database and are ignored by Git. See
+[SECURITY.md](SECURITY.md) for the operational boundary.

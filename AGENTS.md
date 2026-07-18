@@ -1,58 +1,49 @@
 # PatchQuest agent instructions
 
-PatchQuest is a **Markdown-only, self-learn course**. Its repository contains
-only `.md` files and links to primary references. It is not an application
-template and it must never accumulate generated code, package manifests,
-lockfiles, schemas, or learner data.
-
-Learners create code in a workspace that they choose outside this repository.
-Each workspace owns its own local SQLite database at
-`<workspace>/.patchquest/progress.db`. That database is private, is never
-committed, and lets the learner resume a specific language path.
+PatchQuest is a local Bun course runner and an MCP server. The browser UI is
+where the learner selects a language path, sees progress, and submits answers.
+The MCP server is the only supported way for an agent to read or write that
+progress. Both processes share one local SQLite database.
 
 ## When a learner says “Let's start”
 
-Read `.agents/skills/learn-patchquest/SKILL.md` and follow it exactly. The
-first reply must be this one question, with no module dump:
+1. Ask them to run `bun install` once and `bun run dev` from this repository.
+   They open the printed `http://127.0.0.1:3030` address themselves.
+2. Ask which path they want—**Node.js + TypeScript**, **Go**, or **Bun +
+   TypeScript**—then have them create/select that path and workspace in the UI.
+3. With the learner's workspace confirmed, perform only the matching read-only
+   dependency checks in [`references/language-paths.md`](references/language-paths.md).
+   Report what is present or missing. Do not install packages. If the required
+   dependencies are available, suggest the path's development-server command
+   and let the learner run it.
+4. Connect through the `patchquest` MCP configuration in
+   [`docs/mcp.md`](docs/mcp.md). Read `patchquest_get_next_activity` before
+   teaching.
+5. Tell the learner to answer the visible question in the UI. Do not collect an
+   answer only in chat when the UI is available.
+6. After a UI submission, call `patchquest_get_progress`, evaluate only the
+   pending attempt with `patchquest_evaluate_answer`, then tell the learner the
+   result is visible in the browser.
 
-> Which path do you want to follow today: **Node.js + TypeScript**, **Go**, or
-> **Bun + TypeScript**?
+## Teaching and safety boundary
 
-Wait for the learner’s answer. Then establish or confirm the workspace path,
-perform the read-only dependency check in
-[`references/language-paths.md`](references/language-paths.md), initialise or
-open that workspace’s progress database according to
-[`references/progress-database.md`](references/progress-database.md), and
-offer—never silently start—the appropriate development-server command.
+- Give one small action at a time. Ask the learner to create code only inside
+  their selected workspace; record reported paths or command results through
+  `patchquest_record_evidence`.
+- Evaluate against the selected question's source reference. Feedback must say
+  the target, observed answer, exact gap or confirmation, one correction, and a
+  next action.
+- Only evaluate an attempt that is still `submitted`. A partial or incorrect
+  answer stays visible and requires a new submitted revision.
+- Never install learner dependencies, run their server, execute submitted code,
+  or inspect files outside their confirmed workspace through this MCP.
+- The browser and MCP are local-only by default. Do not expose their SQLite
+  database, learner answers, workspace paths, or tool output publicly.
 
-Do not install a dependency, run a server, create a project, or write learner
-code without the learner’s confirmation. Explain what is missing and give the
-smallest exact command. If `sqlite3` is unavailable, say that progress cannot
-be recorded yet and ask before proposing an installation.
+## Course authoring
 
-## Teaching boundary
-
-- Give one small action at a time. The learner writes, runs, and explains their
-  own code.
-- Every module supplies diagnostic and exit questions. Ask one, wait for the
-  answer, then evaluate it against the cited course source. Record the answer,
-  feedback, result, and source in that workspace’s database.
-- Mark a step complete only when the learner has supplied the requested code or
-  command evidence and answered the exit question accurately. For a partial or
-  incorrect answer, identify the exact gap, point to one source, ask a smaller
-  revision, and record the revision separately.
-- Ask the learner to keep code inside the confirmed workspace and record each
-  requested path in the database. Never write or inspect files elsewhere by
-  default.
-- This course teaches backend architecture, not a prescribed product. Use a
-  small running API plus a minimal browser-facing status route or frontend as
-  the visible learning surface. Do not imply that a course document itself is a
-  runnable server.
-
-## Course truth
-
-Read the selected module under `course/modules/` and the relevant Markdown
-reference before evaluating an answer. The learning method and its limits are
-in [`references/learning-protocol.md`](references/learning-protocol.md). The
-course never promises a universal learning interval, an automatic semantic
-grade, or production-ready code.
+The canonical structured course is `course/ddd-course.json`. Use
+[`docs/course-authoring.md`](docs/course-authoring.md) to create another course
+or adapt the DDD example. The Markdown modules and references remain the
+evidence sources; the manifest supplies the UI and MCP with a standard order,
+actions, and questions.

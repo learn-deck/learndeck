@@ -1,14 +1,15 @@
 # Security boundary
 
-PatchQuest is a documentation course, not a hosted service or code execution
-environment. It does not collect learner answers or progress. A learner’s
-workspace and `<workspace>/.patchquest/progress.db` stay on their machine.
+PatchQuest is a local course runner. Its browser server binds only to
+`127.0.0.1`; the MCP integration uses local stdio. It stores selected workspace
+paths, learner answers, feedback, and progress in an ignored SQLite database.
 
-Do not paste credentials, production data, private URLs, or customer code into
-an agent conversation or the progress database. Treat any code run during the
-course as the learner’s responsibility. The course agent must not execute
-untrusted code, install software, or start servers without the learner’s
-approval.
+Do not enter credentials, production data, private URLs, customer code, or
+secrets into the course UI or its progress database. Do not expose the local
+server on a network interface without first adding authentication and a threat
+model.
 
-To report a security concern about the public course material, contact the
-repository owner privately. Do not include secrets in a public issue.
+MCP tools intentionally cannot execute learner code, install dependencies, or
+read arbitrary workspace files. They record learner-reported evidence and
+agent-provided feedback only. Agent hosts should show tool calls and require
+their normal approval controls for writes.

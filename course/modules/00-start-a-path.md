@@ -16,9 +16,11 @@ avoids.
 1. Confirm the language and absolute workspace path with the agent.
 2. Follow only that path's dependency checks in
    [`references/language-paths.md`](../../references/language-paths.md).
-3. Initialise the workspace's `.patchquest/progress.db` using
+3. Start the PatchQuest Bun UI and create this language/workspace path there.
+   It stores local progress in the runner's
    [`references/progress-database.md`](../../references/progress-database.md).
-4. Ask the agent to record the proposed project structure before creating it.
+4. Ask the agent to record the proposed project structure through PatchQuest
+   MCP before creating it.
    Keep application code under a clear root such as `src/` (Node or Bun) or
    `cmd/` plus `internal/` (Go).
 5. Create the smallest development surface: one health/status route and, if
@@ -29,9 +31,9 @@ avoids.
 
 ## Exit question
 
-State your language, workspace path, progress-database path, and development
-command. Why is that database allowed in the workspace but not in the course
-repository?
+State your language, workspace path, PatchQuest progress-database path, and
+development command. Why does one local course database keep progress keyed to
+the workspace rather than mixing Node, Go, and Bun attempts?
 
 ## Later review
 
