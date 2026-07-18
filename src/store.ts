@@ -10,6 +10,8 @@ import type {
   NextActivity,
   PathOverview,
   QuestionAttempt,
+  PathExport,
+  PathResetResult,
   SectionProgress,
   SectionStatus,
 } from "./types";
@@ -145,6 +147,40 @@ export class CourseStore {
     const row = this.db.query<PathRow, [string]>("SELECT * FROM learning_paths WHERE id = ?").get(pathId);
     if (!row) throw new Error(`Unknown learning path: ${pathId}`);
     return mapPath(row);
+  }
+
+  resetPath(pathId: string): PathResetResult {
+    this.getPath(pathId);
+    const reset = this.db.transaction((id: string): PathResetResult => {
+      const attempts = this.db.query<{ count: number }, [string]>("SELECT COUNT(*) AS count FROM question_attempts WHERE path_id = ?").get(id)?.count ?? 0;
+      const evidence = this.db.query<{ count: number }, [string]>("SELECT COUNT(*) AS count FROM section_progress WHERE path_id = ? AND evidence IS NOT NULL").get(id)?.count ?? 0;
+      const progressRows = this.db.query<{ count: number }, [string]>("SELECT COUNT(*) AS count FROM section_progress WHERE path_id = ?").get(id)?.count ?? 0;
+      this.db.query("DELETE FROM learning_paths WHERE id = ?").run(id);
+      return { pathId: id, attempts, evidence, progressRows };
+    });
+    return reset(pathId);
+  }
+
+  exportPath(course: CourseDefinition, pathId: string): PathExport {
+    const path = this.getPath(pathId);
+    if (path.courseId !== course.id) throw new Error("This path belongs to a different course.");
+    const progress = this.progress(pathId);
+    return {
+      courseId: course.id,
+      courseTitle: course.title,
+      course: { id: course.id, title: course.title },
+      path,
+      progress,
+      attempts: this.attempts(pathId),
+      evidence: progress
+        .filter((item): item is SectionProgress & { evidence: string } => Boolean(item.evidence))
+        .map((item) => ({
+          sectionId: item.sectionId,
+          evidence: item.evidence,
+          ...(item.reviewQuestion ? { reviewQuestion: item.reviewQuestion } : {}),
+          updatedAt: item.updatedAt,
+        })),
+    };
   }
 
   getAttempt(attemptId: number): QuestionAttempt {

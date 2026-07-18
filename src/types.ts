@@ -94,3 +94,27 @@ export interface NextActivity {
   question: CourseQuestion;
   progress: SectionProgress | undefined;
 }
+
+export interface PathResetResult {
+  pathId: string;
+  attempts: number;
+  evidence: number;
+  progressRows: number;
+}
+
+export interface PathEvidence {
+  sectionId: string;
+  evidence: string;
+  reviewQuestion?: string;
+  updatedAt: string;
+}
+
+export interface PathExport {
+  courseId: string;
+  courseTitle: string;
+  course: { id: string; title: string };
+  path: LearningPath;
+  progress: SectionProgress[];
+  attempts: QuestionAttempt[];
+  evidence: PathEvidence[];
+}
