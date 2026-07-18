@@ -1,5 +1,5 @@
 import { CourseCatalog } from "./course";
-import { IntegrationService, isIntegrationId } from "./integrations";
+import { IntegrationError, IntegrationService, isIntegrationId } from "./integrations";
 import { CourseStore } from "./store";
 
 const PUBLIC = `${import.meta.dir}/../public`;
@@ -19,8 +19,19 @@ export async function createApp(store = new CourseStore(), catalog?: CourseCatal
         return json({ ready: true, courses: courses.list(), integrations: await integrations.list() });
       }
       if (url.pathname === "/api/integrations" && request.method === "GET") return json(await integrations.list());
+      // DELETE /api/integrations/:id/connect forgets only LearnDeck's own entry.
       const integrationRoute = url.pathname.match(/^\/api\/integrations\/([^/]+)\/connect$/);
-      if (integrationRoute && request.method === "POST" && isIntegrationId(integrationRoute[1])) return json(await integrations.connect(integrationRoute[1]));
+      if (integrationRoute && (request.method === "POST" || request.method === "DELETE") && isIntegrationId(integrationRoute[1])) {
+        try {
+          if (request.method === "DELETE") return json(await integrations.disconnect(integrationRoute[1]));
+          return json(await integrations.connect(integrationRoute[1]));
+        } catch (error) {
+          if (error instanceof IntegrationError) {
+            return json({ error: error.message, integrationId: error.integrationId, configPath: error.configPath, userAction: error.userAction }, 409);
+          }
+          throw error;
+        }
+      }
       if (url.pathname === "/api/courses" && request.method === "GET") return json((await getCatalog()).list());
       const courseRoute = url.pathname.match(/^\/api\/courses\/([^/]+)$/);
       if (courseRoute && request.method === "GET") return json((await getCatalog()).get(decodeURIComponent(courseRoute[1])));
@@ -35,6 +46,17 @@ export async function createApp(store = new CourseStore(), catalog?: CourseCatal
         const course = courses.get(decodeURIComponent(coursePathsRoute[1]));
         const body = await request.json();
         return json(store.createPath(course, requireObject(body, ["coursePathId", "workspacePath"]) as { coursePathId: string; workspacePath: string; label?: string }), 201);
+      }
+      const pathExportRoute = url.pathname.match(/^\/api\/paths\/([^/]+)\/export$/);
+      if (pathExportRoute && request.method === "GET") {
+        const courses = await getCatalog();
+        const pathId = decodeURIComponent(pathExportRoute[1]);
+        const document = store.exportPath(courseForPath(courses, store, pathId), pathId);
+        return json(document, 200, { "content-disposition": `attachment; filename="learndeck-${fileNamePart(pathId)}.json"` });
+      }
+      const pathResetRoute = url.pathname.match(/^\/api\/paths\/([^/]+)$/);
+      if (pathResetRoute && request.method === "DELETE") {
+        return json(store.resetPath(decodeURIComponent(pathResetRoute[1])));
       }
       const overview = url.pathname.match(/^\/api\/paths\/([^/]+)\/overview$/);
       if (overview && request.method === "GET") {
@@ -78,11 +100,15 @@ function requireObject(value: unknown, required: string[]): Record<string, unkno
   return body;
 }
 
-function json(body: unknown, status = 200) {
+function json(body: unknown, status = 200, extraHeaders: Record<string, string> = {}) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...extraHeaders },
   });
+}
+
+function fileNamePart(pathId: string) {
+  return pathId.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
 function asset(name: string, type: string) {
