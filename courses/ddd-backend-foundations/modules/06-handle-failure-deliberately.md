@@ -64,3 +64,12 @@ duplicate. Is a retry safe? State the precondition that makes your answer true.
 
 Explain why an idempotency key changes the effect of a retry but does not make
 all work automatically safe to repeat.
+
+## Definition of done
+
+Before answering, check that:
+
+- Three failures are classified as domain rejection, transient adapter failure, and duplicate delivery.
+- One expected domain failure is explicit in the application result.
+- One side effect has a named idempotency or deduplication boundary and retry rule.
+- A duplicate or retry decision has a test and recorded result.

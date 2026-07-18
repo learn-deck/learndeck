@@ -64,3 +64,12 @@ stop?
 
 Given a new error, decide whether it is a transport error, application decision,
 or domain failure before choosing its HTTP response.
+
+## Definition of done
+
+Before answering, check that:
+
+- One command endpoint and the status route are reachable with the documented development command.
+- Malformed transport input stops at the HTTP boundary with a deliberate response.
+- A double booking or other invariant failure produces a distinct stable response.
+- You recorded the command, route, and observed results in your workspace or answer.

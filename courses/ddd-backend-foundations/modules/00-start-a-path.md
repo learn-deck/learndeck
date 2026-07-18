@@ -74,3 +74,12 @@ or collect your project outside the folder you confirm.
 
 When you are ready, answer the question below in your own words. A short,
 concrete answer is better than architecture vocabulary.
+
+## Definition of done
+
+Before answering, check that:
+
+- A separate backend project folder contains `domain/`, `application/`, `ports/`, and `adapters/`.
+- A learner-run development command starts the backend, such as `npm run dev`.
+- A visible `GET /health` or equivalent status route returns its documented response.
+- You can name the project folder, command, route, and observed response.

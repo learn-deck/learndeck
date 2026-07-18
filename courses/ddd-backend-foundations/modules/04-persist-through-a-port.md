@@ -52,6 +52,60 @@ When might they be the same value, and why should the model not depend on that?
 5. Run the relevant tests and your status route. Record the evidence and any
    persistence-specific failures.
 
+## Worked example: map storage at the edge
+
+Here is one small persistence decision fully worked for a booking row:
+
+```ts
+type Booking = { roomId: string; startsAt: number; endsAt: number };
+type BookingRow = { room_id: string; starts_at: number; ends_at: number };
+
+function toDomain(row: BookingRow): Booking {
+  return {
+    roomId: row.room_id,
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+  };
+}
+```
+
+Your next analogous decision: write the `toRow` function for saving a booking
+and decide which identity and time fields must survive a round trip. Keep the
+row type and database naming outside the port signature.
+
+Why this decision? `toDomain` reconstructs the object the booking rule
+understands before it reaches inner code. SQL names and storage types stay in the
+adapter, so replacing the store does not force a change to the invariant.
+
+## What this is NOT
+
+This port leaks infrastructure details into the inside:
+
+```ts
+// wrong
+import type { Pool } from "pg";
+type BookingRow = { room_id: string; starts_at: number; ends_at: number };
+
+interface BookingRepository {
+  findOne(db: Pool, tableName: string, sql: string): Promise<BookingRow | null>;
+}
+```
+
+This port exposes the capability the booking use case actually needs:
+
+```ts
+// right
+type Booking = { roomId: string; startsAt: number; endsAt: number };
+
+interface BookingRepository {
+  findOverlapping(roomId: string, startsAt: number, endsAt: number): Promise<Booking | null>;
+}
+```
+
+The wrong version makes callers know a driver, table name, SQL, and row shape;
+it is an infrastructure API disguised as a port. The right version speaks in
+booking terms, while the adapter owns SQL and maps rows at the edge.
+
 Use [Fowler's Repository pattern](../../../references/source-index.md#persistence)
 as a vocabulary reference, while keeping the port shaped by your use case.
 
@@ -65,3 +119,12 @@ invariant?
 
 If an adapter returns a duplicate-key error, which layer should translate it
 into the application's language before it reaches HTTP?
+
+## Definition of done
+
+Before answering, check that:
+
+- The existing repository port still expresses only the operations this use case needs.
+- A persistence adapter maps storage rows to domain objects at its edge.
+- One transaction boundary is written down for a booking use case.
+- Tests and the status route were run, with persistence-specific results recorded honestly.

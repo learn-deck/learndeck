@@ -49,6 +49,35 @@ might obscure?
 5. Record test paths, command output summary, and what each test is allowed to
    prove. Do not label a passing test as proof of every production concern.
 
+## What this is NOT
+
+The wrong test asserts private implementation details and call order:
+
+```ts
+// wrong
+it("checks before saving", async () => {
+  const find = vi.spyOn(repo, "findOverlapping");
+  const save = vi.spyOn(repo, "save");
+  await createBooking(input, repo);
+  expect(find.mock.invocationCallOrder[0]).toBeLessThan(save.mock.invocationCallOrder[0]);
+});
+```
+
+The right test asserts the booking behaviour a learner or caller can observe:
+
+```ts
+// right
+it("rejects an overlapping booking", async () => {
+  const result = await createBooking(input, repoWithExistingBooking);
+  expect(result).toEqual({ kind: "rejected", reason: "room-already-booked" });
+});
+```
+
+The wrong version can fail after a harmless refactor even when the booking rule
+still works, because it prescribes internals and order. The right version stays
+valuable when the implementation changes because it checks the observable
+rejection of a second booking.
+
 Use [Google's testing guidance](../../../references/source-index.md#testing) for
 test-value trade-offs, not as a mandated testing pyramid.
 
@@ -61,3 +90,12 @@ does not prove. Why is a test double acceptable at the port boundary here?
 
 Given a slow flaky integration test, decide whether it belongs in a fast inner
 loop, a boundary suite, or a separate environment check.
+
+## Definition of done
+
+Before answering, check that:
+
+- A fast domain test rejects a second booking for the same room and time.
+- A use-case test runs through the in-memory adapter.
+- An HTTP boundary test covers one deliberate input or error mapping.
+- `npm test` was run and each test's evidence and limitation are recorded.

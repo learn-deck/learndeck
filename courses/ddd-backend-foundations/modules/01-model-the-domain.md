@@ -54,6 +54,34 @@ rule? Give one example of each for a small task or booking service.
 5. Ask the agent to record the domain-note and code paths. Then explain the
    invariant in your own words.
 
+## Worked example: protect the overlap rule
+
+Here is one small domain decision fully worked for the booking service:
+
+```ts
+type Booking = {
+  roomId: string;
+  startsAt: number;
+  endsAt: number;
+};
+
+export function overlaps(existing: Booking, candidate: Booking): boolean {
+  return existing.roomId === candidate.roomId
+    && existing.startsAt < candidate.endsAt
+    && candidate.startsAt < existing.endsAt;
+}
+```
+
+Your next analogous decision: decide what your domain operation should return
+when `overlaps` is true. Write the result type and one expectation for a second
+booking attempt; keep HTTP and database concerns out of it.
+
+Why this decision? The predicate compares the same room and intersecting time
+intervals, so it protects the booking invariant independently of how a request
+or row is represented. Its small boundary lets the application turn `true`
+into a domain rejection without asking the domain to know about status codes or
+SQL.
+
 Use [Vaughn Vernon's aggregate guidance](../../../references/source-index.md#ddd)
 and [the hexagonal architecture reference](../../../references/source-index.md#hexagonal)
 as anchors; do not copy their examples as your product model.
@@ -67,3 +95,12 @@ reject first, and explain why they are not the same responsibility.
 
 Given a new route, decide whether its rule belongs in the adapter, application
 use case, or domain model—and say why.
+
+## Definition of done
+
+Before answering, check that:
+
+- A domain note names the booking or other workflow's nouns, verbs, state changes, and invariant.
+- One domain type or aggregate protects that invariant without HTTP, database, or logger imports.
+- One use case names its input, successful outcome, and expected domain failure.
+- You can distinguish the domain invariant from one transport validation rule.
