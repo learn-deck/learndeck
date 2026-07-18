@@ -132,6 +132,9 @@ body:has(#welcome-screen:not(.hidden)) .welcome-screen { min-height: 100dvh; }
 .welcome-proof { margin: var(--space-md) 0 0; color: var(--color-content-tertiary); font-size: .73rem; font-weight: 600; letter-spacing: .025em; }
 .welcome-proof span { padding: 0 5px; color: var(--color-interactive); }
 .course-library { width: min(1120px, 100%); margin: 0 auto; padding: clamp(64px, 10vw, 120px) 0 var(--space-xxl); }
+.catalogue-provenance { display: grid; gap: 2px; margin: var(--space-lg) 0; padding: var(--space-md); color: var(--color-content-secondary); background: color-mix(in srgb, var(--color-interactive) 8%, var(--color-surface-raised)); border-left: 3px solid var(--color-interactive); }
+.catalogue-provenance strong { color: var(--color-content-primary); font-size: .82rem; }
+.catalogue-provenance p { margin: 0; font-size: .78rem; line-height: 1.5; }
 .library-heading { display: flex; align-items: end; justify-content: space-between; gap: var(--space-lg); }
 .library-heading h1 { margin: var(--space-sm) 0 0; font-size: clamp(1.8rem, 3vw, 2.6rem); line-height: 1.1; letter-spacing: -.04em; }
 .library-count { margin: 0; color: var(--color-content-tertiary); font-family: var(--font-mono); font-size: .72rem; }
@@ -242,7 +245,14 @@ body:has(#welcome-screen:not(.hidden)) .welcome-screen { min-height: 100dvh; }
 .integration-label { color: var(--color-content-primary); font-size: .86rem; font-weight: 700; }
 .integration-state { margin-top: 1px !important; color: var(--color-content-tertiary); font-size: .65rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
 .integration-next { margin-top: 3px !important; color: var(--color-content-secondary); font-size: .76rem; line-height: 1.4; }
-.integration-connect { flex: 0 0 auto; padding: 7px 10px; font-size: .72rem; }
+.integration-explanation { margin-top: 4px !important; color: var(--color-content-tertiary); font-family: var(--font-mono); font-size: .67rem; line-height: 1.4; overflow-wrap: anywhere; }
+.integration-actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-sm); align-items: center; }
+.integration-connect { padding: 7px 10px; font-size: .72rem; }
+.integration-disconnect, .setup-disconnect, .setup-connect { font-size: .72rem; }
+.guide-setup-connected { color: var(--color-feedback-success); }
+.guide-setup-stale { color: var(--color-feedback-warning); }
+.guide-setup-detected { color: var(--color-content-secondary); }
+.guide-setup-not_found { color: var(--color-content-tertiary); }
 
 /* Setup is intentionally a single decision: where the learner's project lives. */
 .workspace-setup { display: grid; grid-template-columns: minmax(0, 1fr) minmax(330px, .68fr); gap: clamp(var(--space-xl), 10vw, 160px); align-items: center; min-height: calc(100vh - 88px); padding: clamp(72px, 10vw, 148px) 0; }
@@ -266,6 +276,10 @@ body:has(#welcome-screen:not(.hidden)) .welcome-screen { min-height: 100dvh; }
 .workspace-summary { display: grid; gap: var(--space-sm); margin-top: var(--space-lg); padding: var(--space-md) 0; border-top: 1px solid var(--color-border-subtle); border-bottom: 1px solid var(--color-border-subtle); }
 .workspace-summary .path-command { color: var(--color-content-tertiary); }
 .path-command code { color: var(--color-content-primary); font-family: var(--font-mono); font-size: .72rem; }
+.path-actions { display: grid; gap: var(--space-sm); padding-top: var(--space-sm); }
+.path-actions .text-button { justify-self: start; font-size: .72rem; text-align: left; }
+.danger-button { color: var(--color-feedback-error) !important; }
+.path-actions .form-note { overflow-wrap: anywhere; }
 .section-list { display: grid; margin: var(--space-md) 0 0; padding: 0; list-style: none; }
 .section-list button { width: 100%; display: grid; grid-template-columns: 26px 1fr; gap: var(--space-sm); padding: 11px 0; color: var(--color-content-secondary); background: transparent; border: 0; border-bottom: 1px solid var(--color-border-subtle); text-align: left; font-size: .82rem; font-weight: 550; line-height: 1.35; transition: color var(--transition-fast); }
 .section-list button:hover, .section-list button[aria-current="step"] { color: var(--color-content-primary); }
@@ -354,6 +368,23 @@ body:has(#welcome-screen:not(.hidden)) .welcome-screen { min-height: 100dvh; }
 .attempt-result { color: var(--color-content-primary); }
 .attempt-answer { margin: var(--space-sm) 0; color: var(--color-content-primary); white-space: pre-wrap; }
 .attempt-feedback { margin: 0; color: var(--color-content-secondary); white-space: pre-wrap; }
+.attempt-actions { margin-top: var(--space-md); }
+.self-review { padding: 7px 10px; color: var(--color-interactive-contrast); background: var(--color-interactive); border: 1px solid var(--color-interactive); border-radius: var(--radius-sm); font-size: .74rem; font-weight: 700; }
+.self-review:hover { background: var(--color-interactive-strong); border-color: var(--color-interactive-strong); }
+.self-review[disabled] { cursor: wait; opacity: .65; }
+.evidence-panel { max-width: 70ch; margin-top: var(--space-xxl); }
+.evidence-panel h2 { margin: var(--space-sm) 0 var(--space-md); font-size: 1.55rem; line-height: 1.2; letter-spacing: -.025em; }
+.evidence-record { margin-top: var(--space-sm); padding: var(--space-md); background: var(--color-surface-raised); border-left: 3px solid var(--color-feedback-success); }
+.evidence-record.evidence-guide { border-left-color: var(--color-callout-note); }
+.evidence-record-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-sm); color: var(--color-content-primary); font-size: .72rem; }
+.evidence-record-heading time { color: var(--color-content-tertiary); font-family: var(--font-mono); font-size: .65rem; }
+.evidence-record p { margin: var(--space-sm) 0 0; color: var(--color-content-secondary); white-space: pre-wrap; }
+.evidence-record .evidence-reference { color: var(--color-content-tertiary); font-family: var(--font-mono); font-size: .7rem; overflow-wrap: anywhere; }
+.evidence-form { display: grid; gap: var(--space-md); margin-top: var(--space-lg); padding: var(--space-lg); background: var(--color-surface-raised); border-top: 2px solid var(--color-feedback-success); }
+.evidence-form textarea { min-height: 88px; }
+.evidence-form label { font-size: .8rem; }
+.evidence-form label span { font-size: .76rem; }
+.evidence-form .form-note { margin: 0; }
 .empty { color: var(--color-content-tertiary); }
 
 body.zen-mode .masthead, body.zen-mode .sidebar { display: none; }

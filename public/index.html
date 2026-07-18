@@ -62,6 +62,10 @@
             </div>
             <div class="library-actions"><p id="library-count" class="library-count"></p><button id="close-library" class="text-button" type="button">Back</button></div>
           </div>
+          <div id="catalogue-provenance" class="catalogue-provenance hidden" role="status" aria-live="polite">
+            <strong id="catalogue-provenance-label"></strong>
+            <p id="catalogue-provenance-warning"></p>
+          </div>
           <div id="category-filters" class="category-filters" aria-label="Filter courses by category"></div>
           <div id="course-grid" class="course-grid"></div>
         </section>
@@ -87,7 +91,7 @@
           <p id="agent-setup-status" class="form-note" role="status" aria-live="polite" tabindex="-1">You can connect a guide now or continue to the course library and add one later.</p>
           <div class="agent-setup-actions">
             <button id="connect-selected-guides" type="button">Connect selected guides <span aria-hidden="true">→</span></button>
-            <button id="continue-to-library" class="text-button" type="button">Continue to courses</button>
+            <button id="continue-to-library" class="text-button" type="button">Continue without a guide</button>
           </div>
         </div>
       </section>
@@ -111,6 +115,7 @@
             <p>LearnDeck detects supported apps on this Mac. Connecting adds one local MCP entry and never shares your course work. You can switch guides at any time because progress stays local.</p>
             <div id="integration-list" class="integration-list"></div>
             <p id="integration-status" class="form-note" role="status" aria-live="polite" tabindex="-1">You can complete every lesson on your own, then connect a guide later.</p>
+            <button id="continue-without-guide" class="text-button" type="button">Continue without a guide</button>
           </details>
         </div>
 
@@ -164,6 +169,11 @@
             <p id="workspace-label"></p>
             <p id="server-command-wrap" class="path-command">You run: <code id="server-command"></code></p>
             <button id="change-workspace" class="text-button" type="button">Use another workspace</button>
+            <div class="path-actions" aria-label="Path data actions">
+              <button id="export-path" class="text-button" type="button">Export progress</button>
+              <button id="reset-path" class="text-button danger-button" type="button">Reset path</button>
+              <p id="path-actions-status" class="form-note" role="status" aria-live="polite"></p>
+            </div>
           </div>
           <nav aria-label="Course sections">
             <ol id="section-list" class="section-list"></ol>
@@ -217,6 +227,19 @@
             <h2 id="attempts-title">Question history</h2>
             <div id="attempt-list"></div>
           </section>
+          <section id="evidence-panel" class="evidence-panel" aria-labelledby="evidence-title">
+            <p class="eyebrow">Progress evidence</p>
+            <h2 id="evidence-title">What you can point to</h2>
+            <div id="evidence-list"></div>
+            <form id="evidence-form" class="evidence-form">
+              <label for="evidence-note">Add a note for this section</label>
+              <textarea id="evidence-note" name="note" rows="3" required placeholder="What did you build, decide, or verify?"></textarea>
+              <label for="evidence-ref">Reference <span>optional</span></label>
+              <input id="evidence-ref" name="ref" placeholder="A file path, command, or source" autocomplete="off" />
+              <button type="submit">Record evidence <span aria-hidden="true">→</span></button>
+              <p id="evidence-status" class="form-note" role="status" aria-live="polite"></p>
+            </form>
+          </section>
         </section>
       </section>
       </main>
@@ -229,6 +252,9 @@
         </div>
         <p class="attempt-answer"></p>
         <p class="attempt-feedback"></p>
+        <div class="attempt-actions">
+          <button class="self-review" type="button">Mark as self-reviewed and continue</button>
+        </div>
       </article>
     </template>
     <template id="integration-template">
@@ -239,9 +265,13 @@
             <p class="integration-label"></p>
             <p class="integration-state"></p>
             <p class="integration-next"></p>
+            <p class="integration-explanation"></p>
           </div>
         </div>
-        <button class="integration-connect" type="button"></button>
+        <div class="integration-actions">
+          <button class="integration-connect" type="button"></button>
+          <button class="integration-disconnect text-button" type="button">Disconnect</button>
+        </div>
       </article>
     </template>
     <script type="module" src="/app.js"></script>
