@@ -58,7 +58,7 @@ test("loads a public GitHub Markdown course repository and falls back to its com
     "references/remote-note.md": "# Remote note\n",
   };
   try {
-    process.env.LEARNDECK_COURSE_REPOSITORY = "github:learndeck/courses@main";
+    process.env.LEARNDECK_COURSE_REPOSITORY = "github:learn-deck/courses@main";
     process.env.LEARNDECK_COURSE_CACHE_DIR = directory;
     globalThis.fetch = async (input) => {
       const url = String(input);
@@ -73,7 +73,7 @@ test("loads a public GitHub Markdown course repository and falls back to its com
     };
     const publicCatalog = await CourseCatalog.loadConfigured();
     expect(publicCatalog.get("remote-foundations").category).toBe("Engineering");
-    expect(existsSync(join(directory, "learndeck-courses-main", "courses", "remote-foundations", "course.md"))).toBe(true);
+    expect(existsSync(join(directory, "learn-deck-courses-main", "courses", "remote-foundations", "course.md"))).toBe(true);
 
     globalThis.fetch = async () => new Response("offline", { status: 503 });
     expect((await CourseCatalog.loadConfigured()).get("remote-foundations").title).toBe("Remote Foundations");
