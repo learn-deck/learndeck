@@ -17,7 +17,13 @@ rubric](docs/catalogue-quality-rubric.md).
 
 ## Run locally
 
-Requires Bun 1.3 or newer.
+Requires Bun 1.3 or newer. Check your version first:
+
+```sh
+bun --version
+```
+
+From this clone, install dependencies and start the app:
 
 ```sh
 bun install
@@ -25,24 +31,22 @@ bun run app
 ```
 
 Open [http://127.0.0.1:3030](http://127.0.0.1:3030). LearnDeck creates local
-progress at `.learndeck/progress.db`; set `LEARNDECK_DB_PATH` to use a separate
-database. It loads direct child course packs from `courses/`; set
-`LEARNDECK_COURSES_DIR` to load a local fork's packs elsewhere.
+progress at `.learndeck/progress.db`. Set `LEARNDECK_DB_PATH` to use a separate
+database.
 
-To use the public Markdown course catalogue, copy the release configuration
-before starting the app:
+The commands above load the bundled Markdown packs. To select the public
+catalogue, copy the release configuration before `bun run app`:
 
 ```sh
 cp .env.example .env
-bun run app
 ```
 
-LearnDeck downloads only Markdown under `courses/` and `references/` into its
-local cache when the learner clicks **Start Now**, then uses that cache if the
-public repository is temporarily unavailable. A fork can set a different
-`LEARNDECK_COURSE_REPOSITORY=github:your-org/courses@main`; without one,
-LearnDeck uses its bundled packs for development. See [public course
-distribution](docs/public-course-distribution.md).
+The release configuration selects `github:learn-deck/courses@main`. When the
+learner clicks **Start Now**, LearnDeck syncs only Markdown under `courses/`
+and `references/` into its local cache. If GitHub is unavailable, it uses the
+last complete cache. A fork can set a different
+`LEARNDECK_COURSE_REPOSITORY=github:your-org/courses@main`. See [public course
+distribution](docs/public-course-distribution.md) and [troubleshooting](docs/troubleshooting.md).
 
 On first launch, LearnDeck:
 
@@ -118,5 +122,7 @@ bun run verify
 ## Privacy and scope
 
 The browser binds only to `127.0.0.1`. Progress, answers, workspace paths, and
-reported evidence remain in the local database and are ignored by Git. See
+reported evidence remain in the local database and are ignored by Git. By
+default, that database and the public-course cache live under `.learndeck/`;
+see the [local progress database](references/progress-database.md). See also
 [SECURITY.md](SECURITY.md).
