@@ -76,3 +76,9 @@ Repository scripts invoke locked local dependencies. They do not use floating
 These contracts contain no Node, Fastify, PostgreSQL, RabbitMQ, provider SDK,
 database entity, or implementation source type. A future stack must be able to
 implement them without reading `/node`.
+
+The Node consumer mirrors this boundary in `node/packages/contracts`: closed,
+readonly TypeScript unions for exactly the three public commands and twelve
+public events. It contains transport DTOs and message-type inventories only,
+never Mission, Attempt, VerificationRun, CompletionReview, process-manager, or
+persistence models.

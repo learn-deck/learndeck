@@ -221,7 +221,8 @@
                     "ATTEMPT_EXPIRED",
                     "ATTEMPT_FAILED",
                     "REVISION_REQUESTED",
-                    "HUMAN_AUTHORIZED"
+                    "HUMAN_AUTHORIZED",
+                    "VERIFICATION_ABORTED"
                   ]
                 },
                 "feedback": {
@@ -598,6 +599,21 @@
                   "maxLength": 2000
                 }
               },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "reason": { "const": "MISSION_CANCELLED" }
+                    },
+                    "required": ["reason"]
+                  },
+                  "then": {
+                    "properties": {
+                      "retryable": { "const": false }
+                    }
+                  }
+                }
+              ],
               "additionalProperties": false
             }
           }
@@ -642,6 +658,24 @@
                   "maxLength": 2000
                 }
               },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": { "verdict": { "const": "PASSED" } },
+                    "required": ["verdict"]
+                  },
+                  "then": {
+                    "properties": {
+                      "recommendation": { "const": "APPROVE" }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "recommendation": { "const": "REQUEST_REVISION" }
+                    }
+                  }
+                }
+              ],
               "additionalProperties": false
             }
           }

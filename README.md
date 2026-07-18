@@ -46,8 +46,11 @@ acceptance scenarios.
 
 PatchQuest has a contract-first foundation and an executable Node verification
 spine. The English domain model, architecture, decisions, contract inventory,
-and deterministic acceptance scenarios are available. Service behavior is not
-implemented yet and this is not a public release.
+and sixteen deterministic acceptance scenarios are available. Phase 4A makes
+the shared TypeScript v1 transport boundary and Mission Control's Mission and
+completion-process behavior executable and offline-tested. Workshop,
+Verification and Review, adapters, and infrastructure are not implemented yet,
+and this is not a public release.
 
 PatchQuest is a fresh, independently authored project. No earlier course files,
 package metadata, configuration, or Git history are imported. Earlier courses

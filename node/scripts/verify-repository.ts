@@ -75,6 +75,7 @@ type Catalog = {
     asyncapi: string;
     commandsByIssuer: Record<string, string[]>;
     commandsByRecipient: Record<string, string[]>;
+    missionRetryReasons: string[];
     eventsByProducer: Record<string, string[]>;
   };
 };
@@ -738,6 +739,51 @@ async function verifyContracts(): Promise<void> {
     throw new Error("AsyncAPI message/catalog parity failed");
   if (new Set(catalogMessages).size !== 15)
     throw new Error("expected exactly 15 unique integration messages");
+  const integrationSchema = schemas.find((schema) =>
+    typeof schema["$id"] === "string"
+      ? schema["$id"].endsWith("/integration-messages.schema.json")
+      : false,
+  );
+  if (!integrationSchema)
+    throw new Error("integration message schema is missing");
+  const definitions = objectAtBoundary(
+    integrationSchema["$defs"],
+    "integration message definitions",
+  );
+  const retryDefinition = objectAtBoundary(
+    definitions["MissionRetryAuthorizedV1"],
+    "mission retry definition",
+  );
+  const retryAllOf = retryDefinition["allOf"];
+  if (!Array.isArray(retryAllOf) || retryAllOf.length !== 2)
+    throw new Error("mission retry definition must have two allOf branches");
+  const retryPayload = objectAtBoundary(retryAllOf[1], "mission retry payload");
+  const retryProperties = objectAtBoundary(
+    retryPayload["properties"],
+    "mission retry properties",
+  );
+  const retryData = objectAtBoundary(
+    retryProperties["data"],
+    "mission retry data",
+  );
+  const retryDataProperties = objectAtBoundary(
+    retryData["properties"],
+    "mission retry data properties",
+  );
+  const retryReason = objectAtBoundary(
+    retryDataProperties["reason"],
+    "mission retry reason",
+  );
+  const retryReasonEnum = retryReason["enum"];
+  if (
+    !Array.isArray(retryReasonEnum) ||
+    !retryReasonEnum.every((reason) => typeof reason === "string") ||
+    JSON.stringify([...retryReasonEnum].sort()) !==
+      JSON.stringify(
+        [...catalog.integrationMessages.missionRetryReasons].sort(),
+      )
+  )
+    throw new Error("mission retry reason schema/catalog parity failed");
 
   const componentByName = new Map<
     string,
@@ -874,8 +920,8 @@ async function verifyScenarios(): Promise<void> {
   const names = (await readdir(scenarioDir))
     .filter((name) => name.endsWith(".json"))
     .sort();
-  if (names.length !== 15)
-    throw new Error(`expected 15 scenarios, found ${names.length}`);
+  if (names.length !== 16)
+    throw new Error(`expected 16 scenarios, found ${names.length}`);
   for (const name of names) {
     const scenario = parseBoundary<Scenario>(
       await readJson(path.join(scenarioDir, name)),

@@ -1,3 +1,4 @@
+import { existsSync, realpathSync, statSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -12,36 +13,101 @@ const applicationNames = new Set([
   "workshop",
   "verification",
 ]);
-const forbiddenFrameworkImports = [
-  "fastify",
-  "pg",
-  "amqplib",
-  "@opentelemetry/",
-  "openai",
-  "@anthropic-ai/",
-  "@google/generative-ai",
-];
-
-function isForbiddenFrameworkImport(specifier: string): boolean {
-  return forbiddenFrameworkImports.some(
-    (name) => specifier === name || specifier.startsWith(name),
+function isAllowedProductionSpecifier(
+  specifier: string,
+  importer: string,
+): boolean {
+  return (
+    specifier.startsWith(".") ||
+    specifier === "@patchquest/contracts" ||
+    specifier === "node:crypto" ||
+    (specifier === "node:util/types" &&
+      importer === "apps/mission-control/src/domain/json-topology.ts")
   );
+}
+
+const forbiddenRuntimeGlobals = new Set([
+  "globalThis",
+  "global",
+  "process",
+  "fetch",
+  "WebSocket",
+  "EventSource",
+  "eval",
+  "Function",
+  "WebAssembly",
+  "module",
+]);
+
+function isPropertyNameOnly(node: ts.Identifier): boolean {
+  const parent = node.parent;
+  return (
+    (ts.isPropertyAccessExpression(parent) && parent.name === node) ||
+    (ts.isPropertyAssignment(parent) && parent.name === node) ||
+    (ts.isMethodDeclaration(parent) && parent.name === node) ||
+    (ts.isPropertyDeclaration(parent) && parent.name === node) ||
+    (ts.isPropertySignature(parent) && parent.name === node) ||
+    (ts.isMethodSignature(parent) && parent.name === node) ||
+    (ts.isBindingElement(parent) && parent.propertyName === node)
+  );
+}
+
+const sourceExtensionCandidates: Readonly<Record<string, readonly string[]>> = {
+  ".js": [".ts", ".tsx"],
+  ".mjs": [".mts"],
+  ".cjs": [".cts"],
+};
+
+/** @param {string} candidate */
+function existingSourceFile(candidate: string): string | undefined {
+  if (!existsSync(candidate) || !statSync(candidate).isFile()) return undefined;
+  return realpathSync(candidate);
+}
+
+/** @param {string} specifier @param {string} importer */
+function resolveRelativeTarget(specifier: string, importer: string): string {
+  const raw = path.resolve(nodeRoot, path.dirname(importer), specifier);
+  const extension = path.extname(raw);
+  const candidates: string[] = [];
+  if (extension) {
+    candidates.push(raw);
+    for (const replacement of sourceExtensionCandidates[extension] ?? [])
+      candidates.push(`${raw.slice(0, -extension.length)}${replacement}`);
+  } else {
+    candidates.push(raw);
+    for (const sourceExtension of [".ts", ".tsx", ".mts", ".cts"])
+      candidates.push(`${raw}${sourceExtension}`);
+    for (const sourceExtension of [".ts", ".tsx", ".mts", ".cts"])
+      candidates.push(path.join(raw, `index${sourceExtension}`));
+  }
+  return candidates.map(existingSourceFile).find(Boolean) ?? raw;
+}
+
+interface TargetArea {
+  readonly area: string;
+  readonly name: string;
+  readonly relativePath?: string;
 }
 
 /** @param {string} specifier @param {string} importer */
 function targetArea(
   specifier: string,
   importer: string,
-): [string, string] | undefined {
+): TargetArea | undefined {
   if (specifier.startsWith("@patchquest/")) {
     const name = specifier.slice("@patchquest/".length).split("/")[0];
     if (name === undefined) return undefined;
-    return applicationNames.has(name) ? ["apps", name] : ["packages", name];
+    return applicationNames.has(name)
+      ? { area: "apps", name }
+      : { area: "packages", name };
   }
   if (!specifier.startsWith(".")) return undefined;
-  const absolute = path.resolve(nodeRoot, path.dirname(importer), specifier);
-  const [area, name] = path.relative(nodeRoot, absolute).split(path.sep);
-  return area !== undefined && name !== undefined ? [area, name] : undefined;
+  const absolute = resolveRelativeTarget(specifier, importer);
+  const relativePath = path.relative(nodeRoot, absolute);
+  const [area, name] = relativePath.split(path.sep);
+  return area !== undefined && name !== undefined
+    ? { area, name, relativePath }
+    : undefined;
 }
 
 /** @param {string} source @param {string} importer */
@@ -51,6 +117,13 @@ export function findArchitectureViolations(
 ): string[] {
   const violations: string[] = [];
   const [importerArea, importerName] = importer.split(/[\\/]/);
+  const importerParts = importer.split(/[\\/]/);
+  const importerLayer =
+    importerParts[2] === "src" ? importerParts[3] : undefined;
+  const isProductionCore =
+    importerArea === "apps" &&
+    importerLayer !== undefined &&
+    ["domain", "application"].includes(importerLayer);
   const sourceFile = ts.createSourceFile(
     importer,
     source,
@@ -58,8 +131,131 @@ export function findArchitectureViolations(
     true,
     ts.ScriptKind.TS,
   );
+  const scopeBindings = new Map<ts.Node, Set<string>>();
+  const addBinding = (
+    scope: ts.Node | undefined,
+    name: ts.BindingName,
+  ): void => {
+    if (!scope) return;
+    const bindings = scopeBindings.get(scope) ?? new Set<string>();
+    scopeBindings.set(scope, bindings);
+    if (ts.isIdentifier(name)) bindings.add(name.text);
+    else
+      for (const element of name.elements)
+        if (!ts.isOmittedExpression(element)) addBinding(scope, element.name);
+  };
+  const collectBindings = (
+    node: ts.Node,
+    parentScope: ts.Node | undefined,
+  ): void => {
+    if (
+      (ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node)) &&
+      node.name
+    )
+      addBinding(parentScope, node.name);
+    let scope = parentScope;
+    if (ts.isSourceFile(node) || ts.isBlock(node) || ts.isFunctionLike(node)) {
+      scope = node;
+      if (!scopeBindings.has(scope)) scopeBindings.set(scope, new Set());
+    }
+    if (
+      ts.isVariableDeclaration(node) ||
+      ts.isParameter(node) ||
+      ts.isBindingElement(node)
+    )
+      addBinding(scope, node.name);
+    else if (ts.isImportClause(node) && node.name) addBinding(scope, node.name);
+    else if (ts.isImportSpecifier(node) || ts.isNamespaceImport(node))
+      addBinding(scope, node.name);
+    ts.forEachChild(node, (child) => collectBindings(child, scope));
+  };
+  collectBindings(sourceFile, undefined);
+  const isLocallyBound = (node: ts.Identifier): boolean => {
+    for (
+      let current: ts.Node | undefined = node.parent;
+      current;
+      current = current.parent
+    ) {
+      if (scopeBindings.get(current)?.has(node.text)) return true;
+    }
+    return false;
+  };
   /** @param {import("typescript").Node} node */
   function visit(node: ts.Node): void {
+    if (importerArea === "packages" && importerName === "contracts") {
+      if (
+        ts.isClassDeclaration(node) ||
+        ts.isFunctionDeclaration(node) ||
+        ts.isEnumDeclaration(node)
+      ) {
+        violations.push(
+          `${importer}: contracts may contain transport DTO types only, not runtime classes, functions, or enums`,
+        );
+      }
+      if (
+        (ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)) &&
+        [
+          "Mission",
+          "Attempt",
+          "VerificationRun",
+          "CompletionReview",
+          "MissionCompletionProcess",
+          "MissionSnapshot",
+        ].includes(node.name.text)
+      ) {
+        violations.push(
+          `${importer}: contracts may not export aggregate or persistence model ${node.name.text}`,
+        );
+      }
+    }
+    if (isProductionCore && ts.isImportEqualsDeclaration(node)) {
+      violations.push(
+        `${importer}: ${importerLayer} may not use TypeScript import-equals or require aliases`,
+      );
+    }
+    if (
+      isProductionCore &&
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === "require"
+    ) {
+      violations.push(
+        `${importer}: ${importerLayer} may not use CommonJS require`,
+      );
+    }
+    if (
+      isProductionCore &&
+      ts.isIdentifier(node) &&
+      node.text === "require" &&
+      !(ts.isCallExpression(node.parent) && node.parent.expression === node)
+    ) {
+      violations.push(
+        `${importer}: ${importerLayer} may not reference require indirectly`,
+      );
+    }
+    if (
+      isProductionCore &&
+      ts.isCallExpression(node) &&
+      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+      (node.arguments.length !== 1 ||
+        node.arguments[0] === undefined ||
+        !ts.isStringLiteral(node.arguments[0]))
+    ) {
+      violations.push(
+        `${importer}: ${importerLayer} may not use a non-literal dynamic import`,
+      );
+    }
+    if (
+      isProductionCore &&
+      ts.isIdentifier(node) &&
+      forbiddenRuntimeGlobals.has(node.text) &&
+      !isPropertyNameOnly(node) &&
+      !isLocallyBound(node)
+    ) {
+      violations.push(
+        `${importer}: ${importerLayer} may not reference forbidden runtime global ${node.text}`,
+      );
+    }
     let expression: ts.StringLiteral | undefined;
     if (
       (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
@@ -73,56 +269,57 @@ export function findArchitectureViolations(
       node.arguments[0] !== undefined &&
       ts.isStringLiteral(node.arguments[0]) &&
       (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
-        (ts.isIdentifier(node.expression) &&
+        (!isProductionCore &&
+          ts.isIdentifier(node.expression) &&
           node.expression.text === "require"))
     ) {
       expression = node.arguments[0];
     }
     if (expression) {
-      const importerParts = importer.split(/[\\/]/);
-      const importerLayer =
-        importerParts[2] === "src" ? importerParts[3] : undefined;
-      if (
-        importerArea === "apps" &&
-        importerLayer !== undefined &&
-        ["domain", "application"].includes(importerLayer) &&
-        isForbiddenFrameworkImport(expression.text)
-      ) {
+      const allowedProductionSpecifier =
+        !isProductionCore ||
+        isAllowedProductionSpecifier(expression.text, importer);
+      if (!allowedProductionSpecifier) {
         violations.push(
-          `${importer}: ${importerLayer} may not import framework, infrastructure, telemetry, or provider module ${expression.text}`,
+          `${importer}: ${importerLayer} may import only bounded-context relative modules, @patchquest/contracts, node:crypto, or the json-topology node:util/types exception; received ${expression.text}`,
         );
       }
       const target = targetArea(expression.text, importer);
-      if (target) {
-        const [targetAreaName, targetName] = target;
-        if (targetAreaName === "apps" && targetName !== importerName) {
+      if (target && allowedProductionSpecifier) {
+        const {
+          area: targetAreaName,
+          name: targetName,
+          relativePath: targetRelativePath,
+        } = target;
+        if (
+          targetAreaName === "apps" &&
+          targetName !== importerName &&
+          !(isProductionCore && expression.text.startsWith("."))
+        ) {
           violations.push(
             `${importer}: ${importerArea === "apps" ? "applications" : "shared packages"} may not import application ${targetName}`,
           );
         }
         if (
           expression.text.startsWith(".") &&
-          importerArea === "apps" &&
-          targetAreaName === "apps" &&
-          targetName === importerName &&
-          importerLayer !== undefined &&
-          ["domain", "application"].includes(importerLayer)
+          isProductionCore &&
+          importerLayer !== undefined
         ) {
-          const absolute = path.resolve(
-            nodeRoot,
-            path.dirname(importer),
-            expression.text,
-          );
-          const targetParts = path.relative(nodeRoot, absolute).split(path.sep);
+          const targetParts = (targetRelativePath ?? "").split(path.sep);
           const targetLayer =
             targetParts[2] === "src" ? targetParts[3] : undefined;
           const allowedLayers =
             importerLayer === "domain"
               ? new Set(["domain"])
               : new Set(["domain", "application"]);
-          if (!targetLayer || !allowedLayers.has(targetLayer))
+          if (
+            targetAreaName !== "apps" ||
+            targetName !== importerName ||
+            !targetLayer ||
+            !allowedLayers.has(targetLayer)
+          )
             violations.push(
-              `${importer}: ${importerLayer} may not import outward layer ${targetLayer ?? "outside-src"}`,
+              `${importer}: ${importerLayer} relative import must resolve inside apps/${importerName}/src/${[...allowedLayers].join(" or ")}; received ${targetRelativePath ?? expression.text}`,
             );
         }
         if (

@@ -85,6 +85,7 @@ DeadLetter, and projection snapshots; digest fields use the contract
 | `stale-completion-bindings`           | `rejectMissionCompletion` conflict                                                                                            | ADR 0005; failure catalog           |
 | `self-verification-rejected`          | verifier assignment policy                                                                                                    | ADR 0005; failure catalog           |
 | `verification-infrastructure-aborted` | `verification.aborted.v1`                                                                                                     | ADRs 0004–0005; failure catalog     |
+| `retryable-verification-abort`        | `verification.aborted.v1`, `mission.retry-authorized.v1`, `workshop.create-attempt.v1`                                        | ADRs 0004–0005; failure catalog     |
 | `telemetry-outage-domain-continuity`  | durable verification cascade                                                                                                  | ADR 0006; failure catalog           |
 
 Relevant sources:

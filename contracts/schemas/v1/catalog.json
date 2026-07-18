@@ -39,6 +39,13 @@
       "workshop": ["workshop.create-attempt.v1", "workshop.revoke-attempt.v1"],
       "verificationAndReview": ["verification.start-verification.v1"]
     },
+    "missionRetryReasons": [
+      "ATTEMPT_EXPIRED",
+      "ATTEMPT_FAILED",
+      "REVISION_REQUESTED",
+      "HUMAN_AUTHORIZED",
+      "VERIFICATION_ABORTED"
+    ],
     "eventsByProducer": {
       "missionControl": [
         "mission.opened.v1",
