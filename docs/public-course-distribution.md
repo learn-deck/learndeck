@@ -35,8 +35,12 @@ courses/
   ddd-backend-foundations/
     course.md
     modules/
-      00-start.md
+      00-start-a-path.md
       ...
+  testing-fundamentals/
+    course.md
+    modules/
+    notes/
 references/
   source-index.md
 ```
@@ -60,7 +64,9 @@ On the learner's **Start Now** action, LearnDeck reads the repository tree,
 downloads only allowed Markdown files to `.learndeck/course-cache/`, and loads
 the cache. It replaces the cache only after a full sync succeeds. If GitHub
 cannot be reached later, the last complete local cache remains available. If no
-repository is configured, LearnDeck uses bundled local packs for development.
+repository is configured, LearnDeck loads only the bundled
+[`example-course`](../courses/example-course/course.md) format pack, which
+keeps development and tests working offline.
 
 The release `.env.example` points to `github:learn-deck/courses@main`; copy it
 to `.env` for the default public catalogue. A fork may replace that value with

@@ -7,11 +7,14 @@ useful question, evaluates a visible answer against an author-written rubric,
 and never writes the learner's solution for them. Answers, evidence, feedback,
 and learning records stay in local SQLite.
 
-The included **DDD and Hexagonal Architecture** pack is the v0.1 flagship:
-six to eight hours of Node.js + TypeScript, structured into satisfying
-45–60-minute building sessions. It is the first focused developer course, not
-the limit of the app. The format remains course-agnostic while the default
-catalogue grows deliberately and stays curated for quality. See the [product
+Courses live in the public catalogue at
+[learn-deck/courses](https://github.com/learn-deck/courses) and sync into the
+app; the v0.1 flagship is **DDD and Hexagonal Architecture** — six to eight
+hours of Node.js + TypeScript in satisfying 45–60-minute building sessions.
+This repository bundles only a small [format example
+pack](courses/example-course/course.md) for documentation and development.
+The format remains course-agnostic while the default catalogue grows
+deliberately and stays curated for quality. See the [product
 position](docs/product-positioning.md) and [catalogue quality
 rubric](docs/catalogue-quality-rubric.md).
 
@@ -45,9 +48,9 @@ database.
 - A connection adds exactly one `learndeck` MCP entry to the selected guide. Disconnect removes only that entry through `DELETE /api/integrations/:id/connect`.
 - Per-path progress can be exported with `GET /api/paths/:id/export` or reset with `DELETE /api/paths/:id`.
 
-The primary catalogue is the public GitHub course repository; the bundled
-Markdown packs load only while no repository is configured, which keeps
-development working offline. To select the public catalogue, copy the release
+The primary catalogue is the public GitHub course repository; while no
+repository is configured, only the bundled `example-course` format pack
+loads, which keeps development working offline. To select the public catalogue, copy the release
 configuration before `bun run app`:
 
 ```sh

@@ -15,7 +15,7 @@ describe("regression: evidence integrity across restarts and resets", () => {
     directory = mkdtempSync(join(tmpdir(), "learndeck-evidence-"));
     databasePath = join(directory, "progress.db");
     store = new CourseStore(databasePath);
-    course = (await CourseCatalog.load()).get("ddd-backend-foundations");
+    course = (await CourseCatalog.load()).get("example-course");
   });
 
   afterEach(() => {
@@ -24,7 +24,7 @@ describe("regression: evidence integrity across restarts and resets", () => {
   });
 
   test("reopening the store does not duplicate learner evidence as guide evidence", () => {
-    const path = store.createPath(course, { coursePathId: "node-typescript", workspacePath: "/work/restart" });
+    const path = store.createPath(course, { coursePathId: "default", workspacePath: "/work/restart" });
     store.recordLearnerEvidence(course, {
       pathId: path.id,
       sectionId: "start",
@@ -41,7 +41,7 @@ describe("regression: evidence integrity across restarts and resets", () => {
   });
 
   test("reset reports every deleted evidence record", () => {
-    const path = store.createPath(course, { coursePathId: "node-typescript", workspacePath: "/work/reset-count" });
+    const path = store.createPath(course, { coursePathId: "default", workspacePath: "/work/reset-count" });
     store.recordLearnerEvidence(course, { pathId: path.id, sectionId: "start", note: "First learner note." });
     store.recordLearnerEvidence(course, { pathId: path.id, sectionId: "start", note: "Second learner note." });
     store.recordEvidence(course, { pathId: path.id, sectionId: "start", evidence: "Guide-confirmed status route check." });

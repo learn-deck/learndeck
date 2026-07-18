@@ -701,7 +701,7 @@ function renderWorkspaceSetup() {
   const coursePath = defaultCoursePath();
   $("#setup-course-title").textContent = state.course.title;
   $("#setup-server-command").textContent = coursePath.serverCommand || "Use the course instructions";
-  $("#workspace").placeholder = coursePath.workspaceHint || "../ddd-backend";
+  $("#workspace").placeholder = coursePath.workspaceHint || "../my-workspace";
 }
 
 async function createPath(event) {
@@ -718,7 +718,7 @@ async function createPath(event) {
       body: JSON.stringify({
         coursePathId: defaultCoursePath().id,
         workspacePath,
-        label: "My DDD backend",
+        label: "My course workspace",
       }),
     });
     state.paths = await api(`/api/courses/${encodeURIComponent(state.course.id)}/paths`);

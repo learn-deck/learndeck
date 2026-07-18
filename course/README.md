@@ -1,10 +1,15 @@
-# Where the DDD course lives now
+# Where courses live now
 
-The shipped DDD course is a Markdown course pack at
-[`../courses/ddd-backend-foundations/`](../courses/ddd-backend-foundations/course.md):
-`course.md` holds the course identity and runtime, and `modules/*.md` hold the
-learner-facing explanations, questions, rubrics, and later-review prompts.
-JSON course manifests are no longer used.
+Real, learner-facing course packs — including the DDD and Hexagonal
+Architecture flagship — live in the public catalogue repository at
+[learn-deck/courses](https://github.com/learn-deck/courses) and sync into the
+app when `LEARNDECK_COURSE_REPOSITORY` is configured.
 
-See [course authoring](../docs/course-authoring.md) before adding another
-course pack, source set, or question contract.
+This repository bundles only the
+[`example-course`](../courses/example-course/course.md) pack: a reference
+implementation of the format kept for documentation and development. JSON
+course manifests are no longer used.
+
+See [course authoring](../docs/course-authoring.md) for the pack standard and
+[public course distribution](../docs/public-course-distribution.md) for how to
+contribute a course to the catalogue.

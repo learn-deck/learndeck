@@ -13,7 +13,7 @@ describe("regression: later activity never downgrades section progress", () => {
   beforeEach(async () => {
     directory = mkdtempSync(join(tmpdir(), "learndeck-downgrade-"));
     store = new CourseStore(join(directory, "progress.db"));
-    course = (await CourseCatalog.load()).get("ddd-backend-foundations");
+    course = (await CourseCatalog.load()).get("example-course");
   });
 
   afterEach(() => {
@@ -22,7 +22,7 @@ describe("regression: later activity never downgrades section progress", () => {
   });
 
   function createPath() {
-    return store.createPath(course, { coursePathId: "node-typescript", workspacePath: `/work/${crypto.randomUUID()}` });
+    return store.createPath(course, { coursePathId: "default", workspacePath: `/work/${crypto.randomUUID()}` });
   }
 
   function completeStartSection(pathId: string) {
@@ -88,7 +88,7 @@ describe("regression: later activity never downgrades section progress", () => {
 
     expect(startStatus(path.id)).toBe("complete");
     expect(store.overview(course, path.id).completedSections).toBe(1);
-    expect(store.nextActivity(course, path.id).section.id).toBe("domain");
+    expect(store.nextActivity(course, path.id).section.id).toBe("author-a-module");
   });
 
   test("self-reviewing a new exit attempt does not downgrade a complete section", () => {

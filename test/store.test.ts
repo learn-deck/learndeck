@@ -13,7 +13,7 @@ describe("CourseStore", () => {
   beforeEach(async () => {
     directory = mkdtempSync(join(tmpdir(), "patchquest-store-"));
     store = new CourseStore(join(directory, "progress.db"));
-    course = (await CourseCatalog.load()).get("ddd-backend-foundations");
+    course = (await CourseCatalog.load()).get("example-course");
   });
 
   afterEach(() => {
@@ -23,12 +23,12 @@ describe("CourseStore", () => {
 
   test("keeps progress and answer history separate for each project workspace", () => {
     const node = store.createPath(course, {
-      coursePathId: "node-typescript",
+      coursePathId: "default",
       workspacePath: "/work/node-api",
       label: "Node API",
     });
     const secondWorkspace = store.createPath(course, {
-      coursePathId: "node-typescript",
+      coursePathId: "default",
       workspacePath: "/work/second-ddd-api",
     });
 
@@ -55,7 +55,7 @@ describe("CourseStore", () => {
   });
 
   test("completes a section only after a correct exit answer", () => {
-    const path = store.createPath(course, { coursePathId: "node-typescript", workspacePath: "/work/ddd-api" });
+    const path = store.createPath(course, { coursePathId: "default", workspacePath: "/work/ddd-api" });
     const diagnostic = store.submitAnswer(course, {
       pathId: path.id,
       questionId: "start-boundary",

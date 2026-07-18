@@ -86,9 +86,9 @@ describe("setup resilience", () => {
   });
 
   test("resets exactly one path's progress, attempts, and evidence", () => {
-    const course = catalog.get("ddd-backend-foundations");
-    const first = store.createPath(course, { coursePathId: "node-typescript", workspacePath: "/work/first" });
-    const second = store.createPath(course, { coursePathId: "node-typescript", workspacePath: "/work/second" });
+    const course = catalog.get("example-course");
+    const first = store.createPath(course, { coursePathId: "default", workspacePath: "/work/first" });
+    const second = store.createPath(course, { coursePathId: "default", workspacePath: "/work/second" });
     const attempt = store.submitAnswer(course, {
       pathId: first.id,
       questionId: "start-boundary",
@@ -109,8 +109,8 @@ describe("setup resilience", () => {
   });
 
   test("exports a submitted attempt with the learner's path record", async () => {
-    const course = catalog.get("ddd-backend-foundations");
-    const path = store.createPath(course, { coursePathId: "node-typescript", workspacePath: "/work/exported" });
+    const course = catalog.get("example-course");
+    const path = store.createPath(course, { coursePathId: "default", workspacePath: "/work/exported" });
     const app = await createApp(store, catalog, new IntegrationService(join(directory, "app"), {
       homeDirectory: join(directory, "home"),
       findExecutable: () => undefined,

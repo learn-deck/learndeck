@@ -29,8 +29,8 @@ describe("solo learning API", () => {
   });
 
   async function createPath() {
-    const course = catalog.get("ddd-backend-foundations");
-    return store.createPath(course, { coursePathId: "node-typescript", workspacePath: `/work/${crypto.randomUUID()}` });
+    const course = catalog.get("example-course");
+    return store.createPath(course, { coursePathId: "default", workspacePath: `/work/${crypto.randomUUID()}` });
   }
 
   test("records learner evidence and preserves provenance in overview and export", async () => {
@@ -90,7 +90,7 @@ describe("solo learning API", () => {
     expect(overview.progress.find((item) => item.sectionId === "start")?.status).toBe("self_reviewed");
     expect(overview.completedSections).toBe(0);
     expect(overview.attempts.find((item) => item.id === exit.id)?.result).toBe("self_reviewed");
-    expect(store.nextActivity(catalog.get(path.courseId), path.id).section.id).toBe("domain");
+    expect(store.nextActivity(catalog.get(path.courseId), path.id).section.id).toBe("author-a-module");
   });
 
   test("rejects self-review after a real guide evaluation", async () => {

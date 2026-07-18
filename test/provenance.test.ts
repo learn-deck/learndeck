@@ -186,10 +186,10 @@ describe("workspace path contract", () => {
 });
 
 async function createPath(app: Awaited<ReturnType<typeof createApp>>, workspacePath: string) {
-  return app(new Request("http://learndeck.test/api/courses/ddd-backend-foundations/paths", {
+  return app(new Request("http://learndeck.test/api/courses/example-course/paths", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ coursePathId: "node-typescript", workspacePath }),
+    body: JSON.stringify({ coursePathId: "default", workspacePath }),
   }));
 }
 
