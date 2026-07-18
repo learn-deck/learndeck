@@ -2,7 +2,7 @@
 id: start
 title: Set up your backend
 goal: Confirm one Node.js + TypeScript workspace and make a tiny status route visible.
-action: Create the agreed folder structure and one health/status route in your project folder. Run npm run dev yourself when you are ready.
+action: Create src/domain/, src/application/, src/ports/, and src/adapters/ plus one health/status route in your project folder. Run npm run dev yourself when you are ready.
 sources:
   - ./00-start-a-path.md
   - ../../../references/language-paths.md
@@ -42,13 +42,50 @@ without touching the course itself.
 2. Use the Node.js + TypeScript checks in
    [`language-paths.md`](../../../references/language-paths.md). They only tell
    you what is present; they never install or run anything for you.
-3. In your project, create the first four areas: `domain`, `application`,
-   `ports`, and `adapters`. Empty folders are enough today.
-4. Add a tiny status endpoint such as `GET /health` that returns a simple,
-   honest response.
+3. In your project, create these four areas: `src/domain/`,
+   `src/application/`, `src/ports/`, and `src/adapters/`. Empty folders are
+   enough today.
+4. If the folder is empty, copy this minimal setup. It uses `tsx` to run
+   TypeScript directly; run `npm install` yourself. LearnDeck never installs
+   packages or starts your server.
+
+`package.json`
+
+```json
+{
+  "name": "ddd-backend",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "tsx --watch src/server.ts" },
+  "devDependencies": { "tsx": "latest", "typescript": "latest" }
+}
+```
+
+`src/server.ts`
+
+```ts
+import { createServer } from "node:http";
+
+const server = createServer((request, response) => {
+  if (request.method === "GET" && request.url === "/health") {
+    response.writeHead(200, { "content-type": "application/json" });
+    response.end(JSON.stringify({ status: "ok" }));
+    return;
+  }
+  response.writeHead(404);
+  response.end();
+});
+
+server.listen(3000);
+```
+
+Run `npm install`, then `npm run dev`, and check `GET /health`. The expected
+response is verbatim: `200 {"status":"ok"}`.
+
 5. When the project is ready, run `npm run dev` yourself and look at the
-   endpoint. Tell your AI guide what you ran and what you observed so it can
-   record that evidence through LearnDeck.
+   endpoint. If a guide is connected, tell it what you ran and observed so it
+   can record that evidence; otherwise record it with the evidence form or in
+   `NOTES.md` in your workspace.
 
 > [!TIP]
 > Do not design the perfect server today. A plain status response is valuable
@@ -79,7 +116,11 @@ concrete answer is better than architecture vocabulary.
 
 Before answering, check that:
 
-- A separate backend project folder contains `domain/`, `application/`, `ports/`, and `adapters/`.
+- The project contains `src/domain/`, `src/application/`, `src/ports/`, and `src/adapters/`.
 - A learner-run development command starts the backend, such as `npm run dev`.
-- A visible `GET /health` or equivalent status route returns its documented response.
+- A visible `GET /health` route returns `200 {"status":"ok"}`.
 - You can name the project folder, command, route, and observed response.
+
+After you submit your answer, choose **Mark as self-reviewed and continue** if
+you are working without a connected guide. Guide evaluation is optional, not
+required; if a guide is connected, you may request feedback instead.

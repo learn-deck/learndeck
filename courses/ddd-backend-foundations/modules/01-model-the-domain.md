@@ -44,15 +44,17 @@ rule? Give one example of each for a small task or booking service.
 > your domain must protect—even when tomorrow's client is not HTTP.
 
 1. Choose a deliberately small problem: task tracking, booking, inventory
-   reservation, or another bounded workflow. Record the choice in progress.
+   reservation, or another bounded workflow. Record the choice in your answer
+   or in `NOTES.md` in your workspace.
 2. Write a short domain note in your workspace: nouns, verbs, state changes,
    and what must always be true.
 3. Define one use case in application language: input, successful outcome, and
    expected domain failures.
 4. Create a domain type or aggregate that protects one invariant without
    importing an HTTP framework, database client, or logger.
-5. Ask the agent to record the domain-note and code paths. Then explain the
-   invariant in your own words.
+5. If a guide is connected, ask it to record the domain-note and code paths;
+   otherwise record those paths in the evidence form or in `NOTES.md` in your
+   workspace. Then explain the invariant in your own words.
 
 ## Worked example: protect the overlap rule
 
@@ -104,3 +106,7 @@ Before answering, check that:
 - One domain type or aggregate protects that invariant without HTTP, database, or logger imports.
 - One use case names its input, successful outcome, and expected domain failure.
 - You can distinguish the domain invariant from one transport validation rule.
+
+After you submit your answer, choose **Mark as self-reviewed and continue** if
+you are working without a connected guide. Guide evaluation is optional, not
+required; if a guide is connected, you may request feedback instead.

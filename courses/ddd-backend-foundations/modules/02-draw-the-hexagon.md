@@ -137,3 +137,7 @@ Before answering, check that:
 - One in-memory adapter implements that port and is wired at the outer composition point.
 - The inner code has no web framework, SQL driver, or environment-package imports.
 - You can name the caller, port owner, adapter, and dependency direction for one booking decision.
+
+After you submit your answer, choose **Mark as self-reviewed and continue** if
+you are working without a connected guide. Guide evaluation is optional, not
+required; if a guide is connected, you may request feedback instead.
