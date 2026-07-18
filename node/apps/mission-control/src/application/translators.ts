@@ -589,7 +589,7 @@ function parseEnvelope(value: unknown): ParsedEnvelope | undefined {
     return undefined;
   const eventId = identifier(value, "eventId");
   const eventType = text(value, "eventType", 128);
-  const occurredAt = text(value, "occurredAt", 64);
+  const occurredAt = value["occurredAt"];
   const producer = text(value, "producer", 64);
   const subjectId = identifier(value, "subjectId");
   const correlationId = identifier(value, "correlationId");
@@ -597,7 +597,6 @@ function parseEnvelope(value: unknown): ParsedEnvelope | undefined {
   if (
     !eventId ||
     !eventType ||
-    !occurredAt ||
     !producer ||
     !subjectId ||
     !correlationId ||
@@ -711,13 +710,12 @@ export function translateMissionControlEvent(
       const runnerId = identifier(data, "runnerId");
       const leaseId = identifier(data, "leaseId");
       const runnerCapabilities = identifierList(data["runnerCapabilities"]);
-      const expiresAt = text(data, "expiresAt", 64);
+      const expiresAt = data["expiresAt"];
       if (
         !attemptId ||
         !runnerId ||
         !leaseId ||
         !runnerCapabilities ||
-        !expiresAt ||
         !isRfc3339DateTime(expiresAt)
       )
         return invalid("Attempt-leased fields are invalid.");

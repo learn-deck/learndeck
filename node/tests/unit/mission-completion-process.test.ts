@@ -914,6 +914,99 @@ describe("MissionCompletionProcess", () => {
     expect(first.process.toMemento()).toEqual(second.process.toMemento());
   });
 
+  it("accepts schema-valid long RFC3339 values at every process metadata boundary", () => {
+    const longRfc3339 = `2026-07-12T10:00:00.${"1".repeat(80)}Z`;
+    expect(longRfc3339).toHaveLength(101);
+
+    const verificationStarted = MissionCompletionProcess.start(seed(), {
+      openedEventId: "event-opened-1",
+      commandId: "command-create-1",
+      issuedAt: longRfc3339,
+      correlationId,
+    });
+    if (!verificationStarted.ok)
+      throw new Error(verificationStarted.error.message);
+    verificationStarted.process.recordAttemptReady(attemptReady());
+    verificationStarted.process.recordAttemptLeased(attemptLeased());
+    expect(
+      verificationStarted.process.recordArtifactSubmitted(artifactSubmitted(), {
+        commandId: "command-verification-1",
+        verificationRunId: "verification-1",
+        issuedAt: longRfc3339,
+      }),
+    ).toMatchObject({ ok: true });
+
+    const cancellationStarted = MissionCompletionProcess.start(seed(), {
+      openedEventId: "event-opened-cancel-long-time",
+      commandId: "command-create-cancel-long-time",
+      issuedAt: longRfc3339,
+      correlationId,
+    });
+    if (!cancellationStarted.ok)
+      throw new Error(cancellationStarted.error.message);
+    expect(
+      cancellationStarted.process.cancel(
+        {
+          eventId: "event-cancelled-long-time",
+          eventType: "mission.cancelled.v1",
+          schemaVersion: 1,
+          occurredAt: longRfc3339,
+          producer: "mission-control",
+          subjectId: "mission-1",
+          correlationId,
+          causationId: "request-cancel-long-time",
+          data: {
+            missionId: "mission-1",
+            missionRevision: 1,
+            cancelledBy: "human-reviewer",
+            reason: "Stop.",
+          },
+        },
+        {
+          commandId: "command-revoke-long-time",
+          issuedAt: longRfc3339,
+        },
+      ),
+    ).toMatchObject({ ok: true });
+
+    const retryStarted = MissionCompletionProcess.start(seed(), {
+      openedEventId: "event-opened-1",
+      commandId: "command-create-1",
+      issuedAt: longRfc3339,
+      correlationId,
+    });
+    if (!retryStarted.ok) throw new Error(retryStarted.error.message);
+    retryStarted.process.recordAttemptReady(attemptReady());
+    retryStarted.process.recordAttemptLeased(attemptLeased());
+    const ended: WorkshopAttemptEndedV1 = {
+      eventId: "event-ended-long-time",
+      eventType: "workshop.attempt-ended.v1",
+      schemaVersion: 1,
+      occurredAt: longRfc3339,
+      producer: "workshop",
+      subjectId: "attempt-1",
+      correlationId,
+      causationId: "runner-fact-long-time",
+      data: {
+        attemptId: "attempt-1",
+        missionId: "mission-1",
+        missionRevision: 1,
+        outcome: "FAILED",
+      },
+    };
+    const retryDispatch = retry("ATTEMPT_FAILED", ended.eventId);
+    expect(
+      retryStarted.process.recordAttemptEnded(ended, {
+        ...retryDispatch,
+        issuedAt: longRfc3339,
+        authorization: {
+          ...retryDispatch.authorization,
+          occurredAt: longRfc3339,
+        },
+      }),
+    ).toMatchObject({ ok: true });
+  });
+
   it("validates outgoing metadata before mutation and deeply freezes emitted commands", () => {
     for (const metadata of [
       {

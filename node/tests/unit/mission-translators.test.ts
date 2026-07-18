@@ -437,6 +437,107 @@ describe("Mission Control translators", () => {
     },
   );
 
+  it("matches command and event schemas for unbounded RFC3339 timestamps", () => {
+    const longRfc3339 = `2026-07-12T10:00:00.${"1".repeat(80)}Z`;
+    expect(longRfc3339).toHaveLength(101);
+
+    const submitted = { ...artifactEvent(), occurredAt: longRfc3339 };
+    expect(schemaAccepts("WorkshopArtifactSubmittedV1", submitted)).toBe(true);
+    expect(translateMissionControlEvent(submitted)).toMatchObject({ ok: true });
+
+    const leased = {
+      eventId: "event-leased-long-time",
+      eventType: "workshop.attempt-leased.v1",
+      schemaVersion: 1,
+      occurredAt: longRfc3339,
+      producer: "workshop",
+      subjectId: "attempt-1",
+      correlationId: "corr-long-time",
+      causationId: "request-lease-long-time",
+      data: {
+        attemptId: "attempt-1",
+        runnerId: "runner-1",
+        leaseId: "lease-1",
+        runnerCapabilities: ["edit-trusted-fixture"],
+        expiresAt: longRfc3339,
+      },
+    };
+    expect(schemaAccepts("WorkshopAttemptLeasedV1", leased)).toBe(true);
+    expect(translateMissionControlEvent(leased)).toMatchObject({ ok: true });
+
+    const drafted = Mission.draft({
+      missionId: "mission-long-time",
+      missionRevision: 1,
+      objective: "Implement shipping quote.",
+      startingRevision: "fixture-shipping-v1",
+      workspaceReference: "urn:patchquest:fixture:shipping-quote",
+      allowedScope: { pathPatterns: ["src/shipping/**"] },
+      requestedCapabilities: ["edit-trusted-fixture"],
+      attemptBudget: 1,
+    });
+    if (!drafted.ok) throw new Error(drafted.error.message);
+    const defined = drafted.value.defineAcceptanceGates({
+      acceptanceGates: gates,
+      gateSetDigest,
+    });
+    if (!defined.ok) throw new Error(defined.error.message);
+    const opened = drafted.value.open({ attemptId: "attempt-long-time" });
+    if (!opened.ok) throw new Error(opened.error.message);
+    const domainEvent = opened.events[0];
+    if (!domainEvent) throw new Error("missing opened event");
+    const publicEvent = translateMissionDomainEvent(domainEvent, {
+      eventId: "event-opened-long-time",
+      occurredAt: longRfc3339,
+      correlationId: "corr-long-time",
+      causationId: "request-open-long-time",
+    });
+    expect(publicEvent).toMatchObject({ ok: true });
+    if (!publicEvent.ok) throw new Error(publicEvent.error.message);
+    expect(schemaAccepts("MissionOpenedV1", publicEvent.value)).toBe(true);
+
+    const started = MissionCompletionProcess.start(opened.value.processSeed, {
+      openedEventId: publicEvent.value.eventId,
+      commandId: "command-create-long-time",
+      issuedAt: longRfc3339,
+      correlationId: "corr-long-time",
+    });
+    expect(started).toMatchObject({ ok: true });
+    if (!started.ok) throw new Error(started.error.message);
+    const command = started.result.commands[0];
+    if (!command) throw new Error("missing create command");
+    expect(schemaAccepts("WorkshopCreateAttemptV1", command)).toBe(true);
+    expect(finalizeMissionControlCommand(command)).toMatchObject({ ok: true });
+
+    for (const invalidTimestamp of ["not-a-time", 42]) {
+      const invalidEvent = {
+        ...artifactEvent(),
+        occurredAt: invalidTimestamp,
+      };
+      expect(schemaAccepts("WorkshopArtifactSubmittedV1", invalidEvent)).toBe(
+        false,
+      );
+      expect(translateMissionControlEvent(invalidEvent)).toMatchObject({
+        ok: false,
+        error: { code: "CONTRACT_INVALID" },
+      });
+
+      const invalidCommand = structuredClone(command) as unknown as Record<
+        string,
+        unknown
+      >;
+      invalidCommand["issuedAt"] = invalidTimestamp;
+      expect(schemaAccepts("WorkshopCreateAttemptV1", invalidCommand)).toBe(
+        false,
+      );
+      expect(
+        finalizeMissionControlCommand(invalidCommand as never),
+      ).toMatchObject({
+        ok: false,
+        error: { code: "OUTGOING_MESSAGE_INVALID" },
+      });
+    }
+  });
+
   it("rejects unsupported Mission-owned events on the inbound context boundary", () => {
     const outgoing = translateMissionDomainEvent(openedEvent(), {
       eventId: "event-opened-1",
