@@ -30,9 +30,20 @@ bun install
 bun run app
 ```
 
+If startup reports `EADDRINUSE` or that port `3030` is already in use, stop the
+other LearnDeck process, or run `PORT=3031 bun run app` and open the URL
+LearnDeck prints.
+
 Open [http://127.0.0.1:3030](http://127.0.0.1:3030). LearnDeck creates local
 progress at `.learndeck/progress.db`. Set `LEARNDECK_DB_PATH` to use a separate
 database.
+
+## What stays local
+
+- Progress is SQLite at `.learndeck/progress.db`; `LEARNDECK_DB_PATH` overrides it.
+- Connecting Codex targets `~/.codex/config.toml`, Cursor targets `~/.cursor/mcp.json`, and Claude Code targets `~/.claude.json`.
+- A connection adds exactly one `learndeck` MCP entry to the selected guide. Disconnect removes only that entry through `DELETE /api/integrations/:id/connect`.
+- Per-path progress can be exported with `GET /api/paths/:id/export` or reset with `DELETE /api/paths/:id`.
 
 The commands above load the bundled Markdown packs. To select the public
 catalogue, copy the release configuration before `bun run app`:

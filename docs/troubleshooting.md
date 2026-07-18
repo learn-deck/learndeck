@@ -23,12 +23,13 @@ This repository does not define a separate Bun installation command.
 
 ## Port 3030 is already in use
 
-**Symptom:** The app cannot start because port `3030` is already in use.
+**Symptom:** Startup reports `EADDRINUSE` or that port `3030` is already in use.
 
 **Cause:** `src/server.ts` binds to `127.0.0.1:3030` by default. It reads the
 `PORT` environment variable when one is provided.
 
-**Fix:** Start LearnDeck on another port:
+**Fix:** Stop the other LearnDeck process and start this one again. If both
+must run, start LearnDeck on another port:
 
 ```sh
 PORT=3031 bun run app
@@ -81,6 +82,11 @@ Codex and Claude Code receive the entry through their CLI commands; Cursor's
 JSON file is updated by merging only the `learndeck` entry. The MCP entry
 points to this clone's `src/mcp.ts` and uses the running Bun executable.
 
+To disconnect a guide, use `DELETE /api/integrations/:id/connect`. LearnDeck
+removes only its own `learndeck` entry and preserves other MCP entries. The
+browser currently exposes connect controls but no disconnect control, so use
+the local API when you need to disconnect one.
+
 **Fix:** Fully restart the selected Codex, Claude Code, or Cursor host, then
 ask it to use LearnDeck. If it was not connected from the app, return to the
 AI guides screen and connect it first.
@@ -124,9 +130,16 @@ activity log. It does not contain the Markdown course packs. If
 `LEARNDECK_DB_PATH` is set, that configured path is the database instead; the
 UI and MCP process must use the same override.
 
-**Fix:** There is no export command yet. Stop the app and copy the database
-file to a safe location when you need an export or backup. To reset local
-progress, stop the app and delete `.learndeck/progress.db`; the next start
-creates a new empty database. Deleting it removes all local learning paths,
-section progress, question attempts, and activity-log records. Do not delete
-the file while the app is running.
+**Fix:** The local server exposes per-path progress operations:
+
+- `GET /api/paths/:id/export` returns that path's JSON export as a download.
+- `DELETE /api/paths/:id` resets that path, including its attempts, evidence,
+  and progress rows.
+
+The browser currently has no export or reset button, so call these local API
+routes directly when needed. For a full manual backup, stop the app and copy
+the database file to a safe location. To reset all local progress, stop the app
+and delete `.learndeck/progress.db`; the next start creates a new empty
+database. Deleting it removes all local learning paths, section progress,
+question attempts, and activity-log records. Do not delete the file while the
+app is running.
