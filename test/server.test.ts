@@ -24,16 +24,20 @@ describe("PatchQuest HTTP API", () => {
   test("creates a path and accepts a UI answer", async () => {
     const page = await app(new Request("http://patchquest.test/"));
     expect(page.status).toBe(200);
-    expect(await page.text()).toContain("Choose where you will build");
+    expect(await page.text()).toContain("Choose a course and path");
 
-    const course = await app(new Request("http://patchquest.test/api/course"));
-    expect(course.status).toBe(200);
-    expect((await course.json()).sections).toHaveLength(8);
+    const courses = await app(new Request("http://patchquest.test/api/courses"));
+    expect(courses.status).toBe(200);
+    expect((await courses.json()).map((course: { id: string }) => course.id)).toContain("ddd-backend-foundations");
+
+    const ddd = await app(new Request("http://patchquest.test/api/courses/ddd-backend-foundations"));
+    expect(ddd.status).toBe(200);
+    expect((await ddd.json()).sections).toHaveLength(8);
 
     const pathResponse = await app(
-      new Request("http://patchquest.test/api/paths", {
+      new Request("http://patchquest.test/api/courses/ddd-backend-foundations/paths", {
         method: "POST",
-        body: JSON.stringify({ languageId: "go", workspacePath: "/work/go-api", label: "Go course path" }),
+        body: JSON.stringify({ coursePathId: "go", workspacePath: "/work/go-api", label: "Go course path" }),
       }),
     );
     expect(pathResponse.status).toBe(201);

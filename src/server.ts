@@ -1,27 +1,40 @@
-import { loadCourse } from "./course";
+import { CourseCatalog } from "./course";
 import { CourseStore } from "./store";
 
 const PUBLIC = `${import.meta.dir}/../public`;
 
-export async function createApp(store = new CourseStore()) {
-  const course = await loadCourse();
+export async function createApp(store = new CourseStore(), catalog?: CourseCatalog) {
+  const courses = catalog ?? await CourseCatalog.load();
 
   return async function fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     try {
-      if (url.pathname === "/api/course" && request.method === "GET") return json(course);
-      if (url.pathname === "/api/paths" && request.method === "GET") return json(store.listPaths(course.id));
-      if (url.pathname === "/api/paths" && request.method === "POST") {
+      if (url.pathname === "/api/courses" && request.method === "GET") return json(courses.list());
+      const courseRoute = url.pathname.match(/^\/api\/courses\/([^/]+)$/);
+      if (courseRoute && request.method === "GET") return json(courses.get(decodeURIComponent(courseRoute[1])));
+      const coursePathsRoute = url.pathname.match(/^\/api\/courses\/([^/]+)\/paths$/);
+      if (coursePathsRoute && request.method === "GET") {
+        const course = courses.get(decodeURIComponent(coursePathsRoute[1]));
+        return json(store.listPaths(course.id));
+      }
+      if (coursePathsRoute && request.method === "POST") {
+        const course = courses.get(decodeURIComponent(coursePathsRoute[1]));
         const body = await request.json();
-        return json(store.createPath(course, requireObject(body, ["languageId", "workspacePath"])), 201);
+        return json(store.createPath(course, requireObject(body, ["coursePathId", "workspacePath"]) as { coursePathId: string; workspacePath: string; label?: string }), 201);
       }
       const overview = url.pathname.match(/^\/api\/paths\/([^/]+)\/overview$/);
-      if (overview && request.method === "GET") return json(store.overview(course, decodeURIComponent(overview[1])));
+      if (overview && request.method === "GET") {
+        const pathId = decodeURIComponent(overview[1]);
+        return json(store.overview(courseForPath(courses, store, pathId), pathId));
+      }
       const next = url.pathname.match(/^\/api\/paths\/([^/]+)\/next$/);
-      if (next && request.method === "GET") return json(store.nextActivity(course, decodeURIComponent(next[1])));
+      if (next && request.method === "GET") {
+        const pathId = decodeURIComponent(next[1]);
+        return json(store.nextActivity(courseForPath(courses, store, pathId), pathId));
+      }
       if (url.pathname === "/api/attempts" && request.method === "POST") {
         const body = requireObject(await request.json(), ["pathId", "questionId", "answer"]);
-        return json(store.submitAnswer(course, body), 201);
+        return json(store.submitAnswer(courseForPath(courses, store, body.pathId as string), body as { pathId: string; questionId: string; answer: string; confidence?: number }), 201);
       }
       if (url.pathname === "/" || url.pathname === "/index.html") return asset("index.html", "text/html; charset=utf-8");
       if (url.pathname === "/app.js") return asset("app.js", "text/javascript; charset=utf-8");
@@ -32,6 +45,10 @@ export async function createApp(store = new CourseStore()) {
       return json({ error: message }, 400);
     }
   };
+}
+
+function courseForPath(catalog: CourseCatalog, store: CourseStore, pathId: string) {
+  return catalog.get(store.getPath(pathId).courseId);
 }
 
 function requireObject(value: unknown, required: string[]): Record<string, unknown> {

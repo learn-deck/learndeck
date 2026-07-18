@@ -5,9 +5,9 @@ export type SectionStatus = "not_started" | "active" | "revision" | "complete";
 export interface CoursePath {
   id: string;
   label: string;
-  serverCommand: string;
-  testCommand: string;
-  workspaceHint: string;
+  serverCommand?: string;
+  testCommand?: string;
+  workspaceHint?: string;
 }
 
 export interface CourseQuestion {
@@ -38,7 +38,7 @@ export interface CourseDefinition {
 export interface LearningPath {
   id: string;
   courseId: string;
-  languageId: string;
+  coursePathId: string;
   workspacePath: string;
   label: string;
   createdAt: string;

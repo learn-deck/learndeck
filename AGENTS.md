@@ -1,21 +1,20 @@
 # PatchQuest agent instructions
 
-PatchQuest is a local Bun course runner and an MCP server. The browser UI is
-where the learner selects a language path, sees progress, and submits answers.
-The MCP server is the only supported way for an agent to read or write that
-progress. Both processes share one local SQLite database.
+PatchQuest is a local Bun course tracker and MCP server. The browser UI is
+where the learner selects a seeded course, chooses a path, sees progress, and
+submits answers. The MCP server is the only supported way for an agent to read
+or write that progress. Both processes share one local SQLite database.
 
 ## When a learner says “Let's start”
 
 1. Ask them to run `bun install` once and `bun run dev` from this repository.
    They open the printed `http://127.0.0.1:3030` address themselves.
-2. Ask which path they want—**Node.js + TypeScript**, **Go**, or **Bun +
-   TypeScript**—then have them create/select that path and workspace in the UI.
-3. With the learner's workspace confirmed, perform only the matching read-only
-   dependency checks in [`references/language-paths.md`](references/language-paths.md).
-   Report what is present or missing. Do not install packages. If the required
-   dependencies are available, suggest the path's development-server command
-   and let the learner run it.
+2. Ask them to choose a course and path in the UI. Do not assume the DDD seed;
+   list available courses first when the choice is unclear.
+3. When the selected course defines a workspace and development command, perform
+   only its documented read-only dependency checks. Report what is present or
+   missing. Do not install packages. If requirements are available, suggest the
+   development-server command and let the learner run it.
 4. Connect through the `patchquest` MCP configuration in
    [`docs/mcp.md`](docs/mcp.md). Read `patchquest_get_next_activity` before
    teaching.
@@ -42,8 +41,7 @@ progress. Both processes share one local SQLite database.
 
 ## Course authoring
 
-The canonical structured course is `course/ddd-course.json`. Use
-[`docs/course-authoring.md`](docs/course-authoring.md) to create another course
-or adapt the DDD example. The Markdown modules and references remain the
-evidence sources; the manifest supplies the UI and MCP with a standard order,
-actions, and questions.
+Every `courses/*.json` manifest is a first-class course. Use
+[`docs/course-authoring.md`](docs/course-authoring.md) and `bun run seed` to
+create another course. The DDD content is one seed; the manifest supplies the
+UI and MCP with a standard order, actions, and questions.

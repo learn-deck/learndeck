@@ -2,7 +2,8 @@
 
 PatchQuest uses a local stdio MCP server. It shares the same
 `.patchquest/progress.db` as the browser UI, so an agent's evaluation appears in
-the learner's current page without copying answers through chat.
+the learner's current page without copying answers through chat. The server
+loads every manifest in `courses/`, making the MCP course-agnostic.
 
 ## Connect
 
@@ -29,9 +30,10 @@ MCP must use exactly the same path.
 
 | Tool | Purpose |
 | --- | --- |
-| `patchquest_get_course` | Read paths, ordered sections, actions, questions, and source references. |
-| `patchquest_list_paths` | See the learner's existing local workspaces. |
-| `patchquest_create_path` | Create a path only after the learner chooses its language and workspace in the conversation/UI. |
+| `patchquest_list_courses` | List locally seeded courses before choosing one. |
+| `patchquest_get_course` | Read one course's paths, ordered sections, actions, questions, and source references. |
+| `patchquest_list_paths` | See a learner's existing paths for the selected course. |
+| `patchquest_create_path` | Create a path only after the learner chooses its course, path, and workspace/context in the UI. |
 | `patchquest_get_progress` | Read section status, pending submissions, feedback, and completed count. |
 | `patchquest_get_next_activity` | Get one next section/question instead of dumping the whole course. |
 | `patchquest_record_evidence` | Record a learner-reported path, command result, or other evidence. |
@@ -39,10 +41,11 @@ MCP must use exactly the same path.
 
 ## Interaction contract
 
-1. The learner chooses the path in the browser.
-2. With the workspace confirmed, the agent runs the matching read-only checks
-   from `references/language-paths.md`, reports the result, and suggests the
-   development command for the learner to run.
+1. The agent calls `patchquest_list_courses`; the learner chooses a course and
+   path in the browser.
+2. For a coding course that declares commands, the agent runs only its named
+   read-only checks, reports the result, and suggests—not starts—the learner's
+   development command.
 3. The agent reads the next activity through MCP and guides one small action.
 4. The learner submits their answer in the browser.
 5. The agent reads the submitted attempt, evaluates it using the named source,

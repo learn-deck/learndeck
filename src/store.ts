@@ -108,17 +108,17 @@ export class CourseStore {
     `);
   }
 
-  createPath(course: CourseDefinition, input: { languageId: string; workspacePath: string; label?: string }): LearningPath {
-    const language = course.paths.find((path) => path.id === input.languageId);
-    if (!language) throw new Error(`Unknown language path: ${input.languageId}`);
+  createPath(course: CourseDefinition, input: { coursePathId: string; workspacePath: string; label?: string }): LearningPath {
+    const coursePath = course.paths.find((path) => path.id === input.coursePathId);
+    if (!coursePath) throw new Error(`Unknown course path: ${input.coursePathId}`);
     const workspacePath = input.workspacePath.trim();
     if (!workspacePath) throw new Error("A workspace path is required.");
-    const label = input.label?.trim() || `${language.label} — ${workspacePath}`;
+    const label = input.label?.trim() || `${coursePath.label} — ${workspacePath}`;
     const existing = this.db
       .query<PathRow, [string, string, string]>(
         "SELECT * FROM learning_paths WHERE course_id = ? AND language_id = ? AND workspace_path = ?",
       )
-      .get(course.id, language.id, workspacePath);
+      .get(course.id, coursePath.id, workspacePath);
     if (existing) return mapPath(existing);
 
     const id = randomUUID();
@@ -126,11 +126,11 @@ export class CourseStore {
       .query(
         "INSERT INTO learning_paths (id, course_id, language_id, workspace_path, label) VALUES (?, ?, ?, ?, ?)",
       )
-      .run(id, course.id, language.id, workspacePath, label);
+      .run(id, course.id, coursePath.id, workspacePath, label);
     for (const section of course.sections) {
       this.db.query("INSERT INTO section_progress (path_id, section_id, status) VALUES (?, ?, 'not_started')").run(id, section.id);
     }
-    this.log(id, "learner", "path_created", { languageId: language.id, workspacePath, label });
+    this.log(id, "learner", "path_created", { coursePathId: coursePath.id, workspacePath, label });
     return this.getPath(id);
   }
 
@@ -145,6 +145,12 @@ export class CourseStore {
     const row = this.db.query<PathRow, [string]>("SELECT * FROM learning_paths WHERE id = ?").get(pathId);
     if (!row) throw new Error(`Unknown learning path: ${pathId}`);
     return mapPath(row);
+  }
+
+  getAttempt(attemptId: number): QuestionAttempt {
+    const row = this.db.query<AttemptRow, [number]>("SELECT * FROM question_attempts WHERE id = ?").get(attemptId);
+    if (!row) throw new Error(`Unknown attempt: ${attemptId}`);
+    return mapAttempt(row);
   }
 
   overview(course: CourseDefinition, pathId: string): PathOverview {
@@ -184,7 +190,8 @@ export class CourseStore {
       throw new Error("Confidence must be a whole number from 0 to 100.");
     }
     const { section, question } = getQuestion(course, input.questionId);
-    this.getPath(input.pathId);
+    const path = this.getPath(input.pathId);
+    if (path.courseId !== course.id) throw new Error("This path belongs to a different course.");
     const result = this.db
       .query<AttemptRow, [string, string, string, string, string, number | null, string]>(
         `INSERT INTO question_attempts (path_id, section_id, question_id, kind, answer, confidence, result, reference)
@@ -203,10 +210,10 @@ export class CourseStore {
   ): QuestionAttempt {
     const feedback = input.feedback.trim();
     if (!feedback) throw new Error("Source-linked feedback is required.");
-    const row = this.db.query<AttemptRow, [number]>("SELECT * FROM question_attempts WHERE id = ?").get(input.attemptId);
-    if (!row) throw new Error(`Unknown attempt: ${input.attemptId}`);
-    if (row.result !== "submitted") throw new Error("Only submitted answers may be evaluated.");
-    const { section, question } = getQuestion(course, row.question_id);
+    const attempt = this.getAttempt(input.attemptId);
+    if (this.getPath(attempt.pathId).courseId !== course.id) throw new Error("This attempt belongs to a different course.");
+    if (attempt.result !== "submitted") throw new Error("Only submitted answers may be evaluated.");
+    const { section, question } = getQuestion(course, attempt.questionId);
     const evaluated = this.db
       .query<AttemptRow, [string, string, number]>(
         "UPDATE question_attempts SET result = ?, feedback = ?, evaluated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *",
@@ -214,12 +221,12 @@ export class CourseStore {
       .get(input.result, feedback, input.attemptId);
 
     const status: SectionStatus = input.result === "correct" && question.kind === "exit" ? "complete" : input.result === "correct" ? "active" : "revision";
-    this.setProgress(row.path_id, section.id, status, input.evidence, input.reviewQuestion);
-    this.log(row.path_id, "agent", "answer_evaluated", {
+    this.setProgress(attempt.pathId, section.id, status, input.evidence, input.reviewQuestion);
+    this.log(attempt.pathId, "agent", "answer_evaluated", {
       attemptId: input.attemptId,
       questionId: question.id,
       result: input.result,
-      reference: row.reference,
+      reference: attempt.reference,
     });
     return mapAttempt(evaluated);
   }
@@ -287,7 +294,7 @@ function mapPath(row: PathRow): LearningPath {
   return {
     id: row.id,
     courseId: row.course_id,
-    languageId: row.language_id,
+    coursePathId: row.language_id,
     workspacePath: row.workspace_path,
     label: row.label,
     createdAt: row.created_at,

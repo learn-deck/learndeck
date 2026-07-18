@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "replace-me",
+  "title": "Replace me: a PatchQuest course",
+  "description": "A one-step seed course. Replace this section with the learning journey you want to track.",
+  "paths": [
+    {
+      "id": "default",
+      "label": "My learning path",
+      "workspaceHint": "../my-course-workspace"
+    }
+  ],
+  "sections": [
+    {
+      "id": "orient",
+      "title": "Orient the learner",
+      "goal": "State the outcome and establish the evidence the learner will produce.",
+      "action": "Replace this seed action with one small, observable activity in the learner's workspace or learning context.",
+      "sources": ["docs/course-authoring.md"],
+      "questions": [
+        {
+          "id": "orient-diagnostic",
+          "kind": "diagnostic",
+          "prompt": "What do you already know about this topic, and what evidence would show the intended outcome?",
+          "reference": "docs/course-authoring.md"
+        },
+        {
+          "id": "orient-exit",
+          "kind": "exit",
+          "prompt": "Describe the action you took, the evidence you produced, and one decision you can now explain.",
+          "reference": "docs/course-authoring.md"
+        }
+      ]
+    }
+  ]
+}

@@ -1,41 +1,40 @@
-# Course authoring standard
+# Course authoring and seeding standard
 
-PatchQuest separates **teaching evidence** from **course orchestration**. The
-browser UI and MCP need a predictable shape; the Markdown modules and external
-references remain the source a learner and agent use to reason about the work.
+PatchQuest separates a reusable **course tracker** from replaceable **course
+content**. The browser UI, SQLite store, and MCP need a predictable shape; a
+manifest plus its sources define one course. The DDD course is a seed that
+proves the format, not a special case in the runner.
 
 ```mermaid
 flowchart LR
-  A[Course author] --> M[course manifest]
-  A --> D[Markdown modules and references]
-  M --> H[Language paths]
+  A[Course author] --> T[templates/course.json]
+  T --> M[courses/course-id.json]
+  A --> D[Course sources: Markdown, links, or other evidence]
+  M --> H[Learning paths]
   M --> S[Ordered sections]
   S --> Q[Diagnostic, exit, and review questions]
-  H --> U
-  Q --> U
   M --> U[Bun UI]
   M --> P[PatchQuest MCP]
-  D --> U
-  D --> P
-  U --> L[Learner selects a path and submits an answer]
-  P --> G[Agent reads progress, guides and evaluates]
-  G --> S[(Local SQLite progress)]
-  L --> S
-  S --> U
-  S --> P
+  D --> G[Agent guidance and evaluation]
+  U --> L[Learner chooses course/path and submits answer]
+  P --> G
+  G --> DB[(Local SQLite progress)]
+  L --> DB
+  DB --> U
+  DB --> P
 ```
 
-The diagram makes the ownership boundary clear: a course author defines
-content; the learner owns code and answers; the UI and agent share local
-progress but do not own the learner's workspace.
+The diagram makes the ownership boundary clear: authors can seed many courses;
+learners own their answers and work; the UI and MCP share local progress but do
+not own the learner's workspace.
 
 ## Required source files
 
 | Source | Owns | Does not own |
 | --- | --- | --- |
-| `course/<id>.json` | Ordered paths, sections, one action per section, question prompts, and source links. | Long explanations or hidden scoring rules. |
-| `course/modules/*.md` | Explanations, worked examples, actions, question rubrics, and later-review prompts. | Mutable learner progress. |
-| `references/*.md` | Primary sources, standards, and qualification of claims. | UI state or product code. |
+| `courses/<id>.json` | Ordered paths, sections, one action per section, question prompts, and source links. | Long explanations or hidden scoring rules. |
+| Course-owned sources | Explanations, worked examples, actions, question rubrics, and later-review prompts. | Mutable learner progress. |
+| `templates/course.json` | A minimal seed that becomes a new manifest with `bun run seed`. | A published course or learner data. |
 | `.patchquest/progress.db` | Local paths, submissions, evaluations, reported evidence, and completion state. | Course truth; it is ignored and never committed. |
 
 ## Manifest shape
@@ -55,9 +54,10 @@ Every course manifest uses `schemaVersion: 1` and these top-level fields:
 
 ### Paths
 
-A path is a learner-selectable implementation route. It must specify a stable
-`id`, visible `label`, a suggested `serverCommand`, `testCommand`, and a
-`workspaceHint`. Commands are shown to the learner; PatchQuest never runs them.
+A path is a learner-selectable route through one course. It must specify a
+stable `id` and visible `label`. `workspaceHint`, `serverCommand`, and
+`testCommand` are optional and useful for coding courses. Commands are shown to
+the learner; PatchQuest never runs them.
 
 ### Sections
 
@@ -92,14 +92,17 @@ the original answer.
 
 ## New course checklist
 
-1. Copy the structure of `course/ddd-course.json` under a new ID.
-2. Write the Markdown module and reference it from each manifest section.
+1. Run `bun run seed -- <course-id> "Course title"` or copy
+   `templates/course.json` into `courses/`.
+2. Write or link the course source material and reference it from each manifest
+   section.
 3. Add no more than one bounded build action per section.
 4. Add a diagnostic and exit question, plus a later review question where the
    distinction is important.
-5. Start `bun run dev`, create a test path, submit an answer, and use MCP to
-   record an evaluation.
+5. Restart `bun run dev` and the MCP server, create a test path, submit an
+   answer, and use MCP to record an evaluation.
 6. Run `bun run verify` before sharing the course.
 
-The DDD backend course is the reference implementation: its paths differ only
-in toolchain while its sections retain the same architectural decisions.
+The DDD backend course is the included reference seed: its paths differ by
+toolchain while its sections retain the same architectural decisions. A fork can
+remove it entirely without changing the tracker.

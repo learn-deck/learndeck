@@ -13,11 +13,12 @@ test("MCP exposes the learner-guidance tools over stdio", async () => {
     cwd: resolve(import.meta.dir, ".."),
     env: { ...process.env, PATCHQUEST_DB_PATH: join(directory, "progress.db") },
   });
-  const client = new Client({ name: "patchquest-test", version: "0.1.0" });
+  const client = new Client({ name: "patchquest-test", version: "0.2.0" });
   try {
     await client.connect(transport);
     const listed = await client.listTools();
     expect(listed.tools.map((tool) => tool.name)).toEqual([
+      "patchquest_list_courses",
       "patchquest_get_course",
       "patchquest_list_paths",
       "patchquest_create_path",
@@ -26,7 +27,10 @@ test("MCP exposes the learner-guidance tools over stdio", async () => {
       "patchquest_record_evidence",
       "patchquest_evaluate_answer",
     ]);
-    const course = await client.callTool({ name: "patchquest_get_course", arguments: {} });
+    const courses = await client.callTool({ name: "patchquest_list_courses", arguments: {} });
+    expect(courses.isError).toBeFalsy();
+    expect(JSON.stringify(courses.structuredContent)).toContain("ddd-backend-foundations");
+    const course = await client.callTool({ name: "patchquest_get_course", arguments: { courseId: "ddd-backend-foundations" } });
     expect(course.isError).toBeFalsy();
   } finally {
     await client.close();

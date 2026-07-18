@@ -1,20 +1,20 @@
 {
   "name": "patchquest",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
-  "description": "A local, agent-guided backend architecture course runner.",
+  "description": "A local, agent-guided course tracker with a browser UI, SQLite progress, and MCP.",
   "type": "module",
   "scripts": {
     "dev": "bun --watch src/server.ts",
     "start": "bun src/server.ts",
     "mcp": "bun src/mcp.ts",
+    "seed": "bun src/seed.ts",
     "test": "bun test",
-    "verify": "bun test && bun build ./src/server.ts --target=bun --outdir=/private/tmp/patchquest-build && bun build ./src/mcp.ts --target=bun --outdir=/private/tmp/patchquest-build && bun build ./public/app.js --target=browser --outdir=/private/tmp/patchquest-build"
+    "verify": "bun test && bun build ./src/server.ts --target=bun --outdir=/private/tmp/patchquest-build && bun build ./src/mcp.ts --target=bun --outdir=/private/tmp/patchquest-build && bun build ./src/seed.ts --target=bun --outdir=/private/tmp/patchquest-build && bun build ./public/app.js --target=browser --outdir=/private/tmp/patchquest-build"
   },
   "keywords": [
-    "ddd",
-    "hexagonal-architecture",
-    "backend",
+    "course-tracker",
+    "course-authoring",
     "learning",
     "mcp",
     "bun"

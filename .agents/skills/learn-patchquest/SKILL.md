@@ -1,28 +1,29 @@
 ---
 name: learn-patchquest
-description: Guide a learner through the visible PatchQuest UI and its Node.js + TypeScript, Go, or Bun + TypeScript DDD backend path. Use when the learner asks to start, learn, review, or continue PatchQuest.
+description: Guide a learner through a visible, seeded PatchQuest course. Use when the learner asks to start, learn, review, or continue a PatchQuest path.
 ---
 
 # Learn PatchQuest
 
 PatchQuest has one shared local learning record: its browser UI and stdio MCP
-server use the same SQLite database. The learner selects their path and submits
-answers in the UI; use MCP to guide and evaluate those visible submissions.
+server use the same SQLite database. The learner selects a seeded course and
+path, then submits answers in the UI; use MCP to guide and evaluate those
+visible submissions.
 
 ## Start or resume
 
 1. Read `AGENTS.md`, `README.md`, and `docs/mcp.md`.
 2. If the UI is not running, ask the learner to run `bun run dev` and open the
    displayed local URL. Do not start it silently.
-3. If the learner said only “Let's start,” ask them to select **Node.js +
-   TypeScript**, **Go**, or **Bun + TypeScript** and a workspace in the UI.
-4. Use `patchquest_list_paths`. If the learner has no path, let them create it
-   in the UI or call `patchquest_create_path` only after they explicitly name
-   the language and workspace.
-5. With that workspace confirmed, run only its read-only dependency checks in
-   `references/language-paths.md`. Report present and missing requirements;
-   never install dependencies. When the checks pass, suggest the matching
-   development-server command for the learner to run themselves.
+3. Use `patchquest_list_courses`. If the learner said only “Let's start,” ask
+   them to choose a visible course, path, and workspace/context in the UI.
+4. Use `patchquest_list_paths` with that course ID. If the learner has no path,
+   let them create it in the UI or call `patchquest_create_path` only after they
+   explicitly choose the course, path, and workspace/context.
+5. For a coding course, run only the source-documented read-only dependency
+   checks. Report present and missing requirements; never install dependencies.
+   When the checks pass, suggest the matching development command for the
+   learner to run themselves.
 6. Use `patchquest_get_next_activity` for exactly one current section and
    question. Do not present a module menu.
 

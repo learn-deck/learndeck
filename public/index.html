@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light" />
-    <title>PatchQuest — Self-Learn Backend Development with Domain-Driven Design and Hexagonal Architecture</title>
+    <title>PatchQuest — Local course tracker</title>
     <link rel="stylesheet" href="/app.css" />
   </head>
   <body>
@@ -20,21 +20,26 @@
       <section id="path-setup" class="setup" aria-labelledby="setup-title">
         <div>
           <p class="eyebrow">First session</p>
-          <h2 id="setup-title">Choose where you will build.</h2>
-          <p>PatchQuest keeps progress local, separated by the workspace and language path you choose.</p>
+          <h2 id="setup-title">Choose a course and path.</h2>
+          <p>PatchQuest keeps progress local, separated by the course and learning path you choose.</p>
         </div>
         <form id="path-form" class="path-form">
           <label>
-            Language path
-            <select id="language" name="languageId" required></select>
+            Course
+            <select id="course-choice" required></select>
+          </label>
+          <p id="course-description" class="form-note"></p>
+          <label>
+            Learning path
+            <select id="course-path" name="coursePathId" required></select>
           </label>
           <label>
-            Workspace folder
-            <input id="workspace" name="workspacePath" required placeholder="../my-ddd-backend" autocomplete="off" />
+            Workspace or learning context
+            <input id="workspace" name="workspacePath" required placeholder="../my-course-workspace" autocomplete="off" />
           </label>
           <label>
             A label for this path <span>(optional)</span>
-            <input name="label" placeholder="My booking API" autocomplete="off" />
+            <input name="label" placeholder="My first run" autocomplete="off" />
           </label>
           <button type="submit">Start this path</button>
         </form>
@@ -43,10 +48,13 @@
       <section id="course" class="course hidden" aria-live="polite">
         <aside class="sidebar">
           <div class="path-switcher">
+            <label for="course-select">Course</label>
+            <select id="course-select"></select>
+            <p id="course-title"></p>
             <label for="path-select">Learning path</label>
             <select id="path-select"></select>
             <p id="workspace-label"></p>
-            <p class="path-command">When checks pass: <code id="server-command"></code></p>
+            <p id="server-command-wrap" class="path-command">When checks pass: <code id="server-command"></code></p>
           </div>
           <ol id="section-list" class="section-list"></ol>
         </aside>

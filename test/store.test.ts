@@ -2,18 +2,18 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { loadCourse } from "../src/course";
+import { CourseCatalog } from "../src/course";
 import { CourseStore } from "../src/store";
 
 describe("CourseStore", () => {
   let directory: string;
   let store: CourseStore;
-  let course: Awaited<ReturnType<typeof loadCourse>>;
+  let course: ReturnType<CourseCatalog["get"]>;
 
   beforeEach(async () => {
     directory = mkdtempSync(join(tmpdir(), "patchquest-store-"));
     store = new CourseStore(join(directory, "progress.db"));
-    course = await loadCourse();
+    course = (await CourseCatalog.load()).get("ddd-backend-foundations");
   });
 
   afterEach(() => {
@@ -21,14 +21,14 @@ describe("CourseStore", () => {
     rmSync(directory, { recursive: true, force: true });
   });
 
-  test("keeps progress and answer history separate for each language path", () => {
+  test("keeps progress and answer history separate for each course path", () => {
     const node = store.createPath(course, {
-      languageId: "node-typescript",
+      coursePathId: "node-typescript",
       workspacePath: "/work/node-api",
       label: "Node API",
     });
     const go = store.createPath(course, {
-      languageId: "go",
+      coursePathId: "go",
       workspacePath: "/work/go-api",
     });
 
@@ -55,7 +55,7 @@ describe("CourseStore", () => {
   });
 
   test("completes a section only after a correct exit answer", () => {
-    const path = store.createPath(course, { languageId: "bun-typescript", workspacePath: "/work/bun-api" });
+    const path = store.createPath(course, { coursePathId: "bun-typescript", workspacePath: "/work/bun-api" });
     const diagnostic = store.submitAnswer(course, {
       pathId: path.id,
       questionId: "start-boundary",
