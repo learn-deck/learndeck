@@ -1,0 +1,61 @@
+name: Course proposal
+description: Propose a Markdown-only course for the curated catalogue
+title: "[Course]: "
+labels:
+  - course
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Course proposals should describe one project-based learning experience. Read the quality rubric and authoring standard before opening a proposal.
+  - type: input
+    id: course-title
+    attributes:
+      label: Course title
+      placeholder: Testing Fundamentals
+    validations:
+      required: true
+  - type: textarea
+    id: target-learner
+    attributes:
+      label: Target learner
+      description: Who is this for, and what should they already know?
+    validations:
+      required: true
+  - type: input
+    id: total-duration
+    attributes:
+      label: Honest total duration
+      placeholder: 4–6 hours
+    validations:
+      required: true
+  - type: textarea
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Name the skills, tools, and workspace the learner needs before starting.
+    validations:
+      required: true
+  - type: textarea
+    id: learner-project
+    attributes:
+      label: The one project the learner builds
+      description: Describe the concrete project or repository evidence produced by the course.
+    validations:
+      required: true
+  - type: textarea
+    id: completion-evidence
+    attributes:
+      label: Evidence of completion
+      description: What can the learner show, run, explain, or verify at the end?
+    validations:
+      required: true
+  - type: checkboxes
+    id: authoring-acknowledgements
+    attributes:
+      label: Authoring acknowledgements
+      options:
+        - label: I have read and will meet the [catalogue quality rubric](../../docs/catalogue-quality-rubric.md).
+          required: true
+        - label: I confirm that the course content will be Markdown-only and contain no executable code.
+          required: true
