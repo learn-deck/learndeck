@@ -39,10 +39,12 @@ through one HTTP edge. The project is intentionally small: the point is to
 learn what a test proves, where to put it, and how to keep confidence honest.
 
 LearnDeck holds your learning record. Your confirmed workspace holds the
-service, tests, commands, and final evidence. You will run commands yourself;
-the guide will help you interpret what you observe.
+service, tests, commands, and final evidence. You will run commands yourself.
+If a guide is connected, it can help you interpret what you observe; guide
+evaluation is optional. Without a connected guide, answer the visible question,
+review your own evidence, and use the app's **Mark as self-reviewed and
+continue** action.
 
 The course follows one parcel through seven short sessions: first a failing
 test, then focused behaviour tests, boundary choices, honest test doubles,
 deliberate edge cases, a refactor under green, and a final evidence review.
-

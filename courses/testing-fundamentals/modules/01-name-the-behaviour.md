@@ -2,7 +2,7 @@
 id: name-the-behaviour
 title: Name what a test proves
 goal: Turn a passing example into focused arrange–act–assert tests that each describe one parcel-pricing behaviour.
-action: Add a small set of focused tests for ordinary pricing and one option, with test names that state the behaviour and output that shows the cases separately.
+action: Add focused cases in `test/parcel-pricing.test.ts` for ordinary pricing and one option, with test names that state the behaviour and output that shows the cases separately.
 sources:
   - ./01-name-the-behaviour.md
   - ../notes/testing-principles.md
@@ -71,11 +71,14 @@ HTTP endpoint parses JSON; that is a different boundary and a later module.
 ## Build
 
 1. Rename the first test so its title states the behaviour rather than the
-   function name alone.
-2. Add focused tests for an ordinary zone-and-weight price and one option.
-   Keep the input visible in arrange, one pricing call in act, and the price
-   or deliberate failure in assert.
-3. Run `npm test`. The visible output should list separate, readable cases. If
+   function name alone. Keep it in `test/parcel-pricing.test.ts`.
+2. Add focused tests for an ordinary zone-and-weight price and one option in
+   that file. Use names such as `prices a 2 kg zone B parcel at €10` and
+   `adds the express surcharge to a 2 kg zone B parcel`. Keep the input visible
+   in arrange, one pricing call in act, and the price or deliberate failure in
+   assert.
+3. Run `npm test`. The visible output must list those two case names separately
+   and end with `Test Files  1 passed` and `Tests  2 passed`. If
    a test fails, fix the behaviour or its stated expectation deliberately;
    do not weaken the assertion just to get green.
 4. Ask yourself whether each test could fail for a different reason. If the
@@ -84,7 +87,8 @@ HTTP endpoint parses JSON; that is a different boundary and a later module.
 ## Definition of done
 
 - Tests use a visible arrange–act–assert shape for parcel-pricing decisions.
+- The focused cases live in `test/parcel-pricing.test.ts` and their names are
+  visible in `npm test` output.
 - Each test name states one behaviour a learner can explain in one sentence.
 - At least one base price and one option price have separate observable cases.
 - `npm test` passes and its output makes the focused cases visible.
-

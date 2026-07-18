@@ -2,7 +2,7 @@
 id: drive-the-edges
 title: Drive the edges deliberately
 goal: Use table-driven cases to make pricing boundaries, options, and failure paths visible.
-action: Add a table of parcel cases covering both sides of at least two pricing boundaries plus deliberate invalid-input cases, then run the suite and inspect the named cases.
+action: Add a table to `test/parcel-pricing.test.ts` covering both sides of at least two pricing boundaries plus deliberate invalid-input cases, then run the suite and inspect the named cases.
 sources:
   - ./04-drive-the-edges.md
   - ../notes/testing-principles.md
@@ -57,18 +57,21 @@ not make the test depend on a private stack trace.
 ## Build
 
 1. Put related pricing examples in a Vitest table or equivalent data-driven
-   structure. Give each row a case name that will appear in test output.
+   structure in `test/parcel-pricing.test.ts`. Give each row a case name that
+   will appear in test output, including the six names shown above.
 2. Include values at and immediately beside at least two thresholds.
 3. Add deliberate failure cases for invalid input. Keep transport failures in
    the HTTP test; these cases exercise the pricing rule itself.
-4. Run `npm test`. Read the case names, not only the final count. If a boundary
-   fails, decide whether the rule or the test expectation is wrong before
-   changing either.
+4. Run `npm test`. Read the six boundary case names, the option case, and the
+   invalid-input case—not only the final count. The output must end with
+   passing `Test Files` and `Tests` summaries. If a boundary fails, decide
+   whether the rule or the test expectation is wrong before changing either.
 
 ## Definition of done
 
 - A readable table covers both sides of at least two pricing thresholds.
+- The table is in `test/parcel-pricing.test.ts` and its important case names
+  appear in `npm test` output.
 - Options have a focused case and invalid input has a deliberate failure case.
 - Failure assertions identify a useful distinction beyond “something threw”.
 - `npm test` passes and the output exposes the names of the important cases.
-
