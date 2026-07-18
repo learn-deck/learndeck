@@ -16,6 +16,9 @@ claim that one method, interval, or score works identically for every learner.
    evidence before seeing the evaluation.
 5. **Evaluate and revise.** The agent compares the answer with a named source,
    identifies one exact gap, and asks for a separate revision when needed.
+   Without a connected guide, the learner can instead mark a submitted answer
+   as self-reviewed and continue; the record stays honest by keeping
+   self-reviewed work distinct from evaluated work.
 6. **Revisit a related distinction.** Store a review question in the
    per-workspace database. On a later session, retrieve before rereading.
 

@@ -24,6 +24,11 @@ The learner may select a different connected guide later from **AI guides**.
 All guides share the same local SQLite progress, so switching never loses
 course state or answer history.
 
+LearnDeck reports each guide as `connected`, `stale`, `detected`, or
+`not_found`. A `stale` guide has a `learndeck` entry that points at a script
+path other than this clone's `src/mcp.ts` (for example after moving the
+clone); reconnecting repairs only that entry.
+
 ## Manual setup
 
 For another MCP client, use its equivalent of:
@@ -55,6 +60,15 @@ for existing local runs.
 | `learndeck_get_next_activity` | Return one next module/question. |
 | `learndeck_record_evidence` | Store learner-reported code paths or command results. |
 | `learndeck_evaluate_answer` | Evaluate exactly one answer submitted through the UI. |
+
+`learndeck_evaluate_answer` accepts a `result` of `correct`, `partial`, or
+`incorrect`, requires feedback of at least 20 characters, and only applies to
+attempts still in the `submitted` state. A `correct` result on an `exit`
+question completes the module; a `partial` or `incorrect` result marks it for
+revision.
+Self-review is a learner action in the browser, not an MCP tool: without a
+connected guide, the learner can mark a submitted answer self-reviewed and
+continue.
 
 ## Required agent behavior
 

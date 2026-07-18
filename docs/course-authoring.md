@@ -42,13 +42,16 @@ LearnDeck loads one direct child folder per course pack. Each pack must contain
 learning order, so use a zero-padded numeric prefix. Course files and local
 sources are Markdown; JSON course manifests are intentionally not supported.
 
-Run this to create a valid starting pack:
+Run this to create a valid starting pack (the ID must not already exist under
+`courses/`):
 
 ```sh
-bun run seed -- testing-fundamentals "Testing Fundamentals"
+bun run seed -- api-design-basics "API Design Basics"
 ```
 
-The command writes a `course.md` and an `00-orient.md` module. Set
+The command writes a `course.md` and an `00-orient.md` module from
+[`templates/course.md`](../templates/course.md) and
+[`templates/module.md`](../templates/module.md). Set
 `LEARNDECK_COURSES_DIR` to seed or load packs from another folder. The older
 `PATCHQUEST_COURSES_DIR` variable is accepted only as a transition alias.
 
