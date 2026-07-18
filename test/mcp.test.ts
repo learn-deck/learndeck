@@ -29,8 +29,8 @@ test("MCP exposes the learner-guidance tools over stdio", async () => {
     ]);
     const courses = await client.callTool({ name: "learndeck_list_courses", arguments: {} });
     expect(courses.isError).toBeFalsy();
-    expect(JSON.stringify(courses.structuredContent)).toContain("ddd-backend-foundations");
-    const course = await client.callTool({ name: "learndeck_get_course", arguments: { courseId: "ddd-backend-foundations" } });
+    expect(JSON.stringify(courses.structuredContent)).toContain("example-course");
+    const course = await client.callTool({ name: "learndeck_get_course", arguments: { courseId: "example-course" } });
     expect(course.isError).toBeFalsy();
     expect(JSON.stringify(course.structuredContent)).toContain("rubric");
   } finally {

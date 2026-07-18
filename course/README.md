@@ -1,10 +1,15 @@
-# DDD seed sources
+# Where courses live now
 
-These Markdown modules and references are the teaching evidence for the shipped
-DDD seed course. Its tracker manifest is
-[`../courses/ddd-backend-foundations.json`](../courses/ddd-backend-foundations.json).
+Real, learner-facing course packs — including the DDD and Hexagonal
+Architecture flagship — live in the public catalogue repository at
+[learn-deck/courses](https://github.com/learn-deck/courses) and sync into the
+app when `LEARNDECK_COURSE_REPOSITORY` is configured.
 
-The adjacent Markdown modules contain the learner-facing explanations,
-questions, rubrics, and later-review prompts. See
-[Course authoring](../docs/course-authoring.md) before adding another manifest,
-source set, or question contract.
+This repository bundles only the
+[`example-course`](../courses/example-course/course.md) pack: a reference
+implementation of the format kept for documentation and development. JSON
+course manifests are no longer used.
+
+See [course authoring](../docs/course-authoring.md) for the pack standard and
+[public course distribution](../docs/public-course-distribution.md) for how to
+contribute a course to the catalogue.

@@ -273,6 +273,11 @@ type GitHubRepository = { owner: string; repository: string; branch: string };
 function parseGitHubRepository(value: string): GitHubRepository {
   const match = value.match(/^github:([A-Za-z0-9-]+)\/([A-Za-z0-9._-]+)@([A-Za-z0-9._/-]+)$/);
   if (!match) throw new Error(`${GITHUB_REPOSITORY_ENV} must use github:owner/repository@branch.`);
+  // Git forbids "." and ".." ref segments; here they would also let the cache
+  // directory (which gets recursively removed on sync) escape the cache root.
+  if (match[3].split("/").some((segment) => segment === "." || segment === "..")) {
+    throw new Error(`${GITHUB_REPOSITORY_ENV} branch must not contain "." or ".." path segments.`);
+  }
   return { owner: match[1], repository: match[2], branch: match[3] };
 }
 

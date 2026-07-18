@@ -6,6 +6,10 @@ LearnDeck keeps a private local SQLite database at:
 <learndeck clone>/.learndeck/progress.db
 ```
 
+The packaged macOS app uses
+`~/Library/Application Support/LearnDeck/progress.db` instead, so rebuilding
+the app never touches progress.
+
 The runner uses a single database with one learning record per confirmed
 workspace. This lets the browser UI and MCP agent see the same progress while
 keeping attempts from separate backend projects apart. Override the path with
@@ -20,13 +24,18 @@ record through its tools.
 | Record | Why it exists |
 | --- | --- |
 | Learning record | Course runtime, project workspace, label, and update time. |
-| Section progress | Active/revision/complete state, reported evidence, and review prompt. |
-| Question attempt | Exact submitted answer, confidence, source, agent feedback, and result. |
+| Section progress | Section state — `not_started`, `active`, `revision`, `self_reviewed`, or `complete` — with the latest evidence and review prompt. |
+| Question attempt | Exact submitted answer, confidence, source, feedback, and result (`submitted`, `correct`, `partial`, `incorrect`, or `self_reviewed`). |
+| Evidence | Every learner- or guide-reported note, with its optional file or command reference and who recorded it. |
 | Activity log | Learner, agent, or system action for a local audit trail. |
 
 Each answer is a new attempt. A revision never overwrites a partial or
-incorrect answer. The database helps a later agent resume honestly; it does not
-semantically grade prose by itself.
+incorrect answer, and evidence records are additive. The database helps a
+later agent resume honestly; it does not semantically grade prose by itself.
+
+Per-path progress can be exported as JSON with `GET /api/paths/:id/export` or
+reset with `DELETE /api/paths/:id`; the browser exposes both as Export
+progress and Reset path.
 
 ## Inspect locally
 

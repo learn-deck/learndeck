@@ -3,3 +3,4 @@ node_modules/
 .learndeck/
 .env
 .DS_Store
+dist/

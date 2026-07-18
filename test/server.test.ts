@@ -48,18 +48,18 @@ describe("LearnDeck HTTP API", () => {
 
     const courses = await app(new Request("http://patchquest.test/api/courses"));
     expect(courses.status).toBe(200);
-    expect((await courses.json()).map((course: { id: string }) => course.id)).toContain("ddd-backend-foundations");
+    expect((await courses.json()).map((course: { id: string }) => course.id)).toContain("example-course");
 
-    const ddd = await app(new Request("http://patchquest.test/api/courses/ddd-backend-foundations"));
+    const ddd = await app(new Request("http://patchquest.test/api/courses/example-course"));
     expect(ddd.status).toBe(200);
     const course = await ddd.json();
-    expect(course.sections).toHaveLength(8);
-    expect(course.sections[0].content).toContain("Set up your backend");
+    expect(course.sections).toHaveLength(2);
+    expect(course.sections[0].content).toContain("Separate the course from the workspace");
 
     const pathResponse = await app(
-      new Request("http://patchquest.test/api/courses/ddd-backend-foundations/paths", {
+      new Request("http://patchquest.test/api/courses/example-course/paths", {
         method: "POST",
-        body: JSON.stringify({ coursePathId: "node-typescript", workspacePath: join(directory, "ddd-api"), label: "DDD backend" }),
+        body: JSON.stringify({ coursePathId: "default", workspacePath: join(directory, "ddd-api"), label: "DDD backend" }),
       }),
     );
     expect(pathResponse.status).toBe(201);

@@ -80,6 +80,7 @@ export class CourseStore {
   }
 
   private migrate() {
+    const evidenceTableExisted = this.tableExists("evidence");
     const sectionProgressNeedsMigration = this.tableNeedsValue("section_progress", "self_reviewed");
     const questionAttemptsNeedMigration = this.tableNeedsValue("question_attempts", "self_reviewed");
     if (sectionProgressNeedsMigration) this.db.exec("ALTER TABLE section_progress RENAME TO section_progress_legacy;");
@@ -158,6 +159,9 @@ export class CourseStore {
 
     // Older databases stored one unlabelled evidence value on section_progress.
     // Preserve it as guide evidence when the additive evidence table is first introduced.
+    // This must run only on that first introduction: re-running it on every open would
+    // copy learner notes held on section_progress into phantom guide evidence rows.
+    if (evidenceTableExisted) return;
     this.db.exec(`
       INSERT INTO evidence (path_id, section_id, note, source, review_question, recorded_at)
       SELECT progress.path_id, progress.section_id, progress.evidence, 'guide', progress.review_question, progress.updated_at
@@ -171,6 +175,12 @@ export class CourseStore {
             AND evidence.source = 'guide'
         );
     `);
+  }
+
+  private tableExists(tableName: string) {
+    return Boolean(
+      this.db.query<{ name: string }, [string]>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?").get(tableName),
+    );
   }
 
   private tableNeedsValue(tableName: "section_progress" | "question_attempts", value: string) {
@@ -223,7 +233,7 @@ export class CourseStore {
     this.getPath(pathId);
     const reset = this.db.transaction((id: string): PathResetResult => {
       const attempts = this.db.query<{ count: number }, [string]>("SELECT COUNT(*) AS count FROM question_attempts WHERE path_id = ?").get(id)?.count ?? 0;
-      const evidence = this.db.query<{ count: number }, [string]>("SELECT COUNT(*) AS count FROM section_progress WHERE path_id = ? AND evidence IS NOT NULL").get(id)?.count ?? 0;
+      const evidence = this.db.query<{ count: number }, [string]>("SELECT COUNT(*) AS count FROM evidence WHERE path_id = ?").get(id)?.count ?? 0;
       const progressRows = this.db.query<{ count: number }, [string]>("SELECT COUNT(*) AS count FROM section_progress WHERE path_id = ?").get(id)?.count ?? 0;
       this.db.query("DELETE FROM learning_paths WHERE id = ?").run(id);
       return { pathId: id, attempts, evidence, progressRows };
@@ -304,7 +314,10 @@ export class CourseStore {
          RETURNING *`,
       )
       .get(input.pathId, section.id, question.id, question.kind, answer, input.confidence ?? null, question.reference);
-    this.setProgress(input.pathId, section.id, "active");
+    // A bare submission must not downgrade a section the learner already moved past.
+    const current = this.sectionStatus(input.pathId, section.id);
+    const status = current === "self_reviewed" || current === "complete" || current === "revision" ? current : "active";
+    this.setProgress(input.pathId, section.id, status);
     this.log(input.pathId, "learner", "answer_submitted", { attemptId: result.id, questionId: question.id });
     return mapAttempt(result);
   }
@@ -325,7 +338,10 @@ export class CourseStore {
       )
       .get(input.result, feedback, input.attemptId);
 
-    const status: SectionStatus = input.result === "correct" && question.kind === "exit" ? "complete" : input.result === "correct" ? "active" : "revision";
+    const proposed: SectionStatus = input.result === "correct" && question.kind === "exit" ? "complete" : input.result === "correct" ? "active" : "revision";
+    // A correct non-exit answer must not downgrade a section already completed or self-reviewed.
+    const current = this.sectionStatus(attempt.pathId, section.id);
+    const status = proposed === "active" && (current === "complete" || current === "self_reviewed") ? current : proposed;
     const evidence = input.evidence?.trim() || undefined;
     if (evidence) this.addEvidence(attempt.pathId, section.id, evidence, null, "guide", input.reviewQuestion);
     this.setProgress(attempt.pathId, section.id, status, evidence, input.reviewQuestion);
@@ -348,7 +364,10 @@ export class CourseStore {
     if (path.courseId !== course.id) throw new Error("This path belongs to a different course.");
     getSection(course, input.sectionId);
     this.addEvidence(input.pathId, input.sectionId, evidence, null, "guide", input.reviewQuestion);
-    this.setProgress(input.pathId, input.sectionId, "active", evidence, input.reviewQuestion);
+    // Guide evidence must never downgrade a section the learner already moved past.
+    const current = this.sectionStatus(input.pathId, input.sectionId);
+    const status = current === "self_reviewed" || current === "complete" || current === "revision" ? current : "active";
+    this.setProgress(input.pathId, input.sectionId, status, evidence, input.reviewQuestion);
     this.log(input.pathId, "agent", "evidence_recorded", { sectionId: input.sectionId, evidence });
     return this.progress(input.pathId).find((item) => item.sectionId === input.sectionId)!;
   }
@@ -384,9 +403,18 @@ export class CourseStore {
       )
       .get(attemptId);
     if (!reviewed) throw new Error(`Unknown attempt: ${attemptId}`);
-    if (question.kind === "exit") this.setProgress(attempt.pathId, section.id, "self_reviewed");
+    // Self-review must never downgrade a section a guide already marked complete.
+    if (question.kind === "exit" && this.sectionStatus(attempt.pathId, section.id) !== "complete") {
+      this.setProgress(attempt.pathId, section.id, "self_reviewed");
+    }
     this.log(attempt.pathId, "learner", "answer_self_reviewed", { attemptId, questionId: question.id, result: "self_reviewed" });
     return { attemptId, result: "self_reviewed" };
+  }
+
+  private sectionStatus(pathId: string, sectionId: string): SectionStatus | undefined {
+    return this.db
+      .query<{ status: SectionStatus }, [string, string]>("SELECT status FROM section_progress WHERE path_id = ? AND section_id = ?")
+      .get(pathId, sectionId)?.status;
   }
 
   private progress(pathId: string): SectionProgress[] {

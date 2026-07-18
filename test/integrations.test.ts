@@ -54,6 +54,83 @@ describe("IntegrationService", () => {
     });
   });
 
+  test("reports a connected Codex when its TOML entry points at the current script", async () => {
+    const appRoot = join(directory, "app");
+    const expectedEntry = join(appRoot, "src", "mcp.ts");
+    mkdirSync(join(appRoot, "src"), { recursive: true });
+    writeFileSync(expectedEntry, "export {};\n");
+    mkdirSync(join(directory, ".codex"));
+    writeFileSync(
+      join(directory, ".codex", "config.toml"),
+      `[mcp_servers.learndeck]\ncommand = ${JSON.stringify(process.execPath)}\nargs = [${JSON.stringify(expectedEntry)}]\n`,
+    );
+    const service = new IntegrationService(appRoot, { homeDirectory: directory });
+
+    expect((await service.list()).find((item) => item.id === "codex")).toMatchObject({
+      configured: true,
+      status: "connected",
+    });
+  });
+
+  test("disconnect removes only LearnDeck's Codex TOML block", async () => {
+    const configPath = join(directory, ".codex", "config.toml");
+    mkdirSync(join(directory, ".codex"));
+    writeFileSync(configPath, [
+      "[model]",
+      'name = "gpt"',
+      "",
+      "[mcp_servers.learndeck]",
+      'command = "/usr/bin/bun"',
+      'args = ["/opt/x/src/mcp.ts"]',
+      "",
+      "[mcp_servers.other]",
+      'command = "keep-me"',
+      "",
+    ].join("\n"));
+    const service = new IntegrationService("/opt/patchquest", { homeDirectory: directory });
+
+    const result = await service.disconnect("codex");
+    const configuration = await Bun.file(configPath).text();
+    expect(result).toMatchObject({ integrationId: "codex", configPath, removed: true });
+    expect(configuration).toContain("[model]");
+    expect(configuration).toContain('name = "gpt"');
+    expect(configuration).toContain("[mcp_servers.other]");
+    expect(configuration).toContain('command = "keep-me"');
+    expect(configuration).not.toContain("learndeck");
+    expect(configuration).not.toContain('command = "/usr/bin/bun"');
+    expect(configuration).not.toContain("/opt/x/src/mcp.ts");
+  });
+
+  test("repairing a stale Codex entry rewrites only LearnDeck's block", async () => {
+    const appRoot = join(directory, "app");
+    const expectedEntry = join(appRoot, "src", "mcp.ts");
+    mkdirSync(join(appRoot, "src"), { recursive: true });
+    writeFileSync(expectedEntry, "export {};\n");
+    const configPath = join(directory, ".codex", "config.toml");
+    mkdirSync(join(directory, ".codex"));
+    writeFileSync(configPath, [
+      "[model]",
+      'name = "gpt"',
+      "",
+      "[mcp_servers.learndeck]",
+      'command = "/usr/bin/bun"',
+      'args = ["/moved/src/mcp.ts"]',
+      "",
+    ].join("\n"));
+    const service = new IntegrationService(appRoot, { homeDirectory: directory });
+
+    expect((await service.list()).find((item) => item.id === "codex")?.status).toBe("stale");
+    await service.connect("codex");
+
+    const configuration = await Bun.file(configPath).text();
+    expect(configuration).toContain("[model]");
+    expect(configuration).toContain('name = "gpt"');
+    expect(configuration.match(/\[mcp_servers\.learndeck\]/g)).toHaveLength(1);
+    expect(configuration).toContain(JSON.stringify(expectedEntry));
+    expect(configuration).not.toContain("/moved/src/mcp.ts");
+    expect((await service.list()).find((item) => item.id === "codex")?.status).toBe("connected");
+  });
+
   test("detects configured Codex and uses its documented MCP command only after connect", async () => {
     const configDirectory = join(directory, ".codex");
     mkdirSync(configDirectory);

@@ -57,41 +57,36 @@
         <section id="course-library" class="course-library hidden" aria-labelledby="library-title">
           <div class="library-heading">
             <div>
-              <p class="eyebrow">Open course library</p>
+              <p class="eyebrow">Courses synced from GitHub</p>
               <h1 id="library-title" tabindex="-1">Find your next challenge.</h1>
             </div>
             <div class="library-actions"><p id="library-count" class="library-count"></p><button id="close-library" class="text-button" type="button">Back</button></div>
           </div>
+          <p id="library-status" class="form-note" role="status" aria-live="polite" tabindex="-1"></p>
           <div id="catalogue-provenance" class="catalogue-provenance hidden" role="status" aria-live="polite">
             <strong id="catalogue-provenance-label"></strong>
             <p id="catalogue-provenance-warning"></p>
           </div>
-          <div id="category-filters" class="category-filters" aria-label="Filter courses by category"></div>
+          <div id="category-filters" class="category-filters" role="group" aria-label="Filter courses by category"></div>
           <div id="course-grid" class="course-grid"></div>
+          <div class="library-contribute">
+            <p><strong>Add your course.</strong> Courses are Markdown packs pulled from the public GitHub catalogue; bundled packs are the offline fallback. Fork the repository, add a pack under <code>courses/</code>, and open a pull request.</p>
+            <a href="https://github.com/learn-deck/courses" target="_blank" rel="noreferrer">Contribute a course on GitHub <span aria-hidden="true">↗</span></a>
+          </div>
         </section>
       </section>
 
       <section id="agent-setup" class="agent-setup hidden" aria-labelledby="agent-setup-title">
-        <div class="agent-setup-copy">
-          <p class="eyebrow">Your learning space is ready</p>
-          <h1 id="agent-setup-title" tabindex="-1">Bring your AI guides into the learning loop.</h1>
-          <p>LearnDeck has prepared local progress and your available course library. Once connected, any guide can use the same local course state, so you can switch without losing your place.</p>
-          <ol class="activation-steps" aria-label="First-start checklist">
-            <li><span>01</span><div><strong>Local progress</strong><p>Saved on this Mac, per course workspace.</p></div></li>
-            <li><span>02</span><div><strong>Course library</strong><p>Loaded from the configured Markdown catalogue and its local cache.</p></div></li>
-            <li><span>03</span><div><strong>AI guides</strong><p>Optional MCP connections you control.</p></div></li>
-          </ol>
-        </div>
         <div class="agent-setup-card">
-          <p class="eyebrow">Step 1 of 1 · Optional</p>
-          <h2>Choose your AI guides.</h2>
-          <p>Selected guides receive one local LearnDeck MCP entry. No project code, passwords, or unrelated agent settings are shared or changed.</p>
+          <p class="eyebrow">Optional · one local MCP entry</p>
+          <h1 id="agent-setup-title" tabindex="-1">Connect an AI guide.</h1>
+          <p>Bring your AI guides into the learning loop: Codex, Cursor, or Claude Code can ask sharper questions and review your answers. No project code or credentials are shared.</p>
           <div id="agent-setup-list" class="agent-setup-list"></div>
-          <div id="active-guide-options" class="active-guide-options" aria-live="polite"></div>
-          <p id="agent-setup-status" class="form-note" role="status" aria-live="polite" tabindex="-1">You can connect a guide now or continue to the course library and add one later.</p>
+          <div id="active-guide-options" class="active-guide-options hidden" aria-live="polite"></div>
+          <p id="agent-setup-status" class="form-note" role="status" aria-live="polite" tabindex="-1">Pick any detected guide, or skip and connect one later.</p>
           <div class="agent-setup-actions">
             <button id="connect-selected-guides" type="button">Connect selected guides <span aria-hidden="true">→</span></button>
-            <button id="continue-to-library" class="text-button" type="button">Continue without a guide</button>
+            <button id="continue-to-library" class="text-button" type="button">Skip for now</button>
           </div>
         </div>
       </section>
@@ -108,7 +103,7 @@
           </dl>
           <div class="briefing-actions">
             <button id="start-course" type="button">Start the course <span aria-hidden="true">→</span></button>
-            <p id="brief-resume-note" class="form-note"></p>
+            <p id="brief-resume-note" class="form-note" role="status" aria-live="polite" tabindex="-1"></p>
           </div>
           <details id="guide-disclosure" class="guide-disclosure">
             <summary>Connect an AI guide <span>optional</span></summary>
@@ -150,14 +145,15 @@
           <h2>Where will this backend live?</h2>
           <form id="path-form" class="path-form">
             <label for="workspace">Project folder</label>
-            <input id="workspace" name="workspacePath" required placeholder="../ddd-backend" autocomplete="off" />
+            <input id="workspace" name="workspacePath" required placeholder="../my-workspace" autocomplete="off" />
             <p class="form-note">Use a folder separate from LearnDeck. We only store this location with your local course progress.</p>
+            <p id="path-form-status" class="form-note" role="status" aria-live="polite"></p>
             <button type="submit">Begin the first lesson <span aria-hidden="true">→</span></button>
           </form>
         </div>
       </section>
 
-      <section id="course" class="course hidden">
+      <section id="course" class="course hidden" aria-label="Course workspace">
         <aside class="sidebar">
           <div class="course-identity">
             <p class="eyebrow">Your course</p>
@@ -172,7 +168,7 @@
             <div class="path-actions" aria-label="Path data actions">
               <button id="export-path" class="text-button" type="button">Export progress</button>
               <button id="reset-path" class="text-button danger-button" type="button">Reset path</button>
-              <p id="path-actions-status" class="form-note" role="status" aria-live="polite"></p>
+              <p id="path-actions-status" class="form-note" role="status" aria-live="polite" tabindex="-1"></p>
             </div>
           </div>
           <nav aria-label="Course sections">
@@ -220,6 +216,7 @@
               <input id="confidence" type="range" min="0" max="100" value="70" />
               <button type="submit">Reflect &amp; submit <span aria-hidden="true">→</span></button>
             </div>
+            <p id="answer-status" class="form-note" role="status" aria-live="polite"></p>
             <p class="form-note">An AI guide can evaluate this through LearnDeck MCP. Its feedback appears here; learning solo is fine too.</p>
           </form>
           <section id="attempts" class="attempts" aria-labelledby="attempts-title">
@@ -237,7 +234,7 @@
               <label for="evidence-ref">Reference <span>optional</span></label>
               <input id="evidence-ref" name="ref" placeholder="A file path, command, or source" autocomplete="off" />
               <button type="submit">Record evidence <span aria-hidden="true">→</span></button>
-              <p id="evidence-status" class="form-note" role="status" aria-live="polite"></p>
+              <p id="evidence-status" class="form-note" role="status" aria-live="polite" tabindex="-1"></p>
             </form>
           </section>
         </section>

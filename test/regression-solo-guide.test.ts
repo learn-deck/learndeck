@@ -14,7 +14,7 @@ describe("first-hour regression: solo guide state", () => {
     const homeDirectory = join(directory, "home");
     const configPath = join(homeDirectory, ".cursor", "mcp.json");
     const catalog = await CourseCatalog.load();
-    const course = catalog.get("ddd-backend-foundations");
+    const course = catalog.get("example-course");
     const store = new CourseStore(databasePath);
 
     mkdirSync(dirname(configPath), { recursive: true });

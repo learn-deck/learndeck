@@ -7,11 +7,14 @@ useful question, evaluates a visible answer against an author-written rubric,
 and never writes the learner's solution for them. Answers, evidence, feedback,
 and learning records stay in local SQLite.
 
-The included **DDD and Hexagonal Architecture** pack is the v0.1 flagship:
-six to eight hours of Node.js + TypeScript, structured into satisfying
-45–60-minute building sessions. It is the first focused developer course, not
-the limit of the app. The format remains course-agnostic while the default
-catalogue grows deliberately and stays curated for quality. See the [product
+Courses live in the public catalogue at
+[learn-deck/courses](https://github.com/learn-deck/courses) and sync into the
+app; the v0.1 flagship is **DDD and Hexagonal Architecture** — six to eight
+hours of Node.js + TypeScript in satisfying 45–60-minute building sessions.
+This repository bundles only a small [format example
+pack](courses/example-course/course.md) for documentation and development.
+The format remains course-agnostic while the default catalogue grows
+deliberately and stays curated for quality. See the [product
 position](docs/product-positioning.md) and [catalogue quality
 rubric](docs/catalogue-quality-rubric.md).
 
@@ -45,8 +48,10 @@ database.
 - A connection adds exactly one `learndeck` MCP entry to the selected guide. Disconnect removes only that entry through `DELETE /api/integrations/:id/connect`.
 - Per-path progress can be exported with `GET /api/paths/:id/export` or reset with `DELETE /api/paths/:id`.
 
-The commands above load the bundled Markdown packs. To select the public
-catalogue, copy the release configuration before `bun run app`:
+The primary catalogue is the public GitHub course repository; while no
+repository is configured, only the bundled `example-course` format pack
+loads, which keeps development working offline. To select the public catalogue, copy the release
+configuration before `bun run app`:
 
 ```sh
 cp .env.example .env
@@ -56,8 +61,10 @@ The release configuration selects `github:learn-deck/courses@main`. When the
 learner clicks **Start Now**, LearnDeck syncs only Markdown under `courses/`
 and `references/` into its local cache. If GitHub is unavailable, it uses the
 last complete cache. A fork can set a different
-`LEARNDECK_COURSE_REPOSITORY=github:your-org/courses@main`. See [public course
-distribution](docs/public-course-distribution.md) and [troubleshooting](docs/troubleshooting.md).
+`LEARNDECK_COURSE_REPOSITORY=github:your-org/courses@main`. To publish a
+course of your own, follow [public course
+distribution](docs/public-course-distribution.md); for failures, see
+[troubleshooting](docs/troubleshooting.md).
 
 On first launch, LearnDeck:
 
@@ -81,13 +88,14 @@ server, runs submitted code, or changes unrelated MCP servers.
 ## Add a course
 
 ```sh
-bun run seed -- testing-fundamentals "Testing Fundamentals"
+bun run seed -- api-design-basics "API Design Basics"
 ```
 
-This creates a Markdown-only course pack:
+This creates a Markdown-only course pack (seeding fails if the course ID
+already exists, so pick a new one):
 
 ```text
-courses/testing-fundamentals/
+courses/api-design-basics/
   course.md
   modules/00-orient.md
 ```
@@ -101,7 +109,7 @@ Markdown. The loader validates local source links are real `.md` files. See
 and authoring checklist.
 
 The browser UI is a dark-first learning environment with local theme preference,
-Zen Mode, section-based progress, and accessible source-rendered lesson blocks.
+Focus Mode, section-based progress, and accessible source-rendered lesson blocks.
 Its maintainable design rules live in [the UI system](docs/ui-system.md).
 
 ## Agent integration
@@ -130,10 +138,35 @@ evidence, and submitted-answer evaluation. See [MCP integration](docs/mcp.md).
 bun run verify
 ```
 
+## Optional: a local macOS app
+
+On macOS you can build a double-clickable LearnDeck.app for your own machine.
+It needs `swiftc` (Xcode Command Line Tools) and Bun:
+
+```sh
+bash scripts/package-macos.sh
+open dist/LearnDeck.app
+```
+
+The script compiles the server into a standalone binary, stages `public/`,
+`courses/`, and `references/` inside the bundle, and compiles a native
+AppKit/WKWebView shell (`native/macos/LearnDeckApp.swift`). Launching the app
+starts the server on a free local port and opens a native window; quitting the
+app stops the server. The app's data lives outside the bundle at
+`~/Library/Application Support/LearnDeck/` (`progress.db`, `course-cache/`,
+and `server.log`), so rebuilds never touch progress.
+
+This is developer tooling, not a distribution channel: the app is unsigned and
+not notarized, and the supported install remains cloning the repository. One
+known limitation: connecting an AI guide from the packaged app writes an MCP
+entry that points at this repository checkout, so keep the clone in place or
+reconnect after moving it.
+
 ## Privacy and scope
 
 The browser binds only to `127.0.0.1`. Progress, answers, workspace paths, and
 reported evidence remain in the local database and are ignored by Git. By
 default, that database and the public-course cache live under `.learndeck/`;
-see the [local progress database](references/progress-database.md). See also
-[SECURITY.md](SECURITY.md).
+the packaged macOS app keeps them under
+`~/Library/Application Support/LearnDeck/` instead. See the [local progress
+database](references/progress-database.md) and [SECURITY.md](SECURITY.md).

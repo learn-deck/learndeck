@@ -2,7 +2,9 @@
 
 LearnDeck is a reusable learning app, not a DDD-only course. A **course pack**
 is a portable folder of Markdown that the local UI and MCP server load in the
-same order. The bundled DDD course proves the format; a fork can remove it and
+same order. The bundled [`example-course`](../courses/example-course/course.md) pack
+demonstrates the format; real courses live in the public catalogue at
+[learn-deck/courses](https://github.com/learn-deck/courses), and a fork can
 seed an entirely different course without changing application code.
 
 ```mermaid
@@ -29,12 +31,13 @@ their local answers and evidence, and the app owns only progress state.
 
 ```text
 courses/
-  ddd-backend-foundations/
+  example-course/
     course.md
     modules/
-      00-start-a-path.md
-      01-model-the-domain.md
-      ...
+      00-start-here.md
+      01-author-a-module.md
+    notes/
+      format-checklist.md
 ```
 
 LearnDeck loads one direct child folder per course pack. Each pack must contain
@@ -42,13 +45,16 @@ LearnDeck loads one direct child folder per course pack. Each pack must contain
 learning order, so use a zero-padded numeric prefix. Course files and local
 sources are Markdown; JSON course manifests are intentionally not supported.
 
-Run this to create a valid starting pack:
+Run this to create a valid starting pack (the ID must not already exist under
+`courses/`):
 
 ```sh
-bun run seed -- testing-fundamentals "Testing Fundamentals"
+bun run seed -- api-design-basics "API Design Basics"
 ```
 
-The command writes a `course.md` and an `00-orient.md` module. Set
+The command writes a `course.md` and an `00-orient.md` module from
+[`templates/course.md`](../templates/course.md) and
+[`templates/module.md`](../templates/module.md). Set
 `LEARNDECK_COURSES_DIR` to seed or load packs from another folder. The older
 `PATCHQUEST_COURSES_DIR` variable is accepted only as a transition alias.
 
@@ -61,8 +67,8 @@ learner's briefing, and declares the runtime LearnDeck will resolve for them.
 ```md
 ---
 schemaVersion: 1
-id: testing-fundamentals
-title: Testing Fundamentals
+id: my-first-course
+title: My First Course
 description: Learn to make small, trustworthy tests.
 category: Engineering practice
 tags:
@@ -235,6 +241,7 @@ the source body for optional context:
    through MCP.
 8. Run `bun run verify` before sharing the pack.
 
-The DDD pack at
-[`courses/ddd-backend-foundations`](../courses/ddd-backend-foundations) is the
-reference implementation of this contract.
+The bundled [`courses/example-course`](../courses/example-course) pack is a
+minimal reference implementation of this contract; the DDD pack in
+[learn-deck/courses](https://github.com/learn-deck/courses) is the full-scale
+one.

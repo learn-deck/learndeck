@@ -5,6 +5,12 @@ application; public courses live in a second repository that contains only
 Markdown content and references. This lets educators fork, review, and publish
 courses without changing application code.
 
+The GitHub-synced repository is the primary catalogue: when
+`LEARNDECK_COURSE_REPOSITORY` is set, LearnDeck loads courses from it (or from
+the last complete local cache when GitHub is unreachable). The Markdown packs
+bundled in the app repository load only when no repository is configured — a
+development fallback, not the catalogue.
+
 ```mermaid
 flowchart LR
   A[learn-deck/learndeck] -->|loads| B[github:learn-deck/courses@main]
@@ -29,8 +35,12 @@ courses/
   ddd-backend-foundations/
     course.md
     modules/
-      00-start.md
+      00-start-a-path.md
       ...
+  testing-fundamentals/
+    course.md
+    modules/
+    notes/
 references/
   source-index.md
 ```
@@ -54,7 +64,9 @@ On the learner's **Start Now** action, LearnDeck reads the repository tree,
 downloads only allowed Markdown files to `.learndeck/course-cache/`, and loads
 the cache. It replaces the cache only after a full sync succeeds. If GitHub
 cannot be reached later, the last complete local cache remains available. If no
-repository is configured, LearnDeck uses bundled local packs for development.
+repository is configured, LearnDeck loads only the bundled
+[`example-course`](../courses/example-course/course.md) format pack, which
+keeps development and tests working offline.
 
 The release `.env.example` points to `github:learn-deck/courses@main`; copy it
 to `.env` for the default public catalogue. A fork may replace that value with
@@ -63,6 +75,36 @@ its own public Markdown repository.
 The source is public, but learner progress is never placed in it. Answers,
 evidence, workspaces, and agent feedback remain in the separate local progress
 database.
+
+## Contribute a course
+
+The **Add your course** action on the courses page links to the public course
+repository. To contribute a new pack:
+
+1. **Fork the course repository** (`learn-deck/courses`, or the repository
+   your fork of the app names in `LEARNDECK_COURSE_REPOSITORY`) on GitHub.
+2. **Author the pack** as `courses/<course-id>/course.md` plus ordered
+   `modules/*.md` files. Start from
+   [`templates/course.md`](../templates/course.md) and
+   [`templates/module.md`](../templates/module.md) — or run
+   `bun run seed -- <course-id> "Course title"` in a LearnDeck clone and copy
+   the seeded folder — then follow the
+   [course-pack standard](course-authoring.md). Keep every local source a
+   Markdown file under `courses/` or `references/`; nothing else is synced.
+3. **Meet the [catalogue quality rubric](catalogue-quality-rubric.md)**:
+   truthful outcomes, one working project, source-backed questions, and an
+   author-written rubric for each question.
+4. **Test against your fork.** Point a local LearnDeck at it and take one real
+   path through the browser (and MCP, if a guide is connected):
+
+   ```sh
+   LEARNDECK_COURSE_REPOSITORY=github:your-user/courses@your-branch bun run app
+   ```
+
+   Loading fails loudly when front matter, sources, or rubrics are invalid, so
+   a clean **Start Now** is the pack-level check.
+5. **Open a pull request** against the course repository. A maintainer reviews
+   it against the rubric before it joins the default catalogue.
 
 ## Open-source release shape
 

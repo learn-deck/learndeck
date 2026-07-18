@@ -91,6 +91,53 @@ file it changed.
 ask it to use LearnDeck. If it was not connected from the app, return to the
 AI guides screen and connect it first.
 
+## The workspace path is rejected
+
+**Symptom:** Confirming a workspace fails with `workspacePath must be
+absolute: ...`, `workspacePath parent does not exist ...`, or `workspacePath
+already exists but is not a directory: ...`.
+
+**Cause:** When a learning path is created, `src/server.ts` requires an
+absolute workspace path whose parent directory already exists. LearnDeck
+creates the final folder itself when it is missing, but it never creates the
+parent chain, and it refuses a path that points at an existing file.
+
+**Fix:** Enter an absolute path (for example `/Users/you/projects/my-course`),
+create the parent folder first if needed, and pick a path that is either free
+or already a directory.
+
+## A course pack fails to load
+
+**Symptom:** Startup or **Start Now** reports an error such as `... must begin
+with YAML front matter fenced by --- lines.`, `... needs a non-empty <field>.`,
+`... references a missing Markdown source: ...`, `... is not a supported
+LearnDeck course pack.`, or `No LearnDeck course packs found in ...`.
+
+**Cause:** `src/course.ts` validates every pack when it loads: `course.md`
+front matter must carry `schemaVersion: 1` and the required identity, overview,
+and paths fields; every module needs front matter with `id`, `title`, `goal`,
+`action`, `sources`, and at least one question; and every local source or
+question reference must resolve to a real `.md` file relative to its module.
+One invalid pack stops the whole catalogue from loading.
+
+**Fix:** Read the error message — it names the file and field. Repair the pack
+against [the course-pack standard](course-authoring.md), or remove the broken
+folder from `courses/`, then restart the app so both the UI and MCP server
+reload it.
+
+## An answer cannot be evaluated or self-reviewed
+
+**Symptom:** The agent's `learndeck_evaluate_answer` call, or the UI's
+self-review action, fails with `Only submitted answers may be evaluated.` or
+`Only submitted answers may be self-reviewed.`
+
+**Cause:** Each attempt is evaluated at most once. Once its result is
+`correct`, `partial`, `incorrect`, or `self_reviewed`, it can no longer be
+evaluated or self-reviewed; a revision is a new attempt.
+
+**Fix:** Submit a new answer in the browser and evaluate that attempt. Nothing
+is lost — earlier attempts and their feedback stay in the answer history.
+
 ## GitHub course sync is unavailable or offline
 
 **Symptom:** Starting the app reports a public repository error such as
@@ -144,3 +191,40 @@ and delete `.learndeck/progress.db`; the next start creates a new empty
 database. Deleting it removes all local learning paths, section progress,
 question attempts, and activity-log records. Do not delete the file while the
 app is running.
+
+## The macOS app does not build or start
+
+**Symptom:** `scripts/package-macos.sh` exits with `swiftc not found` or
+`bun not found`, or the built `LearnDeck.app` shows a "LearnDeck could not
+start" alert.
+
+**Cause:** The packaging script requires macOS with the Xcode Command Line
+Tools (`swiftc`) and Bun on `PATH`. The built app starts the compiled server
+on a free local port and waits up to 20 seconds for `/` to answer HTTP 200; if
+that fails, it shows the alert and quits.
+
+**Fix:** Install the missing tool (`xcode-select --install` for `swiftc`) and
+rebuild with `bash scripts/package-macos.sh`. For a startup alert, read the
+server log the alert names:
+
+```text
+~/Library/Application Support/LearnDeck/server.log
+```
+
+The app's database and course cache also live in that folder (`progress.db`
+and `course-cache/`), outside the bundle, so rebuilding or deleting
+`dist/LearnDeck.app` never touches progress.
+
+## Connecting a guide from the macOS app stops working
+
+**Symptom:** A guide connected from `LearnDeck.app` reports a `stale` LearnDeck
+entry, or the agent cannot start the `learndeck` MCP server.
+
+**Cause:** The packaged app bakes the repository path into its
+`Contents/Info.plist` (`LearnDeckRoot`) at build time. The MCP entry it writes
+points at that checkout's `src/mcp.ts`, which also needs the repository's
+installed dependencies. Moving or deleting the clone breaks the entry.
+
+**Fix:** Keep the clone where it was when you built the app, or rebuild the
+app from the repository's new location and reconnect the guide so the entry is
+repaired.
