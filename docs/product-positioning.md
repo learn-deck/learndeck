@@ -46,7 +46,7 @@ experience.
 Ship the self-hosted Bun app publicly before native packaging. The intended
 sequence is:
 
-1. Publish `learndeck/app` and `learndeck/courses` after the GitHub account is
+1. Publish `learn-deck/learndeck` and `learn-deck/courses` after the GitHub account is
    authenticated.
 2. Invite use and contributions through the curated Markdown course standard.
 3. Add a project-based Testing Fundamentals course to prove the format beyond

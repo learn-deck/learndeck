@@ -7,7 +7,7 @@ courses without changing application code.
 
 ```mermaid
 flowchart LR
-  A[learndeck/app] -->|loads| B[github:learndeck/courses@main]
+  A[learn-deck/learndeck] -->|loads| B[github:learn-deck/courses@main]
   B --> C[courses/<id>/course.md]
   B --> D[courses/<id>/modules/*.md]
   B --> E[references/*.md]
@@ -56,7 +56,7 @@ the cache. It replaces the cache only after a full sync succeeds. If GitHub
 cannot be reached later, the last complete local cache remains available. If no
 repository is configured, LearnDeck uses bundled local packs for development.
 
-The release `.env.example` points to `github:learndeck/courses@main`; copy it
+The release `.env.example` points to `github:learn-deck/courses@main`; copy it
 to `.env` for the default public catalogue. A fork may replace that value with
 its own public Markdown repository.
 
@@ -70,8 +70,8 @@ Create two public repositories under the `learndeck` GitHub organisation:
 
 | Repository | Responsibility |
 | --- | --- |
-| `learndeck/app` | Bun server, local UI, MCP, SQLite progress, templates, and documentation. |
-| `learndeck/courses` | Markdown-only public course packs and references. |
+| `learn-deck/learndeck` | Bun server, local UI, MCP, SQLite progress, templates, and documentation. |
+| `learn-deck/courses` | Markdown-only public course packs and references. |
 
 Keep the same Apache-2.0 license in both repositories as Markdown (`LICENSE.md`)
 if the course repository must remain strictly Markdown-only. Add contribution
